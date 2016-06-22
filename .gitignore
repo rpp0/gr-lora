@@ -1,0 +1,7 @@
+build/
+*.pyc
+*.ps
+*.pdf
+*nogit*
+*.cfile
+dev/

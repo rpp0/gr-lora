@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<block>
+  <name>LoRa Receiver</name>
+  <key>lora_lora_receiver</key>
+  <category>lora</category>
+  <import>import lora</import>
+  <make>lora.lora_receiver($in_samp_rate, $freq, $offset)</make>
+
+   <param>
+     <name>Sample rate</name>
+     <key>in_samp_rate</key>
+     <type>float</type>
+   </param>
+
+  <param>
+    <name>Frequency</name>
+    <key>freq</key>
+    <type>float</type>
+  </param>
+
+  <param>
+    <name>Offset</name>
+    <key>offset</key>
+    <type>float</type>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+</block>

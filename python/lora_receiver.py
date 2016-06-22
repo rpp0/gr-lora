@@ -1,0 +1,58 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+#
+# Copyright 2016 Pieter Robyns.
+#
+# This is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street,
+# Boston, MA 02110-1301, USA.
+#
+
+from gnuradio import gr
+from lora_decoder import lora_decoder
+from gnuradio.filter import freq_xlating_fir_filter_ccf, firdes, fractional_resampler_cc
+from gnuradio.analog import quadrature_demod_cf
+from gnuradio.blocks import null_sink
+
+class lora_receiver(gr.hier_block2):
+    """
+    docstring for block lora_receiver
+    """
+    def __init__(self, in_samp_rate, freq, offset):
+        gr.hier_block2.__init__(self,
+            "lora_receiver",  # Min, Max, gr.sizeof_<type>
+            gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
+            gr.io_signature(0, 0, 0)) # Output signature
+
+        # Define blocks
+        null1 = null_sink(gr.sizeof_float)
+        null2 = null_sink(gr.sizeof_float)
+        decoder = lora_decoder()
+
+        out_samp_rate = 10000000
+        bw = 125000
+        lpf = firdes.low_pass(1, out_samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)
+
+        qdemod = quadrature_demod_cf(1.0)
+        channelizer = freq_xlating_fir_filter_ccf(10, lpf, offset, out_samp_rate)
+        resampler = fractional_resampler_cc(0, in_samp_rate / float(out_samp_rate))
+
+        # Connect blocks
+        self.connect((self, 0), (resampler, 0))
+        self.connect((resampler, 0), (channelizer, 0))
+        self.connect((channelizer, 0), (qdemod, 0))
+        self.connect((channelizer, 0), (decoder, 1))
+        self.connect((qdemod, 0), (decoder, 0))
+        self.connect((decoder, 0), (null1, 0))
+        self.connect((decoder, 1), (null2, 0))
