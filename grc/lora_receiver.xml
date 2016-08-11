@@ -4,7 +4,14 @@
   <key>lora_lora_receiver</key>
   <category>lora</category>
   <import>import lora</import>
-  <make>lora.lora_receiver($in_samp_rate, $freq, $offset)</make>
+  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $finetune, $realtime)</make>
+
+  <callback>set_finetune($finetune)</callback>
+  <param>
+    <name>Finetune</name>
+    <key>finetune</key>
+    <type>int</type>
+  </param>
 
    <param>
      <name>Sample rate</name>
@@ -22,6 +29,12 @@
     <name>Offset</name>
     <key>offset</key>
     <type>float</type>
+  </param>
+
+  <param>
+    <name>Realtime</name>
+    <key>realtime</key>
+    <type>bool</type>
   </param>
 
   <sink>

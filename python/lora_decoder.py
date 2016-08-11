@@ -217,8 +217,12 @@ def shuffled_hamming(coded, prng):
     for bit in bit_order:
         deshuffle += coded[bit]
 
+    printd("S: " + str(deshuffle))
+
     # Dewhiten
     dewhiten = xor_byte(deshuffle, prng)
+
+    printd("W: " + str(dewhiten))
 
     # Decode
     decode, error = hamming_decode(dewhiten[:-1], powers_of_two_pos=[0, 1, 3], even=True)
@@ -415,6 +419,9 @@ class lora_decoder(gr.basic_block):
         self.demodulated = ""
         self.state = LoRaState.FIND_SYNC
 
+    def calc_energy(self, samples):
+        return numpy.sum(numpy.square(numpy.abs(samples)))
+
     def general_work(self, input_items, output_items):
         in0 = input_items[0]
         in1 = input_items[1]
@@ -423,6 +430,8 @@ class lora_decoder(gr.basic_block):
         num_output_items = len(output_items[0])
 
         if self.state == LoRaState.FIND_SYNC:
+            #if self.calc_energy(in1[0:32]) > 0.08:
+            #    print("Found packet")
             smooth_function = numpy.convolve(signal.gaussian(32, std=12), in0, mode='same') / 32.0
             for i in range(0, num_output_items):
                 out[i] = len(self.sync_buffer) / 10

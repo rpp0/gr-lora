@@ -24,35 +24,58 @@ from lora_decoder import lora_decoder
 from gnuradio.filter import freq_xlating_fir_filter_ccf, firdes, fractional_resampler_cc
 from gnuradio.analog import quadrature_demod_cf
 from gnuradio.blocks import null_sink
+import lora
 
 class lora_receiver(gr.hier_block2):
     """
     docstring for block lora_receiver
     """
-    def __init__(self, in_samp_rate, freq, offset):
+    def __init__(self, in_samp_rate, freq, offset, finetune, realtime):
         gr.hier_block2.__init__(self,
             "lora_receiver",  # Min, Max, gr.sizeof_<type>
             gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
             gr.io_signature(0, 0, 0)) # Output signature
 
+        # Parameters
+        self.finetune = finetune
+        self.offset = offset
+        self.in_samp_rate = in_samp_rate
+        self.realtime = realtime
+        bw = 125000
+
         # Define blocks
         null1 = null_sink(gr.sizeof_float)
         null2 = null_sink(gr.sizeof_float)
-        decoder = lora_decoder()
+        if realtime:
+            self.c_decoder = lora.decoder(finetune)
+            out_samp_rate = 1000000
+            decimation = 1
+        else:
+            decoder = lora_decoder()
+            out_samp_rate = 10000000
+            decimation = 10
 
-        out_samp_rate = 10000000
-        bw = 125000
         lpf = firdes.low_pass(1, out_samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)
-
         qdemod = quadrature_demod_cf(1.0)
-        channelizer = freq_xlating_fir_filter_ccf(10, lpf, offset, out_samp_rate)
+        channelizer = freq_xlating_fir_filter_ccf(decimation, lpf, offset, out_samp_rate)
         resampler = fractional_resampler_cc(0, in_samp_rate / float(out_samp_rate))
 
         # Connect blocks
         self.connect((self, 0), (resampler, 0))
         self.connect((resampler, 0), (channelizer, 0))
-        self.connect((channelizer, 0), (qdemod, 0))
-        self.connect((channelizer, 0), (decoder, 1))
-        self.connect((qdemod, 0), (decoder, 0))
-        self.connect((decoder, 0), (null1, 0))
-        self.connect((decoder, 1), (null2, 0))
+        if realtime:
+            self.connect((channelizer, 0), (self.c_decoder, 0))
+        else:
+            self.connect((channelizer, 0), (qdemod, 0))
+            self.connect((channelizer, 0), (decoder, 1))
+            self.connect((qdemod, 0), (decoder, 0))
+            self.connect((decoder, 0), (null1, 0))
+            self.connect((decoder, 1), (null2, 0))
+
+    def get_finetune(self):
+        return self.finetune
+
+    def set_finetune(self, finetune):
+        self.finetune = finetune
+        if self.realtime:
+            self.c_decoder.set_finetune(self.finetune)

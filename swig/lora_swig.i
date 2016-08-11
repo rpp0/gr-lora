@@ -8,6 +8,9 @@
 %include "lora_swig_doc.i"
 
 %{
+#include "lora/decoder.h"
 %}
 
 
+%include "lora/decoder.h"
+GR_SWIG_BLOCK_MAGIC2(lora, decoder);

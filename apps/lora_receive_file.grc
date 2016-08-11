@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<?grc format='1' created='3.7.9'?>
+<?grc format='1' created='3.7.10'?>
 <flow_graph>
   <timestamp>Tue Apr 12 11:23:34 2016</timestamp>
   <block>
@@ -163,10 +163,18 @@
     </param>
   </block>
   <block>
-    <key>variable</key>
+    <key>variable_slider</key>
     <param>
       <key>comment</key>
       <value></value>
+    </param>
+    <param>
+      <key>converver</key>
+      <value>int_converter</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>-95</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -174,19 +182,43 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(464, 77)</value>
+      <value>(976, 16)</value>
     </param>
     <param>
       <key>_rotation</key>
       <value>0</value>
     </param>
     <param>
-      <key>id</key>
-      <value>decimation</value>
+      <key>grid_pos</key>
+      <value></value>
     </param>
     <param>
-      <key>value</key>
-      <value>10</value>
+      <key>id</key>
+      <value>finetune</value>
+    </param>
+    <param>
+      <key>label</key>
+      <value></value>
+    </param>
+    <param>
+      <key>max</key>
+      <value>150</value>
+    </param>
+    <param>
+      <key>min</key>
+      <value>-150</value>
+    </param>
+    <param>
+      <key>notebook</key>
+      <value></value>
+    </param>
+    <param>
+      <key>num_steps</key>
+      <value>300</value>
+    </param>
+    <param>
+      <key>style</key>
+      <value>wx.SL_HORIZONTAL</value>
     </param>
   </block>
   <block>
@@ -267,7 +299,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>10e6 </value>
+      <value>10e6</value>
     </param>
   </block>
   <block>
@@ -375,7 +407,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(16, 141)</value>
+      <value>(16, 188)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -384,61 +416,6 @@
     <param>
       <key>id</key>
       <value>blocks_file_source_0</value>
-    </param>
-    <param>
-      <key>maxoutbuf</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>minoutbuf</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>type</key>
-      <value>complex</value>
-    </param>
-    <param>
-      <key>repeat</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>vlen</key>
-      <value>1</value>
-    </param>
-  </block>
-  <block>
-    <key>blocks_file_source</key>
-    <param>
-      <key>alias</key>
-      <value></value>
-    </param>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>affinity</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>file</key>
-      <value>/tmp/cap.cfile</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(16, 205)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>blocks_file_source_0_0</value>
     </param>
     <param>
       <key>maxoutbuf</key>
@@ -532,7 +509,11 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>True</value>
+      <value>1</value>
+    </param>
+    <param>
+      <key>finetune</key>
+      <value>finetune</value>
     </param>
     <param>
       <key>freq</key>
@@ -540,7 +521,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(424, 182)</value>
+      <value>(424, 168)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -553,6 +534,10 @@
     <param>
       <key>offset</key>
       <value>offset</value>
+    </param>
+    <param>
+      <key>realtime</key>
+      <value>False</value>
     </param>
     <param>
       <key>in_samp_rate</key>
@@ -587,7 +572,7 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>0</value>
+      <value>1</value>
     </param>
     <param>
       <key>fft_size</key>
@@ -599,7 +584,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(80, 325)</value>
+      <value>(424, 284)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -611,7 +596,7 @@
     </param>
     <param>
       <key>id</key>
-      <value>wxgui_fftsink2_0</value>
+      <value>wxgui_fftsink2_1</value>
     </param>
     <param>
       <key>notebook</key>
@@ -669,12 +654,6 @@
     <sink_key>0</sink_key>
   </connection>
   <connection>
-    <source_block_id>blocks_file_source_0_0</source_block_id>
-    <sink_block_id>blocks_throttle_0</sink_block_id>
-    <source_key>0</source_key>
-    <sink_key>0</sink_key>
-  </connection>
-  <connection>
     <source_block_id>blocks_throttle_0</source_block_id>
     <sink_block_id>lora_lora_receiver_0</sink_block_id>
     <source_key>0</source_key>
@@ -682,7 +661,7 @@
   </connection>
   <connection>
     <source_block_id>blocks_throttle_0</source_block_id>
-    <sink_block_id>wxgui_fftsink2_0</sink_block_id>
+    <sink_block_id>wxgui_fftsink2_1</sink_block_id>
     <source_key>0</source_key>
     <sink_key>0</sink_key>
   </connection>

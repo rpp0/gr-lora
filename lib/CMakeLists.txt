@@ -26,6 +26,7 @@ include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
 list(APPEND lora_sources
+    decoder_impl.cc
 )
 
 set(lora_sources "${lora_sources}" PARENT_SCOPE)
@@ -35,7 +36,7 @@ if(NOT lora_sources)
 endif(NOT lora_sources)
 
 add_library(gnuradio-lora SHARED ${lora_sources})
-target_link_libraries(gnuradio-lora ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
+target_link_libraries(gnuradio-lora ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES} liquid)
 set_target_properties(gnuradio-lora PROPERTIES DEFINE_SYMBOL "gnuradio_lora_EXPORTS")
 
 if(APPLE)
@@ -73,6 +74,7 @@ target_link_libraries(
   ${Boost_LIBRARIES}
   ${CPPUNIT_LIBRARIES}
   gnuradio-lora
+  liquid
 )
 
 GR_ADD_TEST(test_lora test-lora)

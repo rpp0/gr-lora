@@ -22,5 +22,5 @@
 ########################################################################
 install(FILES
     api.h
-    DESTINATION include/lora
+    decoder.h DESTINATION include/lora
 )

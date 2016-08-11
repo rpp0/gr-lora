@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 ##################################################
 # GNU Radio Python Flow Graph
-# Title: Lora Receive File
-# Generated: Thu Aug 11 11:27:08 2016
+# Title: Lora Receive Realtime
+# Generated: Thu Aug 11 11:27:37 2016
 ##################################################
 
 if __name__ == '__main__':
@@ -16,9 +16,9 @@ if __name__ == '__main__':
         except:
             print "Warning: failed to XInitThreads()"
 
-from gnuradio import blocks
 from gnuradio import eng_notation
 from gnuradio import gr
+from gnuradio import uhd
 from gnuradio import wxgui
 from gnuradio.eng_option import eng_option
 from gnuradio.fft import window
@@ -28,21 +28,22 @@ from gnuradio.wxgui import forms
 from grc_gnuradio import wxgui as grc_wxgui
 from optparse import OptionParser
 import lora
+import time
 import wx
 
 
-class lora_receive_file(grc_wxgui.top_block_gui):
+class lora_receive_realtime(grc_wxgui.top_block_gui):
 
     def __init__(self):
-        grc_wxgui.top_block_gui.__init__(self, title="Lora Receive File")
+        grc_wxgui.top_block_gui.__init__(self, title="Lora Receive Realtime")
 
         ##################################################
         # Variables
         ##################################################
         self.target_freq = target_freq = 868.1e6
         self.sf = sf = 12
-        self.samp_rate = samp_rate = 10e6
-        self.capture_freq = capture_freq = 866.0e6
+        self.samp_rate = samp_rate = 2e6
+        self.capture_freq = capture_freq = 867.8e6
         self.bw = bw = 125e3
         self.symbols_per_sec = symbols_per_sec = bw / (2**sf)
         self.offset = offset = -(capture_freq - target_freq)
@@ -92,16 +93,24 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         	peak_hold=False,
         )
         self.Add(self.wxgui_fftsink2_1.win)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, finetune, False)
-        self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, "counting_cr4_sf7.cfile", True)
+        self.uhd_usrp_source_0 = uhd.usrp_source(
+        	",".join(("", "")),
+        	uhd.stream_args(
+        		cpu_format="fc32",
+        		channels=range(1),
+        	),
+        )
+        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
+        self.uhd_usrp_source_0.set_center_freq(capture_freq, 0)
+        self.uhd_usrp_source_0.set_gain(15, 0)
+        self.uhd_usrp_source_0.set_antenna("RX2", 0)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, finetune, True)
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))    
-        self.connect((self.blocks_throttle_0, 0), (self.lora_lora_receiver_0, 0))    
-        self.connect((self.blocks_throttle_0, 0), (self.wxgui_fftsink2_1, 0))    
+        self.connect((self.uhd_usrp_source_0, 0), (self.lora_lora_receiver_0, 0))    
+        self.connect((self.uhd_usrp_source_0, 0), (self.wxgui_fftsink2_1, 0))    
 
     def get_target_freq(self):
         return self.target_freq
@@ -124,8 +133,8 @@ class lora_receive_file(grc_wxgui.top_block_gui):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.wxgui_fftsink2_1.set_sample_rate(self.samp_rate)
+        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
         self.set_firdes_tap(firdes.low_pass(1, self.samp_rate, self.bw, 10000, firdes.WIN_HAMMING, 6.67))
-        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
 
     def get_capture_freq(self):
         return self.capture_freq
@@ -134,6 +143,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         self.capture_freq = capture_freq
         self.set_offset(-(self.capture_freq - self.target_freq))
         self.wxgui_fftsink2_1.set_baseband_freq(self.capture_freq)
+        self.uhd_usrp_source_0.set_center_freq(self.capture_freq, 0)
 
     def get_bw(self):
         return self.bw
@@ -178,7 +188,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         self.bitrate = bitrate
 
 
-def main(top_block_cls=lora_receive_file, options=None):
+def main(top_block_cls=lora_receive_realtime, options=None):
 
     tb = top_block_cls()
     tb.Start(True)
