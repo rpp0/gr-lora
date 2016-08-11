@@ -62,3 +62,10 @@ Usage
 -----
 
 See the LICENSE file for the license of this project. If you are working on a project that involves the usage of gr-lora, we would appreciate it if you can acknowledge gr-lora by linking to this page.
+
+
+Changelog
+---------
+
+- Version 0.2: C++ realtime decoder, manual finetuning for correcting frequency offsets of the transmitter.
+- Version 0.1: Python prototype file based decoder, SF7, CR4/8
