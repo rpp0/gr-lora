@@ -72,6 +72,6 @@ See the LICENSE file for the license of this project. If you are working on a pr
 Changelog
 ---------
 
-- Versuib 0.21: Fixed some issues reported by reletreby
+- Version 0.21: Fixed some issues reported by reletreby
 - Version 0.2 : C++ realtime decoder, manual finetuning for correcting frequency offsets of the transmitter.
 - Version 0.1 : Python prototype file based decoder, SF7, CR4/8
