@@ -56,7 +56,6 @@ import numpy
 import struct
 from gnuradio import gr
 from scipy import signal
-from scapy.all import hexdump
 
 DELAY_AFTER_SYNC = 268  # Delay window after two downchirps in the LoRa signal
 EPSILON = 0.001

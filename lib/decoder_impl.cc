@@ -121,7 +121,7 @@ namespace gr {
     void decoder_impl::samples_to_file(const std::string path, const gr_complex* v, int length, int elem_size) {
         #ifndef NO_TMP_WRITES
             std::ofstream out_file;
-            out_file.open(path, std::ios::out | std::ios::binary);
+            out_file.open(path.c_str(), std::ios::out | std::ios::binary);
             //for(std::vector<gr_complex>::const_iterator it = v.begin(); it != v.end(); ++it) {
             for(uint32_t i = 0; i < length; i++) {
                 out_file.write(reinterpret_cast<const char *>(&v[i]), elem_size);

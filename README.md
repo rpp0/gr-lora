@@ -31,6 +31,11 @@ cmake ../  # Note to Arch Linux users: add "-DCMAKE_INSTALL_PREFIX=/usr"
 make && sudo make install
 ```
 
+The following dependencies are required:
+- numpy
+- scipy
+- liquid-dsp (https://github.com/jgaeddert/liquid-dsp)
+
 
 Testing
 -------
@@ -67,5 +72,6 @@ See the LICENSE file for the license of this project. If you are working on a pr
 Changelog
 ---------
 
-- Version 0.2: C++ realtime decoder, manual finetuning for correcting frequency offsets of the transmitter.
-- Version 0.1: Python prototype file based decoder, SF7, CR4/8
+- Versuib 0.21: Fixed some issues reported by reletreby
+- Version 0.2 : C++ realtime decoder, manual finetuning for correcting frequency offsets of the transmitter.
+- Version 0.1 : Python prototype file based decoder, SF7, CR4/8
