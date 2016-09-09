@@ -32,6 +32,7 @@
 #define CORRELATION_SEARCH_RANGE 1024
 #define DELAY_AFTER_SYNC 262
 //#define NO_TMP_WRITES 1
+//#define CFO_CORRECT 1
 
 namespace gr {
   namespace lora {
@@ -65,18 +66,31 @@ namespace gr {
         d_compression = 8;
         d_payload_symbols = 0;
         d_finetune = finetune;
+        d_cfo_estimation = 0.0f;
+        d_cfo_step = 0;
+        d_dt = 1.0f / d_samples_per_second;
 
         // Some preparations
         std::cout << "Bits per symbol: " << d_bits_per_symbol << std::endl;
         std::cout << "Bins per symbol: " << d_number_of_bins << std::endl;
         std::cout << "Header bins per symbol: " << d_number_of_bins_hdr << std::endl;
         std::cout << "Samples per symbol: " << d_samples_per_symbol << std::endl;
+        std::cout << "Decimation: " << d_samples_per_symbol / d_number_of_bins << std::endl;
 
         build_ideal_downchirp();
         set_output_multiple(2*d_samples_per_symbol);
-        d_fft.resize(d_samples_per_symbol);
-        d_mult.resize(d_samples_per_symbol);
-        d_q = fft_create_plan(d_samples_per_symbol, &d_mult[0], &d_fft[0], LIQUID_FFT_FORWARD, 0);
+        d_fft.resize(d_number_of_bins);
+        d_mult.resize(d_number_of_bins);
+        d_q = fft_create_plan(d_number_of_bins, &d_mult[0], &d_fft[0], LIQUID_FFT_FORWARD, 0);
+
+        // Decimation filter
+        float g[DECIMATOR_FILTER_SIZE];
+        liquid_firdes_rrcos(8, 1, 0.5f, 0.3f, g); // Filter for interpolating
+        for (uint32_t i = 0; i < DECIMATOR_FILTER_SIZE; i++) // Reverse it to get decimation filter
+            d_decim_h[i] = g[DECIMATOR_FILTER_SIZE-i-1];
+        d_decim_factor = d_samples_per_symbol / d_number_of_bins;
+
+        d_decim = firdecim_crcf_create(d_decim_factor, d_decim_h, DECIMATOR_FILTER_SIZE);
     }
 
     /*
@@ -89,6 +103,7 @@ namespace gr {
             d_debug.close();
 
         fft_destroy_plan(d_q);
+        firdecim_crcf_destroy(d_decim);
     }
 
     void decoder_impl::build_ideal_downchirp(void) {
@@ -97,14 +112,13 @@ namespace gr {
 
         double T = 1.0f / d_symbols_per_second;
         double dir = -1.0f;
-        double dt = 1.0f / d_samples_per_second;
         double f0 = (d_bw / 2.0f);
         double amplitude = 1.0f;
 
         // Store time domain signal
         for(int i = 0; i < d_samples_per_symbol; i++) { // Width in number of samples = samples_per_symbol
             // See https://en.wikipedia.org/wiki/Chirp#Linear
-            double t = dt * i;
+            double t = d_dt * i;
             d_downchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(2.0f * M_PI * (f0 * t + (dir * (0.5 * d_bw / T) * pow(t, 2))));
         }
 
@@ -189,29 +203,44 @@ namespace gr {
         return result;
     }
 
-    // TODO: Instead of the finetuning parameter, one could look at the minimum
-    // and maximum instantaneous frequency to determine how detuned the sender
-    // is from the channel frequency.
-    int decoder_impl::sync_fft(const gr_complex* samples) {
-        float fft_mag[d_samples_per_symbol];
+    unsigned int decoder_impl::sync_fft(gr_complex* samples) {
+        float fft_mag[d_number_of_bins];
+        gr_complex mult_hf[d_samples_per_symbol];
+
+        #ifdef CFO_CORRECT
+            determine_cfo(&samples[0]);
+            std::cout << "CFO: " << d_cfo_estimation << std::endl;
+            correct_cfo(&samples[0], d_samples_per_symbol);
+        #endif
+
+        //samples_to_file("/tmp/data", &samples[0], d_samples_per_symbol, sizeof(gr_complex));
 
         // Multiply with ideal downchirp
         for(uint32_t i = 0; i < d_samples_per_symbol; i++) {
-            d_mult[i] = samples[i] * d_downchirp[i];
+            mult_hf[i] = conj(samples[i] * d_downchirp[i]);
         }
+
+        //samples_to_file("/tmp/mult", &mult_hf[0], d_samples_per_symbol, sizeof(gr_complex));
+
+        // Perform decimation
+        for (uint32_t i = 0; i < d_number_of_bins; i++) {
+            firdecim_crcf_execute(d_decim, &mult_hf[d_decim_factor*i], &d_mult[i]);
+        }
+
+        //samples_to_file("/tmp/resampled", &d_mult[0], d_number_of_bins, sizeof(gr_complex));
 
         // Perform FFT
         fft_execute(d_q);
 
         // Get magnitude
-        for(int i = 0; i < d_samples_per_symbol; i++) {
+        for(int i = 0; i < d_number_of_bins; i++) {
             fft_mag[i] = abs(d_fft[i]);
         }
 
-        samples_to_file("/tmp/fft", &d_fft[0], d_samples_per_symbol, sizeof(gr_complex));
+        //samples_to_file("/tmp/fft", &d_fft[0], d_number_of_bins, sizeof(gr_complex));
 
         // Return argmax here
-        return (std::max_element(fft_mag,fft_mag+d_samples_per_symbol) - fft_mag);
+        return (std::max_element(fft_mag,fft_mag+d_number_of_bins) - fft_mag);
     }
 
     unsigned int decoder_impl::max_frequency_gradient_idx(gr_complex* samples) {
@@ -257,16 +286,20 @@ namespace gr {
     }
 
     bool decoder_impl::demodulate(gr_complex* samples, bool is_header) {
-        unsigned int bin_idx = max_frequency_gradient_idx(samples);
+        //unsigned int bin_idx = max_frequency_gradient_idx(samples);
+        unsigned int bin_idx = sync_fft(samples);
+        //unsigned int bin_idx_test = sync_fft(samples);
+        unsigned int bin_idx_test = 0;
 
         // Header has additional redundancy
         if(is_header) {
             bin_idx /= 4;
+            bin_idx_test /= 4;
         }
 
         // Decode (actually gray encode) the bin to get the symbol value
         unsigned int word = gray_encode(bin_idx);
-        d_debug << bin_idx << " " << to_bin(word, is_header ? 5 : 7) << std::endl;
+        d_debug << bin_idx << " " << to_bin(word, is_header ? 5 : 7) << " ! " << bin_idx_test << std::endl;
         d_words.push_back(word);
 
         // Look for 4+cr symbols and stop
@@ -411,6 +444,81 @@ namespace gr {
         }
     }
 
+    void decoder_impl::determine_cfo(const gr_complex* samples) {
+        float instantaneous_phase[d_samples_per_symbol];
+        float instantaneous_freq[d_samples_per_symbol];
+
+        // Determine instant phase
+        for(unsigned int i = 0; i < d_samples_per_symbol; i++) {
+            instantaneous_phase[i] = arg(samples[i]);
+        }
+        liquid_unwrap_phase(instantaneous_phase, d_samples_per_symbol);
+
+        // Determine instant freq
+        for(unsigned int i = 1; i < d_samples_per_symbol; i++) {
+            float ifreq = (instantaneous_phase[i] - instantaneous_phase[i-1]) / (2.0f * M_PI) * d_samples_per_second;
+            instantaneous_freq[i-1] = ifreq;
+        }
+
+        float sum = 0.0f;
+        for(int i = 0; i < d_samples_per_symbol; i++) {
+            sum += instantaneous_freq[i];
+        }
+        sum /= d_samples_per_symbol;
+
+        d_cfo_estimation = sum;
+    }
+
+    void decoder_impl::correct_cfo(gr_complex* samples, int num_samples) {
+        for(uint32_t i = 0; i < num_samples; i++) {
+            samples[i] = samples[i] * gr_expj(2.0f * M_PI * -d_cfo_estimation * (d_dt * d_cfo_step));
+            d_cfo_step += 1;
+        }
+    }
+
+    int decoder_impl::find_preamble_start(gr_complex* samples) {
+        for(int i = 0; i < d_samples_per_symbol; i++) {
+            unsigned int c = sync_fft(&samples[i]);
+            if(c == 0) {
+                return i;
+            }
+        }
+    }
+
+    int decoder_impl::find_preamble_start_fast(gr_complex* samples) {
+        int step_size = d_samples_per_symbol / 8;
+        for(int i = 0; i < d_samples_per_symbol; i++) {
+            bool higher = true;
+            float last_ifreq = -999999999;
+
+            for(int j = 0; j < 8; j++) {
+                float s[2] = {
+                    arg(samples[i+(j*step_size)]),
+                    arg(samples[i+(j*step_size)+1])
+                };
+                liquid_unwrap_phase(s, 2);
+
+                float ifreq = (s[1] - s[0]) / (2.0f * M_PI) * d_samples_per_second;
+                d_debug << "F: " << ifreq << std::endl;
+
+                if(ifreq - last_ifreq < (d_bw / 8) - 3000) { // Make sure it rises fast enough
+                    higher = false;
+                    d_debug << "NOPE" << std::endl;
+                    break;
+                } else {
+                    last_ifreq = ifreq;
+                }
+            }
+
+            if(higher) {
+                d_debug << "YAY" << std::endl;
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     int decoder_impl::work(int noutput_items,
         gr_vector_const_void_star &input_items,
         gr_vector_void_star &output_items) {
@@ -419,22 +527,32 @@ namespace gr {
 
         switch(d_state) {
             case DETECT: {
-                if(calc_energy_threshold(input, noutput_items, 0.0002)) {
-                    d_debug << "Got something\n";
+                if(calc_energy_threshold(input, noutput_items, 0.002)) {
+                    //d_debug << "Got something\n";
 
                     // Attempt to synchronize to an upchirp of the preamble
                     int chirp_start_pos = -1;
-                    for(int i = 0; i < CORRELATION_SEARCH_RANGE; i++) {
-                        int c = sync_fft(&input[i]);
-                        if(c == 0) {
-                            chirp_start_pos = i;
-                            d_debug << "DETECT: " << i << std::endl;
-                            samples_to_file("/tmp/detect", &input[chirp_start_pos + d_finetune], CORRELATION_SEARCH_RANGE, sizeof(gr_complex));
-                            break;
-                        }
-                    }
 
-                    if(chirp_start_pos != -1) {
+                    // Find rough position of preamble
+                    int i = find_preamble_start_fast(&input[0]);
+
+                    // After this step, if i != -1 we know that we are in a rising chirp, starting from i.
+                    // Calculate the CFO here, and correct for it. Then perform sync_fft until we get a 0
+                    // The final position where this is the case indicates the start of the preamble.
+                    if(i != -1) {
+                        //samples_to_file("/tmp/bcfo", &input[i], noutput_items, sizeof(gr_complex));
+                        determine_cfo(&input[i]);
+                        //d_debug << "CFO " << d_cfo_estimation << std::endl;
+                        correct_cfo(&input[0], noutput_items);
+                        //samples_to_file("/tmp/acfo", &input[i], noutput_items, sizeof(gr_complex));
+
+                        // Sync
+                        i = find_preamble_start(&input[0]);
+                        chirp_start_pos = i;
+                        d_debug << "DETECT: Preamble starts at " << i << std::endl;
+                        samples_to_file("/tmp/detect", &input[chirp_start_pos + d_finetune], d_samples_per_symbol, sizeof(gr_complex));
+
+
                         d_state = SYNC;
                         d_corr_fails = 0;
                         consume_each(chirp_start_pos + d_finetune);
@@ -448,7 +566,7 @@ namespace gr {
             }
             case SYNC: {
                 double c = freq_cross_correlate(&input[0], &d_downchirp[0], CORRELATION_SEARCH_RANGE);
-                d_debug << "C: " << c << std::endl;
+                //d_debug << "C: " << c << std::endl;
 
                 if(c > 0.045f) {
                     d_debug << "SYNC: " << c << std::endl;
@@ -461,6 +579,7 @@ namespace gr {
                     d_corr_fails++;
                     if(d_corr_fails > 32) {
                         d_state = DETECT;
+                        d_cfo_estimation = 0;
                     }
                     consume_each(d_samples_per_symbol);
                 }
@@ -507,6 +626,7 @@ namespace gr {
                         decode(decoded, false);
 
                         d_state = DETECT;
+                        d_cfo_estimation = 0;
                     }
                 }
 

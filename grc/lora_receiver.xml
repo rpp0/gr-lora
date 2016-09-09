@@ -7,6 +7,7 @@
   <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $finetune, $realtime)</make>
 
   <callback>set_finetune($finetune)</callback>
+  <callback>set_offset($offset)</callback>
   <param>
     <name>Finetune</name>
     <key>finetune</key>

@@ -27,6 +27,8 @@
 #include <vector>
 #include <fstream>
 
+#define DECIMATOR_FILTER_SIZE 2*8*1+1 // 2*decim_factor*delay+1
+
 namespace gr {
   namespace lora {
 
@@ -70,13 +72,23 @@ namespace gr {
         std::ofstream d_debug_samples;
         std::ofstream d_debug;
         fftplan d_q;
+        float d_decim_h[DECIMATOR_FILTER_SIZE];
+        int d_decim_factor;
+        firdecim_crcf d_decim;
+        float d_cfo_estimation;
+        int d_cfo_step;
+        double d_dt;
 
         bool calc_energy_threshold(gr_complex* samples, int window_size, float threshold);
         void build_ideal_downchirp(void);
         void samples_to_file(const std::string path, const gr_complex* v, int length, int elem_size);
         void samples_debug(const gr_complex* v, int length);
         double freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
-        int sync_fft(const gr_complex* samples);
+        unsigned int sync_fft(gr_complex* samples);
+        void determine_cfo(const gr_complex* samples);
+        void correct_cfo(gr_complex* samples, int num_samples);
+        int find_preamble_start(gr_complex* samples);
+        int find_preamble_start_fast(gr_complex* samples);
         unsigned int max_frequency_gradient_idx(gr_complex* samples);
         bool demodulate(gr_complex* samples, bool is_header);
         void deinterleave(int ppm);

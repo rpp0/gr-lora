@@ -49,16 +49,17 @@ class lora_receiver(gr.hier_block2):
         if realtime:
             self.c_decoder = lora.decoder(finetune)
             out_samp_rate = 1000000
-            decimation = 1
         else:
             decoder = lora_decoder()
             out_samp_rate = 10000000
-            decimation = 10
 
-        lpf = firdes.low_pass(1, out_samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)
+        decimation = 1
+
+        lpf = firdes.low_pass(1, out_samp_rate, 86000, 20000, firdes.WIN_HAMMING, 6.67)
         qdemod = quadrature_demod_cf(1.0)
         channelizer = freq_xlating_fir_filter_ccf(decimation, lpf, offset, out_samp_rate)
-        resampler = fractional_resampler_cc(0, in_samp_rate / float(out_samp_rate))
+        self.channelizer = channelizer
+        resampler = fractional_resampler_cc(0, float(in_samp_rate) / float(out_samp_rate))
 
         # Connect blocks
         self.connect((self, 0), (resampler, 0))
@@ -79,3 +80,10 @@ class lora_receiver(gr.hier_block2):
         self.finetune = finetune
         if self.realtime:
             self.c_decoder.set_finetune(self.finetune)
+
+    def get_offset(self):
+        return self.offset
+
+    def set_offset(self, offset):
+        self.offset = offset
+        self.channelizer.set_center_freq(self.offset)
