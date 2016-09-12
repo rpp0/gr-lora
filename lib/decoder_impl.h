@@ -84,11 +84,12 @@ namespace gr {
         void samples_to_file(const std::string path, const gr_complex* v, int length, int elem_size);
         void samples_debug(const gr_complex* v, int length);
         double freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
+        double cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
         unsigned int sync_fft(gr_complex* samples);
         void determine_cfo(const gr_complex* samples);
         void correct_cfo(gr_complex* samples, int num_samples);
         int find_preamble_start(gr_complex* samples);
-        int find_preamble_start_fast(gr_complex* samples);
+        int find_preamble_start_fast(gr_complex* samples, uint32_t len);
         unsigned int max_frequency_gradient_idx(gr_complex* samples);
         bool demodulate(gr_complex* samples, bool is_header);
         void deinterleave(int ppm);

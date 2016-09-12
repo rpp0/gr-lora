@@ -174,6 +174,17 @@ namespace gr {
         }
     }
 
+    double decoder_impl::cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
+        double result = 0.0f;
+
+        for (int i = 0; i < window; i++) {
+            result += real(samples_1[i] * conj(samples_2[i]));
+        }
+
+        result = result / window;
+        return result;
+    }
+
     double decoder_impl::freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
         double result = 0.0f;
         float instantaneous_phase[window];
@@ -207,27 +218,27 @@ namespace gr {
         float fft_mag[d_number_of_bins];
         gr_complex mult_hf[d_samples_per_symbol];
 
-        #ifdef CFO_CORRECT
+        /*#ifdef CFO_CORRECT
             determine_cfo(&samples[0]);
             std::cout << "CFO: " << d_cfo_estimation << std::endl;
             correct_cfo(&samples[0], d_samples_per_symbol);
-        #endif
+        #endif*/
 
-        //samples_to_file("/tmp/data", &samples[0], d_samples_per_symbol, sizeof(gr_complex));
+        samples_to_file("/tmp/data", &samples[0], d_samples_per_symbol, sizeof(gr_complex));
 
         // Multiply with ideal downchirp
         for(uint32_t i = 0; i < d_samples_per_symbol; i++) {
             mult_hf[i] = conj(samples[i] * d_downchirp[i]);
         }
 
-        //samples_to_file("/tmp/mult", &mult_hf[0], d_samples_per_symbol, sizeof(gr_complex));
+        samples_to_file("/tmp/mult", &mult_hf[0], d_samples_per_symbol, sizeof(gr_complex));
 
         // Perform decimation
         for (uint32_t i = 0; i < d_number_of_bins; i++) {
             firdecim_crcf_execute(d_decim, &mult_hf[d_decim_factor*i], &d_mult[i]);
         }
 
-        //samples_to_file("/tmp/resampled", &d_mult[0], d_number_of_bins, sizeof(gr_complex));
+        samples_to_file("/tmp/resampled", &d_mult[0], d_number_of_bins, sizeof(gr_complex));
 
         // Perform FFT
         fft_execute(d_q);
@@ -237,7 +248,7 @@ namespace gr {
             fft_mag[i] = abs(d_fft[i]);
         }
 
-        //samples_to_file("/tmp/fft", &d_fft[0], d_number_of_bins, sizeof(gr_complex));
+        samples_to_file("/tmp/fft", &d_fft[0], d_number_of_bins, sizeof(gr_complex));
 
         // Return argmax here
         return (std::max_element(fft_mag,fft_mag+d_number_of_bins) - fft_mag);
@@ -286,8 +297,8 @@ namespace gr {
     }
 
     bool decoder_impl::demodulate(gr_complex* samples, bool is_header) {
-        //unsigned int bin_idx = max_frequency_gradient_idx(samples);
-        unsigned int bin_idx = sync_fft(samples);
+        unsigned int bin_idx = max_frequency_gradient_idx(samples);
+        //unsigned int bin_idx = sync_fft(samples);
         //unsigned int bin_idx_test = sync_fft(samples);
         unsigned int bin_idx_test = 0;
 
@@ -467,6 +478,8 @@ namespace gr {
         sum /= d_samples_per_symbol;
 
         d_cfo_estimation = sum;
+
+        /*d_cfo_estimation = (*std::max_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1) + *std::min_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1)) / 2;*/
     }
 
     void decoder_impl::correct_cfo(gr_complex* samples, int num_samples) {
@@ -485,9 +498,9 @@ namespace gr {
         }
     }
 
-    int decoder_impl::find_preamble_start_fast(gr_complex* samples) {
+    int decoder_impl::find_preamble_start_fast(gr_complex* samples, uint32_t len) {
         int step_size = d_samples_per_symbol / 8;
-        for(int i = 0; i < d_samples_per_symbol; i++) {
+        for(int i = 0; i < len; i += 8) {
             bool higher = true;
             float last_ifreq = -999999999;
 
@@ -501,7 +514,7 @@ namespace gr {
                 float ifreq = (s[1] - s[0]) / (2.0f * M_PI) * d_samples_per_second;
                 d_debug << "F: " << ifreq << std::endl;
 
-                if(ifreq - last_ifreq < (d_bw / 8) - 3000) { // Make sure it rises fast enough
+                if(ifreq - last_ifreq < (d_bw / 8) / 1.5) { // Make sure it rises fast enough
                     higher = false;
                     d_debug << "NOPE" << std::endl;
                     break;
@@ -528,23 +541,24 @@ namespace gr {
         switch(d_state) {
             case DETECT: {
                 if(calc_energy_threshold(input, noutput_items, 0.002)) {
-                    //d_debug << "Got something\n";
-
                     // Attempt to synchronize to an upchirp of the preamble
                     int chirp_start_pos = -1;
+                    d_cfo_estimation = 0;
 
                     // Find rough position of preamble
-                    int i = find_preamble_start_fast(&input[0]);
+                    int i = find_preamble_start_fast(&input[0], noutput_items);
 
                     // After this step, if i != -1 we know that we are in a rising chirp, starting from i.
                     // Calculate the CFO here, and correct for it. Then perform sync_fft until we get a 0
                     // The final position where this is the case indicates the start of the preamble.
                     if(i != -1) {
-                        //samples_to_file("/tmp/bcfo", &input[i], noutput_items, sizeof(gr_complex));
+                        // TODO: Find algorithm to reliably determine CFO
+                        samples_to_file("/tmp/bcfo", &input[0], noutput_items, sizeof(gr_complex));
+                        i = find_preamble_start(&input[0]);
                         determine_cfo(&input[i]);
-                        //d_debug << "CFO " << d_cfo_estimation << std::endl;
+                        d_debug << "CFO " << d_cfo_estimation << std::endl;
                         correct_cfo(&input[0], noutput_items);
-                        //samples_to_file("/tmp/acfo", &input[i], noutput_items, sizeof(gr_complex));
+                        samples_to_file("/tmp/acfo", &input[0], noutput_items, sizeof(gr_complex));
 
                         // Sync
                         i = find_preamble_start(&input[0]);
@@ -565,8 +579,8 @@ namespace gr {
                 break;
             }
             case SYNC: {
-                double c = freq_cross_correlate(&input[0], &d_downchirp[0], CORRELATION_SEARCH_RANGE);
-                //d_debug << "C: " << c << std::endl;
+                double c = freq_cross_correlate(&input[0], &d_downchirp[0], d_samples_per_symbol);
+                d_debug << "C: " << c << std::endl;
 
                 if(c > 0.045f) {
                     d_debug << "SYNC: " << c << std::endl;
@@ -579,7 +593,6 @@ namespace gr {
                     d_corr_fails++;
                     if(d_corr_fails > 32) {
                         d_state = DETECT;
-                        d_cfo_estimation = 0;
                     }
                     consume_each(d_samples_per_symbol);
                 }
@@ -626,7 +639,6 @@ namespace gr {
                         decode(decoded, false);
 
                         d_state = DETECT;
-                        d_cfo_estimation = 0;
                     }
                 }
 
