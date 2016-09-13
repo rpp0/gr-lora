@@ -25,6 +25,7 @@
 #include <gnuradio/io_signature.h>
 #include <gnuradio/expj.h>
 #include <liquid/liquid.h>
+#include <numeric>
 #include "decoder_impl.h"
 #include "tables.h"
 #include "utilities.h"
@@ -205,12 +206,28 @@ namespace gr {
             instantaneous_freq_down[i-1] = instantaneous_phase_down[i] - instantaneous_phase_down[i-1];
         }
 
+        double average = std::accumulate(instantaneous_freq, instantaneous_freq + window, 0.0) / window;
+        double average_down = std::accumulate(instantaneous_freq_down, instantaneous_freq_down + window, 0.0) / window;
+        double sd = stddev(instantaneous_freq, window, average);
+        double sd_down = stddev(instantaneous_freq_down, window, average_down);
+
         for (int i = 0; i < window-1; i++) {
-            result += instantaneous_freq[i] * instantaneous_freq_down[i];
+            result += (instantaneous_freq[i] - average) * (instantaneous_freq_down[i] - average_down) / (sd * sd_down);
         }
 
         result = result / window;
         return result;
+    }
+
+    double decoder_impl::stddev(float *values, int len, float mean) {
+        double variance = 0.0f;
+
+        for (unsigned int i = 0; i < len; i++) {
+          variance += std::pow(values[i] - mean, 2);
+        }
+
+        variance /= len;
+        return std::sqrt(variance);
     }
 
     double decoder_impl::sliding_freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window, int slide, int* index) {
@@ -238,10 +255,15 @@ namespace gr {
             instantaneous_freq_down[i-1] = instantaneous_phase_down[i] - instantaneous_phase_down[i-1];
         }
 
+        double average = std::accumulate(instantaneous_freq, instantaneous_freq + window, 0.0) / window;
+        double average_down = std::accumulate(instantaneous_freq_down, instantaneous_freq_down + window, 0.0) / window;
+        double sd = stddev(instantaneous_freq, window, average);
+        double sd_down = stddev(instantaneous_freq_down, window, average_down);
+
         for(int i = 0; i < 2*slide; i++) {
             double result = 0.0f;
             for (int j = 0; j < window-1; j++) {
-                result += instantaneous_freq[i+j] * instantaneous_freq_down[j];
+                result += (instantaneous_freq[i+j] - average) * (instantaneous_freq_down[j] - average_down) / (sd * sd_down);
             }
             correlations[i] = result / (window-1);
         }
@@ -577,7 +599,7 @@ namespace gr {
                     int c_window = std::min(2*d_samples_per_symbol - i, d_samples_per_symbol);
                     int index_correction = 0;
                     double c = sliding_freq_cross_correlate(&input[i], &d_upchirp[0], c_window, 128, &index_correction);
-                    if(c > 0.02f) {
+                    if(c > 0.8f) {
                         d_debug << "Cu: " << c << std::endl;
                         samples_to_file("/tmp/detectb", &input[i], d_samples_per_symbol, sizeof(gr_complex));
                         samples_to_file("/tmp/detect", &input[i+index_correction], d_samples_per_symbol, sizeof(gr_complex));
@@ -594,7 +616,7 @@ namespace gr {
                 double c = freq_cross_correlate(&input[0], &d_downchirp[0], d_samples_per_symbol);
                 d_debug << "Cd: " << c << std::endl;
 
-                if(c > 0.045f) {
+                if(c > 0.8f) {
                     d_debug << "SYNC: " << c << std::endl;
                     // Debug stuff
                     samples_to_file("/tmp/sync", &input[0], CORRELATION_SEARCH_RANGE, sizeof(gr_complex));

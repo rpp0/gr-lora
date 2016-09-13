@@ -99,6 +99,7 @@ namespace gr {
         void dewhiten(const uint8_t* prng);
         void hamming_decode(uint8_t* out_data);
         void nibble_reverse(uint8_t* out_data, int len);
+        double stddev(float *values, int len, float mean);
         inline void phase(gr_complex* in_samples, float* out_phase, int window);
 
 
