@@ -46,7 +46,7 @@ namespace gr {
      private:
         decoder_state d_state;
         std::vector<gr_complex> d_downchirp;
-        std::vector<gr_complex> d_downchirp_fft;
+        std::vector<gr_complex> d_upchirp;
         std::vector<gr_complex> d_fft;
         std::vector<gr_complex> d_mult;
         int32_t d_finetune;
@@ -83,6 +83,7 @@ namespace gr {
         void build_ideal_downchirp(void);
         void samples_to_file(const std::string path, const gr_complex* v, int length, int elem_size);
         void samples_debug(const gr_complex* v, int length);
+        double sliding_freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window, int slide, int* index);
         double freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
         double cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
         unsigned int sync_fft(gr_complex* samples);

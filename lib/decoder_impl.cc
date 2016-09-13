@@ -108,10 +108,10 @@ namespace gr {
 
     void decoder_impl::build_ideal_downchirp(void) {
         d_downchirp.resize(d_samples_per_symbol);
-        d_downchirp_fft.resize(d_samples_per_symbol);
+        d_upchirp.resize(d_samples_per_symbol);
 
-        double T = 1.0f / d_symbols_per_second;
         double dir = -1.0f;
+        double T = 1.0f / d_symbols_per_second;
         double f0 = (d_bw / 2.0f);
         double amplitude = 1.0f;
 
@@ -122,14 +122,13 @@ namespace gr {
             d_downchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(2.0f * M_PI * (f0 * t + (dir * (0.5 * d_bw / T) * pow(t, 2))));
         }
 
-        // Store FFT of downchirp TODO needed?
-        int flags = 0;
-        fftplan q = fft_create_plan(d_samples_per_symbol, &d_downchirp[0], &d_downchirp_fft[0], LIQUID_FFT_FORWARD, flags);
-        fft_execute(q);
-        fft_destroy_plan(q);
+        for(int i = 0; i < d_samples_per_symbol; i++) {
+            double t = d_dt * i;
+            d_upchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(-2.0f * M_PI * (f0 * t + (dir * (0.5 * d_bw / T) * pow(t, 2))));
+        }
 
         samples_to_file("/tmp/downchirp", &d_downchirp[0], d_downchirp.size(), sizeof(gr_complex));
-        samples_to_file("/tmp/downchirp_fft", &d_downchirp_fft[0], d_downchirp_fft.size(), sizeof(gr_complex));
+        samples_to_file("/tmp/upchirp", &d_upchirp[0], d_upchirp.size(), sizeof(gr_complex));
     }
 
     void decoder_impl::samples_to_file(const std::string path, const gr_complex* v, int length, int elem_size) {
@@ -212,6 +211,45 @@ namespace gr {
 
         result = result / window;
         return result;
+    }
+
+    double decoder_impl::sliding_freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window, int slide, int* index) {
+        float instantaneous_phase[window];
+        float instantaneous_phase_down[window];
+        float instantaneous_freq[window+slide*2];
+        float instantaneous_freq_down[window];
+        double correlations[slide*2];
+
+        for(unsigned int i = 0; i < window+slide*2; i++) {
+            instantaneous_freq[i] = 0.0f;
+        }
+
+        // Determine instant phase
+        for(unsigned int i = 0; i < window; i++) {
+            instantaneous_phase[i] = arg(samples_1[i]);
+            instantaneous_phase_down[i] = arg(samples_2[i]);
+        }
+        liquid_unwrap_phase(instantaneous_phase, window);
+        liquid_unwrap_phase(instantaneous_phase_down, window); // TODO: Clean up and precalculate for downchirp
+
+        // Instant freq
+        for(unsigned int i = 1; i < window; i++) {
+            instantaneous_freq[i+slide-1] = instantaneous_phase[i] - instantaneous_phase[i-1];
+            instantaneous_freq_down[i-1] = instantaneous_phase_down[i] - instantaneous_phase_down[i-1];
+        }
+
+        for(int i = 0; i < 2*slide; i++) {
+            double result = 0.0f;
+            for (int j = 0; j < window-1; j++) {
+                result += instantaneous_freq[i+j] * instantaneous_freq_down[j];
+            }
+            correlations[i] = result / (window-1);
+        }
+
+        int argmax = (std::max_element(correlations,correlations+slide*2) - correlations); // What is the best correlation?
+        *index = argmax - slide; // How much do we have to slide before the best correlation is reached?
+
+        return correlations[argmax];
     }
 
     unsigned int decoder_impl::sync_fft(gr_complex* samples) {
@@ -297,8 +335,8 @@ namespace gr {
     }
 
     bool decoder_impl::demodulate(gr_complex* samples, bool is_header) {
-        unsigned int bin_idx = max_frequency_gradient_idx(samples);
-        //unsigned int bin_idx = sync_fft(samples);
+        //unsigned int bin_idx = max_frequency_gradient_idx(samples);
+        unsigned int bin_idx = sync_fft(samples);
         //unsigned int bin_idx_test = sync_fft(samples);
         unsigned int bin_idx_test = 0;
 
@@ -499,34 +537,28 @@ namespace gr {
     }
 
     int decoder_impl::find_preamble_start_fast(gr_complex* samples, uint32_t len) {
-        int step_size = d_samples_per_symbol / 8;
-        for(int i = 0; i < len; i += 8) {
-            bool higher = true;
-            float last_ifreq = -999999999;
+        int decimation = d_decim_factor; // TODO: Replace with d_decimation
+        int decim_size = d_samples_per_symbol / decimation;
+        float decim[decim_size];
+        float gradient[decim_size];
 
-            for(int j = 0; j < 8; j++) {
-                float s[2] = {
-                    arg(samples[i+(j*step_size)]),
-                    arg(samples[i+(j*step_size)+1])
-                };
-                liquid_unwrap_phase(s, 2);
 
-                float ifreq = (s[1] - s[0]) / (2.0f * M_PI) * d_samples_per_second;
-                d_debug << "F: " << ifreq << std::endl;
+        for(int i = 0; i < decim_size; i++) {
+            float s[2] = {
+                arg(samples[i*decimation]),
+                arg(samples[(i+1)*decimation])
+            };
+            liquid_unwrap_phase(s, 2);
 
-                if(ifreq - last_ifreq < (d_bw / 8) / 1.5) { // Make sure it rises fast enough
-                    higher = false;
-                    d_debug << "NOPE" << std::endl;
-                    break;
-                } else {
-                    last_ifreq = ifreq;
-                }
+            decim[i] = (s[1] - s[0]) / (2.0f * M_PI) * d_samples_per_second;
+        }
+
+        for(int i = 1; i < decim_size; i++) {
+            gradient[i] = decim[i] - decim[i-1];
+            if(gradient[i] <= -20000) {
+                return i*decimation;
             }
-
-            if(higher) {
-                d_debug << "YAY" << std::endl;
-                return i;
-            }
+            //d_debug << "G:" << gradient[i] << std::endl;
         }
 
         return -1;
@@ -540,47 +572,27 @@ namespace gr {
 
         switch(d_state) {
             case DETECT: {
-                if(calc_energy_threshold(input, noutput_items, 0.002)) {
-                    // Attempt to synchronize to an upchirp of the preamble
-                    int chirp_start_pos = -1;
-                    d_cfo_estimation = 0;
-
-                    // Find rough position of preamble
-                    int i = find_preamble_start_fast(&input[0], noutput_items);
-
-                    // After this step, if i != -1 we know that we are in a rising chirp, starting from i.
-                    // Calculate the CFO here, and correct for it. Then perform sync_fft until we get a 0
-                    // The final position where this is the case indicates the start of the preamble.
-                    if(i != -1) {
-                        // TODO: Find algorithm to reliably determine CFO
-                        samples_to_file("/tmp/bcfo", &input[0], noutput_items, sizeof(gr_complex));
-                        i = find_preamble_start(&input[0]);
-                        determine_cfo(&input[i]);
-                        d_debug << "CFO " << d_cfo_estimation << std::endl;
-                        correct_cfo(&input[0], noutput_items);
-                        samples_to_file("/tmp/acfo", &input[0], noutput_items, sizeof(gr_complex));
-
-                        // Sync
-                        i = find_preamble_start(&input[0]);
-                        chirp_start_pos = i;
-                        d_debug << "DETECT: Preamble starts at " << i << std::endl;
-                        samples_to_file("/tmp/detect", &input[chirp_start_pos + d_finetune], d_samples_per_symbol, sizeof(gr_complex));
-
-
-                        d_state = SYNC;
+                int i = find_preamble_start_fast(&input[0], 2*d_samples_per_symbol);
+                if(i != -1) {
+                    int c_window = std::min(2*d_samples_per_symbol - i, d_samples_per_symbol);
+                    int index_correction = 0;
+                    double c = sliding_freq_cross_correlate(&input[i], &d_upchirp[0], c_window, 128, &index_correction);
+                    if(c > 0.02f) {
+                        d_debug << "Cu: " << c << std::endl;
+                        samples_to_file("/tmp/detectb", &input[i], d_samples_per_symbol, sizeof(gr_complex));
+                        samples_to_file("/tmp/detect", &input[i+index_correction], d_samples_per_symbol, sizeof(gr_complex));
                         d_corr_fails = 0;
-                        consume_each(chirp_start_pos + d_finetune);
-                    } else {
-                        consume_each(noutput_items);
+                        d_state = SYNC;
+                        consume_each(i+index_correction);
+                        break;
                     }
-                } else {
-                    consume_each(noutput_items);
                 }
+                consume_each(2*d_samples_per_symbol);
                 break;
             }
             case SYNC: {
                 double c = freq_cross_correlate(&input[0], &d_downchirp[0], d_samples_per_symbol);
-                d_debug << "C: " << c << std::endl;
+                d_debug << "Cd: " << c << std::endl;
 
                 if(c > 0.045f) {
                     d_debug << "SYNC: " << c << std::endl;
