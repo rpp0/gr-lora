@@ -78,7 +78,8 @@ namespace gr {
         std::cout << "Samples per symbol: " << d_samples_per_symbol << std::endl;
         std::cout << "Decimation: " << d_samples_per_symbol / d_number_of_bins << std::endl;
 
-        build_ideal_downchirp();
+        build_ideal_chirps();
+
         set_output_multiple(2*d_samples_per_symbol);
         d_fft.resize(d_number_of_bins);
         d_mult.resize(d_number_of_bins);
@@ -107,26 +108,34 @@ namespace gr {
         firdecim_crcf_destroy(d_decim);
     }
 
-    void decoder_impl::build_ideal_downchirp(void) {
+    void decoder_impl::build_ideal_chirps(void) {
         d_downchirp.resize(d_samples_per_symbol);
         d_upchirp.resize(d_samples_per_symbol);
+        d_downchirp_ifreq.resize(d_samples_per_symbol);
+        d_upchirp_ifreq.resize(d_samples_per_symbol);
 
-        double dir = -1.0f;
+        double dir;
         double T = 1.0f / d_symbols_per_second;
         double f0 = (d_bw / 2.0f);
         double amplitude = 1.0f;
 
         // Store time domain signal
+        dir = 1.0f;
         for(int i = 0; i < d_samples_per_symbol; i++) { // Width in number of samples = samples_per_symbol
             // See https://en.wikipedia.org/wiki/Chirp#Linear
             double t = d_dt * i;
-            d_downchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(2.0f * M_PI * (f0 * t + (dir * (0.5 * d_bw / T) * pow(t, 2))));
+            d_downchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(dir * 2.0f * M_PI * (f0 * t + (-1.0f * (0.5 * d_bw / T) * pow(t, 2))));
         }
 
+        dir = -1.0f;
         for(int i = 0; i < d_samples_per_symbol; i++) {
             double t = d_dt * i;
-            d_upchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(-2.0f * M_PI * (f0 * t + (dir * (0.5 * d_bw / T) * pow(t, 2))));
+            d_upchirp[i] = gr_complex(amplitude, amplitude) * gr_expj(dir * 2.0f * M_PI * (f0 * t + (-1.0f * (0.5 * d_bw / T) * pow(t, 2))));
         }
+
+        // Store instant. frequency
+        instantaneous_frequency(&d_downchirp[0], &d_downchirp_ifreq[0], d_samples_per_symbol);
+        instantaneous_frequency(&d_upchirp[0], &d_upchirp_ifreq[0], d_samples_per_symbol);
 
         samples_to_file("/tmp/downchirp", &d_downchirp[0], d_downchirp.size(), sizeof(gr_complex));
         samples_to_file("/tmp/upchirp", &d_upchirp[0], d_upchirp.size(), sizeof(gr_complex));
@@ -168,14 +177,33 @@ namespace gr {
         }
     }
 
-    inline void decoder_impl::phase(gr_complex* in_samples, float* out_phase, int window) {
-        for(int i = 0; i < window; i++) {
-            out_phase[i] = arg(in_samples[i]); // = the same as atan2(imag(in_samples[i]),real(in_samples[i]));
+    void decoder_impl::instantaneous_frequency(const gr_complex* in_samples, float* out_ifreq, uint32_t window) {
+        float iphase[window];
+
+        if(window < 2) {
+            // TODO: throw warning here
+            return;
         }
+
+        instantaneous_phase(in_samples, iphase, window);
+
+        // Instant freq
+        for(uint32_t i = 1; i < window; i++) {
+            out_ifreq[i-1] = iphase[i] - iphase[i-1];
+        }
+        out_ifreq[window-1] = out_ifreq[window-2]; // Make sure there is no strong gradient if this value is accessed by mistake
     }
 
-    double decoder_impl::cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
-        double result = 0.0f;
+    inline void decoder_impl::instantaneous_phase(const gr_complex* in_samples, float* out_iphase, uint32_t window) {
+        for(uint32_t i = 0; i < window; i++) {
+            out_iphase[i] = arg(in_samples[i]); // = the same as atan2(imag(in_samples[i]),real(in_samples[i]));
+        }
+
+        liquid_unwrap_phase(out_iphase, window);
+    }
+
+    float decoder_impl::cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
+        float result = 0.0f;
 
         for (int i = 0; i < window; i++) {
             result += real(samples_1[i] * conj(samples_2[i]));
@@ -185,41 +213,66 @@ namespace gr {
         return result;
     }
 
-    double decoder_impl::freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
-        double result = 0.0f;
-        float instantaneous_phase[window];
-        float instantaneous_phase_down[window];
-        float instantaneous_freq[window];
-        float instantaneous_freq_down[window];
+    float decoder_impl::detect_downchirp(const gr_complex *samples, uint32_t window) {
+        float samples_ifreq[window];
 
-        // Determine instant phase
-        for(unsigned int i = 0; i < window; i++) {
-            instantaneous_phase[i] = arg(samples_1[i]);
-            instantaneous_phase_down[i] = arg(samples_2[i]);
-        }
-        liquid_unwrap_phase(instantaneous_phase, window);
-        liquid_unwrap_phase(instantaneous_phase_down, window);
+        instantaneous_frequency(samples, samples_ifreq, window);
+        return norm_cross_correlate(samples_ifreq, &d_downchirp_ifreq[0], window);
+    }
 
-        // Instant freq
-        for(unsigned int i = 1; i < window; i++) {
-            instantaneous_freq[i-1] = instantaneous_phase[i] - instantaneous_phase[i-1];
-            instantaneous_freq_down[i-1] = instantaneous_phase_down[i] - instantaneous_phase_down[i-1];
-        }
+    /**
+     * Calculate normalized cross correlation of real values.
+     * See https://en.wikipedia.org/wiki/Cross-correlation#Normalized_cross-correlation.
+     */
+    float decoder_impl::norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window) {
+        float result = 0.0f;
 
-        double average = std::accumulate(instantaneous_freq, instantaneous_freq + window, 0.0) / window;
-        double average_down = std::accumulate(instantaneous_freq_down, instantaneous_freq_down + window, 0.0) / window;
-        double sd = stddev(instantaneous_freq, window, average);
-        double sd_down = stddev(instantaneous_freq_down, window, average_down);
+        double average_1 = std::accumulate(samples_1, samples_1 + window, 0.0) / window;
+        double average_2 = std::accumulate(samples_2, samples_2 + window, 0.0) / window;
+        double sd_1 = stddev(samples_1, window, average_1);
+        double sd_2 = stddev(samples_2, window, average_2);
 
         for (int i = 0; i < window-1; i++) {
-            result += (instantaneous_freq[i] - average) * (instantaneous_freq_down[i] - average_down) / (sd * sd_down);
+            result += (samples_1[i] - average_1) * (samples_2[i] - average_2) / (sd_1 * sd_2);
         }
-
         result = result / window;
+
         return result;
     }
 
-    double decoder_impl::stddev(float *values, int len, float mean) {
+    float decoder_impl::sliding_norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window, uint32_t slide, int32_t* index) {
+        float correlations[slide*2];
+        float samples_1_padded[window+slide*2];
+
+        double average_1 = std::accumulate(samples_1, samples_1 + window, 0.0) / window;
+        double average_2 = std::accumulate(samples_2, samples_2 + window, 0.0) / window;
+        double sd_1 = stddev(samples_1, window, average_1);
+        double sd_2 = stddev(samples_2, window, average_2);
+
+        // Create padding on both sides of the samples
+        for(uint32_t i = 0; i < window+slide*2; i++) {
+            samples_1_padded[i] = 0.0f;
+        }
+        for(uint32_t i = 0; i < window; i++) {
+            samples_1_padded[i+slide-1] = samples_1[i];
+        }
+
+        // Slide and correlate
+        for(uint32_t i = 0; i < 2*slide; i++) {
+            float result = 0.0f;
+            for (uint32_t j = 0; j < window; j++) {
+                result += (samples_1_padded[i+j] - average_1) * (samples_2[j] - average_2) / (sd_1 * sd_2);
+            }
+            correlations[i] = result / window;
+        }
+
+        uint32_t argmax = (std::max_element(correlations,correlations+slide*2) - correlations); // Determine best correlation
+        *index = argmax - slide; // Determine how much we have to slide before the best correlation is reached
+
+        return correlations[argmax];
+    }
+
+    float decoder_impl::stddev(const float *values, int len, float mean) {
         double variance = 0.0f;
 
         for (unsigned int i = 0; i < len; i++) {
@@ -230,51 +283,14 @@ namespace gr {
         return std::sqrt(variance);
     }
 
-    double decoder_impl::sliding_freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window, int slide, int* index) {
-        float instantaneous_phase[window];
-        float instantaneous_phase_down[window];
-        float instantaneous_freq[window+slide*2];
-        float instantaneous_freq_down[window];
-        double correlations[slide*2];
+    float decoder_impl::detect_upchirp(const gr_complex *samples, uint32_t window, int32_t* index) {
+        float samples_ifreq[window];
 
-        for(unsigned int i = 0; i < window+slide*2; i++) {
-            instantaneous_freq[i] = 0.0f;
-        }
-
-        // Determine instant phase
-        for(unsigned int i = 0; i < window; i++) {
-            instantaneous_phase[i] = arg(samples_1[i]);
-            instantaneous_phase_down[i] = arg(samples_2[i]);
-        }
-        liquid_unwrap_phase(instantaneous_phase, window);
-        liquid_unwrap_phase(instantaneous_phase_down, window); // TODO: Clean up and precalculate for downchirp
-
-        // Instant freq
-        for(unsigned int i = 1; i < window; i++) {
-            instantaneous_freq[i+slide-1] = instantaneous_phase[i] - instantaneous_phase[i-1];
-            instantaneous_freq_down[i-1] = instantaneous_phase_down[i] - instantaneous_phase_down[i-1];
-        }
-
-        double average = std::accumulate(instantaneous_freq, instantaneous_freq + window, 0.0) / window;
-        double average_down = std::accumulate(instantaneous_freq_down, instantaneous_freq_down + window, 0.0) / window;
-        double sd = stddev(instantaneous_freq, window, average);
-        double sd_down = stddev(instantaneous_freq_down, window, average_down);
-
-        for(int i = 0; i < 2*slide; i++) {
-            double result = 0.0f;
-            for (int j = 0; j < window-1; j++) {
-                result += (instantaneous_freq[i+j] - average) * (instantaneous_freq_down[j] - average_down) / (sd * sd_down);
-            }
-            correlations[i] = result / (window-1);
-        }
-
-        int argmax = (std::max_element(correlations,correlations+slide*2) - correlations); // What is the best correlation?
-        *index = argmax - slide; // How much do we have to slide before the best correlation is reached?
-
-        return correlations[argmax];
+        instantaneous_frequency(samples, samples_ifreq, window);
+        return sliding_norm_cross_correlate(samples_ifreq, &d_upchirp_ifreq[0], window, 128, index);
     }
 
-    unsigned int decoder_impl::sync_fft(gr_complex* samples) {
+    unsigned int decoder_impl::get_shift_fft(gr_complex* samples) {
         float fft_mag[d_number_of_bins];
         gr_complex mult_hf[d_samples_per_symbol];
 
@@ -358,8 +374,8 @@ namespace gr {
 
     bool decoder_impl::demodulate(gr_complex* samples, bool is_header) {
         //unsigned int bin_idx = max_frequency_gradient_idx(samples);
-        unsigned int bin_idx = sync_fft(samples);
-        //unsigned int bin_idx_test = sync_fft(samples);
+        unsigned int bin_idx = get_shift_fft(samples);
+        //unsigned int bin_idx_test = get_shift_fft(samples);
         unsigned int bin_idx_test = 0;
 
         // Header has additional redundancy
@@ -551,7 +567,7 @@ namespace gr {
 
     int decoder_impl::find_preamble_start(gr_complex* samples) {
         for(int i = 0; i < d_samples_per_symbol; i++) {
-            unsigned int c = sync_fft(&samples[i]);
+            unsigned int c = get_shift_fft(&samples[i]);
             if(c == 0) {
                 return i;
             }
@@ -596,9 +612,9 @@ namespace gr {
             case DETECT: {
                 int i = find_preamble_start_fast(&input[0], 2*d_samples_per_symbol);
                 if(i != -1) {
-                    int c_window = std::min(2*d_samples_per_symbol - i, d_samples_per_symbol);
-                    int index_correction = 0;
-                    double c = sliding_freq_cross_correlate(&input[i], &d_upchirp[0], c_window, 128, &index_correction);
+                    uint32_t c_window = std::min(2*d_samples_per_symbol - i, d_samples_per_symbol);
+                    int32_t index_correction = 0;
+                    float c = detect_upchirp(&input[i], c_window, &index_correction);
                     if(c > 0.8f) {
                         d_debug << "Cu: " << c << std::endl;
                         samples_to_file("/tmp/detectb", &input[i], d_samples_per_symbol, sizeof(gr_complex));
@@ -613,7 +629,7 @@ namespace gr {
                 break;
             }
             case SYNC: {
-                double c = freq_cross_correlate(&input[0], &d_downchirp[0], d_samples_per_symbol);
+                double c = detect_downchirp(&input[0], d_samples_per_symbol);
                 d_debug << "Cd: " << c << std::endl;
 
                 if(c > 0.8f) {

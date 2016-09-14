@@ -47,6 +47,8 @@ namespace gr {
         decoder_state d_state;
         std::vector<gr_complex> d_downchirp;
         std::vector<gr_complex> d_upchirp;
+        std::vector<float> d_downchirp_ifreq;
+        std::vector<float> d_upchirp_ifreq;
         std::vector<gr_complex> d_fft;
         std::vector<gr_complex> d_mult;
         int32_t d_finetune;
@@ -80,13 +82,15 @@ namespace gr {
         double d_dt;
 
         bool calc_energy_threshold(gr_complex* samples, int window_size, float threshold);
-        void build_ideal_downchirp(void);
+        void build_ideal_chirps(void);
         void samples_to_file(const std::string path, const gr_complex* v, int length, int elem_size);
         void samples_debug(const gr_complex* v, int length);
-        double sliding_freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window, int slide, int* index);
-        double freq_cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
-        double cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
-        unsigned int sync_fft(gr_complex* samples);
+        float sliding_norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window, uint32_t slide, int32_t* index);
+        float norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window);
+        float detect_downchirp(const gr_complex *samples, uint32_t window);
+        float detect_upchirp(const gr_complex *samples_1, uint32_t window, int32_t* index);
+        float cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
+        unsigned int get_shift_fft(gr_complex* samples);
         void determine_cfo(const gr_complex* samples);
         void correct_cfo(gr_complex* samples, int num_samples);
         int find_preamble_start(gr_complex* samples);
@@ -99,8 +103,9 @@ namespace gr {
         void dewhiten(const uint8_t* prng);
         void hamming_decode(uint8_t* out_data);
         void nibble_reverse(uint8_t* out_data, int len);
-        double stddev(float *values, int len, float mean);
-        inline void phase(gr_complex* in_samples, float* out_phase, int window);
+        float stddev(const float *values, int len, float mean);
+        inline void instantaneous_phase(const gr_complex* in_samples, float* out_iphase, uint32_t window);
+        void instantaneous_frequency(const gr_complex* in_samples, float* out_ifreq, uint32_t window);
 
 
      public:
