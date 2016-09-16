@@ -47,7 +47,19 @@ namespace gr {
                 return (((count+1) % 2) == 0);
         }
 
-        
+        void fec_extract_data_only(uint8_t* in_data, uint32_t len, uint8_t* indices, uint8_t n, uint8_t* out_data) {
+            for(uint32_t i = 0; i < len; i++) {
+                uint8_t d = 0;
+                for(uint32_t j = 0; j < n; j++) {
+                    uint8_t power = pow(2, indices[j]);
+                    if((in_data[i] & power) > 0) {
+                        d += power;
+                    }
+                }
+                out_data[i] = d;
+            }
+        }
+
   }
 }
 

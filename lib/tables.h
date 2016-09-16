@@ -4,7 +4,7 @@
 namespace gr {
   namespace lora {
       const uint8_t prng_header[] = {
-          0x22, 0x11, 0x0, 0x0, 0x0
+          0x22, 0x11, 0x00, 0x00, 0x00
       };
 
       const uint8_t prng_payload[] = {

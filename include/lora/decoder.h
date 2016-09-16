@@ -703,9 +703,9 @@ namespace gr {
        * class. lora::decoder::make is the public interface for
        * creating new instances.
        */
-      static sptr make(int finetune);
+      static sptr make(int sf);
 
-      virtual void set_finetune(int32_t finetune) = 0;
+      virtual void set_sf(uint8_t sf) = 0;
     };
 
   } // namespace lora

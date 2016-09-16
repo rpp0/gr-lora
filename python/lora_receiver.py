@@ -30,15 +30,15 @@ class lora_receiver(gr.hier_block2):
     """
     docstring for block lora_receiver
     """
-    def __init__(self, in_samp_rate, freq, offset, finetune, realtime):
+    def __init__(self, in_samp_rate, freq, offset, sf, realtime):
         gr.hier_block2.__init__(self,
             "lora_receiver",  # Min, Max, gr.sizeof_<type>
             gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
             gr.io_signature(0, 0, 0)) # Output signature
 
         # Parameters
-        self.finetune = finetune
         self.offset = offset
+        self.sf = sf
         self.in_samp_rate = in_samp_rate
         self.realtime = realtime
         bw = 125000
@@ -47,7 +47,7 @@ class lora_receiver(gr.hier_block2):
         null1 = null_sink(gr.sizeof_float)
         null2 = null_sink(gr.sizeof_float)
         if realtime:
-            self.c_decoder = lora.decoder(finetune)
+            self.c_decoder = lora.decoder(sf)
             out_samp_rate = 1000000
         else:
             decoder = lora_decoder()
@@ -73,13 +73,13 @@ class lora_receiver(gr.hier_block2):
             self.connect((decoder, 0), (null1, 0))
             self.connect((decoder, 1), (null2, 0))
 
-    def get_finetune(self):
-        return self.finetune
+    def set_sf(self):
+        return self.sf
 
-    def set_finetune(self, finetune):
-        self.finetune = finetune
+    def set_sf(self, sf):
+        self.sf = sf
         if self.realtime:
-            self.c_decoder.set_finetune(self.finetune)
+            self.c_decoder.set_sf(self.sf)
 
     def get_offset(self):
         return self.offset

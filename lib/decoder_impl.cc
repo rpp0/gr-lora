@@ -30,8 +30,6 @@
 #include "tables.h"
 #include "utilities.h"
 
-#define CORRELATION_SEARCH_RANGE 1024
-#define DELAY_AFTER_SYNC 262
 //#define NO_TMP_WRITES 1
 //#define CFO_CORRECT 1
 
@@ -39,34 +37,35 @@ namespace gr {
   namespace lora {
 
     decoder::sptr
-    decoder::make(int finetune) {
+    decoder::make(int sf) {
       return gnuradio::get_initial_sptr
-        (new decoder_impl(finetune));
+        (new decoder_impl(sf));
     }
 
     /*
      * The private constructor
      */
-    decoder_impl::decoder_impl(int finetune) : gr::sync_block("decoder",
+    decoder_impl::decoder_impl(int sf) : gr::sync_block("decoder",
             gr::io_signature::make(1, -1, sizeof(gr_complex)),
             gr::io_signature::make(0, 2, sizeof(float))) {
         d_state = DETECT;
 
         d_debug_samples.open("/tmp/grlora_debug", std::ios::out | std::ios::binary);
         d_debug.open("/tmp/grlora_debug_txt", std::ios::out);
-        d_sf = 7;  // Only affects PHY send
+        d_sf = sf;  // Only affects PHY send
         d_bw = 125000;
         d_cr = 4;
-        d_bits_per_second = (double)d_sf * 1.0f / (pow(2.0f, d_sf) / d_bw);
+        d_bits_per_second = (double)d_sf * (4.0f/4.0f+d_cr) / (pow(2.0f, d_sf) / d_bw);
         d_samples_per_second = 1000000;
         d_symbols_per_second = (double)d_bw / pow(2.0f, d_sf);
         d_bits_per_symbol = (uint32_t)(d_bits_per_second / d_symbols_per_second);
         d_samples_per_symbol = (uint32_t)(d_samples_per_second / d_symbols_per_second);
+        d_delay_after_sync = d_samples_per_symbol / 4; //262;
+        d_delay_after_sync += (uint32_t)d_delay_after_sync * 2.4f / 100.0f;
+        d_corr_decim_factor = 8; // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
         d_number_of_bins = (uint32_t)pow(2, d_sf);
         d_number_of_bins_hdr = d_number_of_bins / 4;
-        d_compression = 8;
         d_payload_symbols = 0;
-        d_finetune = finetune;
         d_cfo_estimation = 0.0f;
         d_cfo_step = 0;
         d_dt = 1.0f / d_samples_per_second;
@@ -287,18 +286,18 @@ namespace gr {
         float samples_ifreq[window];
 
         instantaneous_frequency(samples, samples_ifreq, window);
-        return sliding_norm_cross_correlate(samples_ifreq, &d_upchirp_ifreq[0], window, 128, index);
+        return sliding_norm_cross_correlate(samples_ifreq, &d_upchirp_ifreq[0], window, d_samples_per_symbol / d_corr_decim_factor, index);
     }
 
     unsigned int decoder_impl::get_shift_fft(gr_complex* samples) {
         float fft_mag[d_number_of_bins];
         gr_complex mult_hf[d_samples_per_symbol];
 
-        /*#ifdef CFO_CORRECT
+        #ifdef CFO_CORRECT
             determine_cfo(&samples[0]);
-            std::cout << "CFO: " << d_cfo_estimation << std::endl;
+            d_debug << "CFO: " << d_cfo_estimation << std::endl;
             correct_cfo(&samples[0], d_samples_per_symbol);
-        #endif*/
+        #endif
 
         samples_to_file("/tmp/data", &samples[0], d_samples_per_symbol, sizeof(gr_complex));
 
@@ -386,17 +385,15 @@ namespace gr {
 
         // Decode (actually gray encode) the bin to get the symbol value
         unsigned int word = gray_encode(bin_idx);
-        d_debug << bin_idx << " " << to_bin(word, is_header ? 5 : 7) << " ! " << bin_idx_test << std::endl;
+        d_debug << to_bin(word, is_header ? d_sf-2 : d_sf) << " " << bin_idx  << std::endl;
         d_words.push_back(word);
 
         // Look for 4+cr symbols and stop
         if(d_words.size() == (4 + d_cr)) {
             // Deinterleave
             if(is_header) {
-                //print_vector(d_words, "M", d_sf - 2);
                 deinterleave(d_sf - 2);
             } else {
-                //print_vector(d_words, "M", d_sf);
                 deinterleave(d_sf);
             }
 
@@ -473,6 +470,8 @@ namespace gr {
 
         if(!is_header)
             std::cout << result.str() << std::endl;
+        else
+        std::cout << result.str();
 
         return 0;
     }
@@ -513,8 +512,21 @@ namespace gr {
     }
 
     void decoder_impl::hamming_decode(uint8_t* out_data) {
-        unsigned int n = ceil(d_words_dewhitened.size() * 4.0 / 8.0);
+        unsigned int n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_cr));
         fec_scheme fs = LIQUID_FEC_HAMMING84;
+
+        if(d_cr == 4)
+            fs = LIQUID_FEC_HAMMING84;
+        else if(d_cr == 3)
+            fs = LIQUID_FEC_HAMMING74;
+        else if(d_cr == 2)
+            fs = LIQUID_FEC_HAMMING128;
+        else if(d_cr == 1) { // TODO: Temporary, since Liquid doesn't support 4/5 Hamming so we need to implement it ourselves / extend Liquid.
+            uint8_t indices[4] = {1, 2, 3, 5};
+            fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), indices, 4, out_data);
+            d_words_dewhitened.clear();
+            return;
+        }
 
         unsigned int k = fec_get_enc_msg_length(fs, n);
         fec hamming = fec_create(fs, NULL);
@@ -548,10 +560,10 @@ namespace gr {
         }
 
         float sum = 0.0f;
-        for(int i = 0; i < d_samples_per_symbol; i++) {
+        for(int i = 0; i < d_samples_per_symbol-1; i++) {
             sum += instantaneous_freq[i];
         }
-        sum /= d_samples_per_symbol;
+        sum /= d_samples_per_symbol-1;
 
         d_cfo_estimation = sum;
 
@@ -575,31 +587,62 @@ namespace gr {
     }
 
     int decoder_impl::find_preamble_start_fast(gr_complex* samples, uint32_t len) {
-        int decimation = d_decim_factor; // TODO: Replace with d_decimation
+        int decimation = d_corr_decim_factor;
         int decim_size = d_samples_per_symbol / decimation;
-        float decim[decim_size];
-        float gradient[decim_size];
+        float decim[decimation];
+        float gradient[decimation];
+        uint32_t rising = 0;
+        uint32_t rising_required = 2;
+
+        gradient[0] = 0.0f;
 
 
-        for(int i = 0; i < decim_size; i++) {
+        for(int i = 0; i < decimation; i++) {
             float s[2] = {
-                arg(samples[i*decimation]),
-                arg(samples[(i+1)*decimation])
+                arg(samples[i*decim_size]),
+                arg(samples[(i+1)*decim_size])
             };
             liquid_unwrap_phase(s, 2);
 
             decim[i] = (s[1] - s[0]) / (2.0f * M_PI) * d_samples_per_second;
         }
 
-        for(int i = 1; i < decim_size; i++) {
+        for(int i = 1; i < decimation; i++) {
             gradient[i] = decim[i] - decim[i-1];
-            if(gradient[i] <= -20000) {
-                return i*decimation;
+            if(gradient[i] > gradient[i-1])
+                rising++;
+            if(rising >= rising_required && gradient[i] <= -20000) { // TODO: Make this a bit more logical, e.g. d_bw / decimation * 2 -> 2 steps down
+                return i*decim_size;
             }
             //d_debug << "G:" << gradient[i] << std::endl;
         }
 
         return -1;
+    }
+
+    uint8_t decoder_impl::lookup_cr(uint8_t bytevalue) {
+        switch (bytevalue & 0x0f) {
+            case 0x0a: {
+                return 4;
+                break;
+            }
+            case 0x0b: {
+                return 3;
+                break;
+            }
+            case 0x0c: {
+                return 2;
+                break;
+            }
+            case 0x08: {
+                return 1;
+                break;
+            }
+            default: {
+                return 4;
+                break;
+            }
+        }
     }
 
     int decoder_impl::work(int noutput_items,
@@ -635,9 +678,10 @@ namespace gr {
                 if(c > 0.8f) {
                     d_debug << "SYNC: " << c << std::endl;
                     // Debug stuff
-                    samples_to_file("/tmp/sync", &input[0], CORRELATION_SEARCH_RANGE, sizeof(gr_complex));
+                    samples_to_file("/tmp/sync", &input[0], d_samples_per_symbol, sizeof(gr_complex));
 
                     d_state = PAUSE;
+                    d_cr = 4;
                     consume_each(d_samples_per_symbol);
                 } else {
                     d_corr_fails++;
@@ -651,8 +695,8 @@ namespace gr {
             case PAUSE: {
                 d_state = DECODE_HEADER;
 
-                samples_debug(input, d_samples_per_symbol + DELAY_AFTER_SYNC);
-                consume_each(d_samples_per_symbol + DELAY_AFTER_SYNC);
+                samples_debug(input, d_samples_per_symbol + d_delay_after_sync);
+                consume_each(d_samples_per_symbol + d_delay_after_sync);
                 break;
             }
             case DECODE_HEADER: {
@@ -663,7 +707,7 @@ namespace gr {
 
                     nibble_reverse(decoded, 1); // TODO: Why?
                     d_payload_length = decoded[0];
-                    d_cr = 4; // TODO: Get from header instead of hardcode
+                    d_cr = lookup_cr(decoded[2]);
 
                     int symbols_per_block = d_cr + 4;
                     int bits_needed = ((d_payload_length * 8) + 16) * (symbols_per_block / 4);
@@ -710,8 +754,9 @@ namespace gr {
         return 0;
     }
 
-    void decoder_impl::set_finetune(int32_t finetune) {
-        d_finetune = finetune;
+    void decoder_impl::set_sf(uint8_t sf) {
+        if(sf >= 7 && sf <= 13)
+            d_sf = sf;
     }
 
   } /* namespace lora */

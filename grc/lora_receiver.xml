@@ -4,13 +4,13 @@
   <key>lora_lora_receiver</key>
   <category>lora</category>
   <import>import lora</import>
-  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $finetune, $realtime)</make>
+  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $sf, $realtime)</make>
 
-  <callback>set_finetune($finetune)</callback>
+  <callback>set_sf($sf)</callback>
   <callback>set_offset($offset)</callback>
   <param>
-    <name>Finetune</name>
-    <key>finetune</key>
+    <name>Spreading factor</name>
+    <key>sf</key>
     <type>int</type>
   </param>
 

@@ -18,6 +18,5 @@
 # Boston, MA 02110-1301, USA.
 
 install(FILES
-    lora_decoder.xml
     lora_receiver.xml DESTINATION share/gnuradio/grc/blocks
 )

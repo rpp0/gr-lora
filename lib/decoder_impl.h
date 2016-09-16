@@ -51,11 +51,11 @@ namespace gr {
         std::vector<float> d_upchirp_ifreq;
         std::vector<gr_complex> d_fft;
         std::vector<gr_complex> d_mult;
-        int32_t d_finetune;
         uint8_t d_sf;
         uint32_t d_bw;
         uint8_t d_cr;
         double d_bits_per_second;
+        uint32_t d_delay_after_sync;
         uint32_t d_samples_per_second;
         double d_symbols_per_second;
         uint32_t d_bits_per_symbol;
@@ -75,6 +75,7 @@ namespace gr {
         std::ofstream d_debug;
         fftplan d_q;
         float d_decim_h[DECIMATOR_FILTER_SIZE];
+        uint32_t d_corr_decim_factor;
         int d_decim_factor;
         firdecim_crcf d_decim;
         float d_cfo_estimation;
@@ -106,6 +107,7 @@ namespace gr {
         float stddev(const float *values, int len, float mean);
         inline void instantaneous_phase(const gr_complex* in_samples, float* out_iphase, uint32_t window);
         void instantaneous_frequency(const gr_complex* in_samples, float* out_ifreq, uint32_t window);
+        uint8_t lookup_cr(uint8_t bytevalue);
 
 
      public:
@@ -118,7 +120,7 @@ namespace gr {
             gr_vector_void_star &output_items);
 
         // GRC interfaces
-        virtual void set_finetune(int32_t finetune);
+        virtual void set_sf(uint8_t sf);
     };
 
   } // namespace lora
