@@ -61,13 +61,12 @@ namespace gr {
         d_bits_per_symbol = (uint32_t)(d_bits_per_second / d_symbols_per_second);
         d_samples_per_symbol = (uint32_t)(d_samples_per_second / d_symbols_per_second);
         d_delay_after_sync = d_samples_per_symbol / 4; //262;
-        d_delay_after_sync += (uint32_t)d_delay_after_sync * 2.4f / 100.0f;
+        //d_delay_after_sync += (uint32_t)d_delay_after_sync * 2.4f / 100.0f;
         d_corr_decim_factor = 8; // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
         d_number_of_bins = (uint32_t)pow(2, d_sf);
         d_number_of_bins_hdr = d_number_of_bins / 4;
         d_payload_symbols = 0;
         d_cfo_estimation = 0.0f;
-        d_cfo_step = 0;
         d_dt = 1.0f / d_samples_per_second;
 
         // Some preparations
@@ -372,8 +371,8 @@ namespace gr {
     }
 
     bool decoder_impl::demodulate(gr_complex* samples, bool is_header) {
-        //unsigned int bin_idx = max_frequency_gradient_idx(samples);
-        unsigned int bin_idx = get_shift_fft(samples);
+        unsigned int bin_idx = max_frequency_gradient_idx(samples);
+        //unsigned int bin_idx = get_shift_fft(samples);
         //unsigned int bin_idx_test = get_shift_fft(samples);
         unsigned int bin_idx_test = 0;
 
@@ -515,13 +514,20 @@ namespace gr {
         unsigned int n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_cr));
         fec_scheme fs = LIQUID_FEC_HAMMING84;
 
-        if(d_cr == 4)
+        if(d_cr == 4) {
             fs = LIQUID_FEC_HAMMING84;
-        else if(d_cr == 3)
+            /*uint32_t j = 0;
+            for(uint32_t i = 1; i < d_words_dewhitened.size(); i+=2) { // TODO: Fix me when uneven number of symbols
+                out_data[j] = (hamming_decode_soft(d_words_dewhitened[i-1]) << 4) | hamming_decode_soft(d_words_dewhitened[i]);
+                j++;
+            }
+            d_words_dewhitened.clear();
+            return;*/
+        } else if(d_cr == 3) {
             fs = LIQUID_FEC_HAMMING74;
-        else if(d_cr == 2)
+        } else if(d_cr == 2) {
             fs = LIQUID_FEC_HAMMING128;
-        else if(d_cr == 1) { // TODO: Temporary, since Liquid doesn't support 4/5 Hamming so we need to implement it ourselves / extend Liquid.
+        } else if(d_cr == 1) { // TODO: Temporary, since Liquid doesn't support 4/5 Hamming so we need to implement it ourselves / extend Liquid.
             uint8_t indices[4] = {1, 2, 3, 5};
             fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), indices, 4, out_data);
             d_words_dewhitened.clear();
@@ -572,8 +578,7 @@ namespace gr {
 
     void decoder_impl::correct_cfo(gr_complex* samples, int num_samples) {
         for(uint32_t i = 0; i < num_samples; i++) {
-            samples[i] = samples[i] * gr_expj(2.0f * M_PI * -d_cfo_estimation * (d_dt * d_cfo_step));
-            d_cfo_step += 1;
+            samples[i] = samples[i] * gr_expj(2.0f * M_PI * -d_cfo_estimation * (d_dt * i));
         }
     }
 
