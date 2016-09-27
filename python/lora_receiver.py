@@ -66,6 +66,7 @@ class lora_receiver(gr.hier_block2):
         self.connect((resampler, 0), (channelizer, 0))
         if realtime:
             self.connect((channelizer, 0), (self.c_decoder, 0))
+            self.connect((resampler, 0), (self.c_decoder, 1))
         else:
             self.connect((channelizer, 0), (qdemod, 0))
             self.connect((channelizer, 0), (decoder, 1))

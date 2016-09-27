@@ -432,8 +432,8 @@ namespace gr {
             words_deinterleaved.push_back(d);
         }
 
-        //print_vector(words_deinterleaved, "D", sizeof(uint8_t)*8);
         std::reverse(words_deinterleaved.begin(),words_deinterleaved.end());
+        print_vector(words_deinterleaved, "D", sizeof(uint8_t)*8);
 
         // Add to demodulated data
         for(int i = 0; i < words_deinterleaved.size(); i++) {
@@ -451,7 +451,14 @@ namespace gr {
         if(is_header) {
             prng = prng_header;
         } else {
-            prng = prng_payload;
+            if(d_cr == 4)
+                prng = prng_payload;
+            else if(d_cr == 3)
+                prng = prng_payload_cr7;
+            else if(d_cr == 1)
+                prng = prng_payload_cr5;
+            else
+                prng = prng_payload;
         }
 
         deshuffle(shuffle_pattern);
@@ -470,7 +477,7 @@ namespace gr {
         if(!is_header)
             std::cout << result.str() << std::endl;
         else
-        std::cout << result.str();
+            std::cout << result.str();
 
         return 0;
     }
@@ -491,6 +498,7 @@ namespace gr {
         }
 
         //print_vector(d_words_deshuffled, "S", sizeof(uint8_t)*8);
+        print_vector_raw(d_words_deshuffled, sizeof(uint8_t)*8);
 
         // We're done with these words
         d_demodulated.clear();
@@ -505,7 +513,7 @@ namespace gr {
             d_words_dewhitened.push_back(xor_b);
         }
 
-        //print_vector(d_words_dewhitened, "W", sizeof(uint8_t)*8);
+        print_vector(d_words_dewhitened, "W", sizeof(uint8_t)*8);
 
         d_words_deshuffled.clear();
     }
@@ -524,7 +532,7 @@ namespace gr {
             d_words_dewhitened.clear();
             return;*/
         } else if(d_cr == 3) {
-            fs = LIQUID_FEC_HAMMING74;
+            fs = LIQUID_FEC_HAMMING84;
         } else if(d_cr == 2) {
             fs = LIQUID_FEC_HAMMING128;
         } else if(d_cr == 1) { // TODO: Temporary, since Liquid doesn't support 4/5 Hamming so we need to implement it ourselves / extend Liquid.
@@ -631,15 +639,15 @@ namespace gr {
                 return 4;
                 break;
             }
-            case 0x0b: {
+            case 0x07: {
                 return 3;
                 break;
             }
-            case 0x0c: {
+            case 0x05: {
                 return 2;
                 break;
             }
-            case 0x08: {
+            case 0x03: {
                 return 1;
                 break;
             }
@@ -712,7 +720,7 @@ namespace gr {
 
                     nibble_reverse(decoded, 1); // TODO: Why?
                     d_payload_length = decoded[0];
-                    d_cr = lookup_cr(decoded[2]);
+                    d_cr = lookup_cr(decoded[1]);
 
                     int symbols_per_block = d_cr + 4;
                     int bits_needed = ((d_payload_length * 8) + 16) * (symbols_per_block / 4);
