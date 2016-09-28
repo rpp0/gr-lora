@@ -1,7 +1,7 @@
 gr-lora
 =======
 
-The gr-lora project aims to provide a collection of GNURadio blocks for sending and receiving LoRa modulated radio messages using Software Defined Radio (SDR). More information about LoRa itself can be found on [the website of the LoRa Alliance](https://www.lora-alliance.org/).
+The gr-lora project aims to provide a collection of GNURadio blocks for receiving LoRa modulated radio messages using Software Defined Radio (SDR). More information about LoRa itself can be found on [the website of the LoRa Alliance](https://www.lora-alliance.org/).
 
 ![alt text](https://github.com/rpp0/gr-lora/blob/master/examples/screenshot.png "gr-lora example")
 
