@@ -14,9 +14,9 @@ Though the core functionality of LoRa is described in various patents and blog p
 - Deinterleaving
 - Dewhitening
 - Decoding + error correction of the LoRa PHDR length field
-- Decoding + error correction of frame payloads with a coding rate of 4/8
+- Decoding + error correction of frame payloads (all coding rates)
 
-Decoding of other coding rates and spreading factors is expected to be implemented in the near future. See the "Issues" page for more information.
+Decoding of other spreading factors is expected to be implemented in the near future. See the "Issues" page for more information.
 
 
 Installation
@@ -50,9 +50,9 @@ Bins per symbol: 128
 Header bins per symbol: 32
 Samples per symbol: 1024
 Using Volk machine: avx2_64_mmx_orc
-00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 b8 73 af 81 69   (0 errors)
-88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 fd e5 af 81 69   (3 errors)
-12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 a3 69 af 81 69   (0 errors)
+00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 b8 73 af 81 69
+88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 fd e5 af 81 69
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 a3 69 af 81 69
 ...
 ```
 
@@ -72,6 +72,7 @@ See the LICENSE file for the license of this project. If you are working on a pr
 Changelog
 ---------
 
+- Version 0.3 : Support for all coding rates
 - Version 0.21: Fixed some issues reported by reletreby
 - Version 0.2 : C++ realtime decoder, manual finetuning for correcting frequency offsets of the transmitter.
 - Version 0.1 : Python prototype file based decoder, SF7, CR4/8
