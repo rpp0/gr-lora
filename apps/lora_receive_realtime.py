@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive Realtime
-# Generated: Thu Aug 11 11:27:37 2016
+# Generated: Wed Sep 28 10:00:46 2016
 ##################################################
 
 if __name__ == '__main__':
@@ -54,6 +54,34 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         ##################################################
         # Blocks
         ##################################################
+        self.wxgui_fftsink2_1 = fftsink2.fft_sink_c(
+        	self.GetWin(),
+        	baseband_freq=capture_freq,
+        	y_per_div=10,
+        	y_divs=10,
+        	ref_level=0,
+        	ref_scale=2.0,
+        	sample_rate=samp_rate,
+        	fft_size=1024,
+        	fft_rate=15,
+        	average=False,
+        	avg_alpha=None,
+        	title='FFT Plot',
+        	peak_hold=False,
+        )
+        self.Add(self.wxgui_fftsink2_1.win)
+        self.uhd_usrp_source_0 = uhd.usrp_source(
+        	",".join(("", "")),
+        	uhd.stream_args(
+        		cpu_format="fc32",
+        		channels=range(1),
+        	),
+        )
+        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
+        self.uhd_usrp_source_0.set_center_freq(capture_freq, 0)
+        self.uhd_usrp_source_0.set_gain(15, 0)
+        self.uhd_usrp_source_0.set_antenna('RX2', 0)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, 7, True)
         _finetune_sizer = wx.BoxSizer(wx.VERTICAL)
         self._finetune_text_box = forms.text_box(
         	parent=self.GetWin(),
@@ -77,34 +105,6 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         	proportion=1,
         )
         self.Add(_finetune_sizer)
-        self.wxgui_fftsink2_1 = fftsink2.fft_sink_c(
-        	self.GetWin(),
-        	baseband_freq=capture_freq,
-        	y_per_div=10,
-        	y_divs=10,
-        	ref_level=0,
-        	ref_scale=2.0,
-        	sample_rate=samp_rate,
-        	fft_size=1024,
-        	fft_rate=15,
-        	average=False,
-        	avg_alpha=None,
-        	title="FFT Plot",
-        	peak_hold=False,
-        )
-        self.Add(self.wxgui_fftsink2_1.win)
-        self.uhd_usrp_source_0 = uhd.usrp_source(
-        	",".join(("", "")),
-        	uhd.stream_args(
-        		cpu_format="fc32",
-        		channels=range(1),
-        	),
-        )
-        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
-        self.uhd_usrp_source_0.set_center_freq(capture_freq, 0)
-        self.uhd_usrp_source_0.set_gain(15, 0)
-        self.uhd_usrp_source_0.set_antenna("RX2", 0)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, finetune, True)
 
         ##################################################
         # Connections
@@ -165,6 +165,7 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
 
     def set_offset(self, offset):
         self.offset = offset
+        self.lora_lora_receiver_0.set_offset(self.offset)
 
     def get_firdes_tap(self):
         return self.firdes_tap
@@ -179,7 +180,6 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         self.finetune = finetune
         self._finetune_slider.set_value(self.finetune)
         self._finetune_text_box.set_value(self.finetune)
-        self.lora_lora_receiver_0.set_finetune(self.finetune)
 
     def get_bitrate(self):
         return self.bitrate

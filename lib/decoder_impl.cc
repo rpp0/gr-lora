@@ -433,7 +433,7 @@ namespace gr {
         }
 
         std::reverse(words_deinterleaved.begin(),words_deinterleaved.end());
-        print_vector(words_deinterleaved, "D", sizeof(uint8_t)*8);
+        //print_vector(words_deinterleaved, "D", sizeof(uint8_t)*8);
 
         // Add to demodulated data
         for(int i = 0; i < words_deinterleaved.size(); i++) {
@@ -452,13 +452,15 @@ namespace gr {
             prng = prng_header;
         } else {
             if(d_cr == 4)
-                prng = prng_payload;
+                prng = prng_payload_cr8;
             else if(d_cr == 3)
                 prng = prng_payload_cr7;
+            else if(d_cr == 2)
+                prng = prng_payload_cr6;
             else if(d_cr == 1)
                 prng = prng_payload_cr5;
             else
-                prng = prng_payload;
+                prng = prng_payload_cr8;
         }
 
         deshuffle(shuffle_pattern);
@@ -498,7 +500,7 @@ namespace gr {
         }
 
         //print_vector(d_words_deshuffled, "S", sizeof(uint8_t)*8);
-        print_vector_raw(d_words_deshuffled, sizeof(uint8_t)*8);
+        //print_vector_raw(d_words_deshuffled, sizeof(uint8_t)*8);
 
         // We're done with these words
         d_demodulated.clear();
@@ -513,31 +515,26 @@ namespace gr {
             d_words_dewhitened.push_back(xor_b);
         }
 
-        print_vector(d_words_dewhitened, "W", sizeof(uint8_t)*8);
+        //print_vector(d_words_dewhitened, "W", sizeof(uint8_t)*8);
 
         d_words_deshuffled.clear();
     }
 
     void decoder_impl::hamming_decode(uint8_t* out_data) {
+        uint8_t data_indices[4] = {1, 2, 3, 5};
         unsigned int n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_cr));
         fec_scheme fs = LIQUID_FEC_HAMMING84;
 
         if(d_cr == 4) {
             fs = LIQUID_FEC_HAMMING84;
-            /*uint32_t j = 0;
-            for(uint32_t i = 1; i < d_words_dewhitened.size(); i+=2) { // TODO: Fix me when uneven number of symbols
-                out_data[j] = (hamming_decode_soft(d_words_dewhitened[i-1]) << 4) | hamming_decode_soft(d_words_dewhitened[i]);
-                j++;
-            }
-            d_words_dewhitened.clear();
-            return;*/
         } else if(d_cr == 3) {
             fs = LIQUID_FEC_HAMMING84;
         } else if(d_cr == 2) {
-            fs = LIQUID_FEC_HAMMING128;
-        } else if(d_cr == 1) { // TODO: Temporary, since Liquid doesn't support 4/5 Hamming so we need to implement it ourselves / extend Liquid.
-            uint8_t indices[4] = {1, 2, 3, 5};
-            fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), indices, 4, out_data);
+            fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), data_indices, 4, out_data);
+            d_words_dewhitened.clear();
+            return;
+        } else if(d_cr == 1) { // TODO: Report parity error to the user
+            fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), data_indices, 4, out_data);
             d_words_dewhitened.clear();
             return;
         }
@@ -635,19 +632,19 @@ namespace gr {
 
     uint8_t decoder_impl::lookup_cr(uint8_t bytevalue) {
         switch (bytevalue & 0x0f) {
-            case 0x0a: {
+            case 0x01: {
                 return 4;
                 break;
             }
-            case 0x07: {
+            case 0x0f: {
                 return 3;
                 break;
             }
-            case 0x05: {
+            case 0x0d: {
                 return 2;
                 break;
             }
-            case 0x03: {
+            case 0x0b: {
                 return 1;
                 break;
             }
@@ -688,18 +685,18 @@ namespace gr {
                 double c = detect_downchirp(&input[0], d_samples_per_symbol);
                 d_debug << "Cd: " << c << std::endl;
 
-                if(c > 0.8f) {
+                if(c > 0.96f) {
                     d_debug << "SYNC: " << c << std::endl;
                     // Debug stuff
                     samples_to_file("/tmp/sync", &input[0], d_samples_per_symbol, sizeof(gr_complex));
 
                     d_state = PAUSE;
-                    d_cr = 4;
                     consume_each(d_samples_per_symbol);
                 } else {
                     d_corr_fails++;
                     if(d_corr_fails > 32) {
                         d_state = DETECT;
+                        d_debug << "Lost sync" << std::endl;
                     }
                     consume_each(d_samples_per_symbol);
                 }
@@ -713,18 +710,19 @@ namespace gr {
                 break;
             }
             case DECODE_HEADER: {
+                d_cr = 4;
                 if(demodulate(input, true)) {
                     uint8_t decoded[3];
                     d_payload_length = 3; // TODO: A bit messy. I think it's better to make an internal decoded std::vector
                     decode(decoded, true);
 
-                    nibble_reverse(decoded, 1); // TODO: Why?
+                    nibble_reverse(decoded, 1); // TODO: Why? Is the radio chip CPU 16-bit?
                     d_payload_length = decoded[0];
                     d_cr = lookup_cr(decoded[1]);
 
                     int symbols_per_block = d_cr + 4;
-                    int bits_needed = ((d_payload_length * 8) + 16) * (symbols_per_block / 4);
-                    float symbols_needed = float(bits_needed) / float(d_sf);
+                    int bits_needed = ((d_payload_length * 8) + 16);
+                    float symbols_needed = float(bits_needed) * (symbols_per_block / 4.0f) / float(d_sf);
                     int blocks_needed = ceil(symbols_needed / symbols_per_block);
                     d_payload_symbols = blocks_needed * symbols_per_block;
 
@@ -743,6 +741,7 @@ namespace gr {
 
                     if(d_payload_symbols <= 0) {
                         uint8_t decoded[d_payload_length];
+                        memset(decoded, 0x00, d_payload_length);
                         decode(decoded, false);
 
                         d_state = DETECT;

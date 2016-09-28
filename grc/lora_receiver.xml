@@ -4,7 +4,7 @@
   <key>lora_lora_receiver</key>
   <category>lora</category>
   <import>import lora</import>
-  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $sf, $realtime)</make>
+  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $sf, True)</make>
 
   <callback>set_sf($sf)</callback>
   <callback>set_offset($offset)</callback>
@@ -30,12 +30,6 @@
     <name>Offset</name>
     <key>offset</key>
     <type>float</type>
-  </param>
-
-  <param>
-    <name>Realtime</name>
-    <key>realtime</key>
-    <type>bool</type>
   </param>
 
   <sink>

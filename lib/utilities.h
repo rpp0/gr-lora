@@ -55,27 +55,33 @@ namespace gr {
                 return (((count+1) % 2) == 0);
         }
 
-        // TODO: Crappy implementation! Fix
-        void fec_extract_data_only(uint8_t* in_data, uint32_t len, uint8_t* indices, uint8_t n, uint8_t* out_data) {
-            uint8_t index = 0;
-            for(uint32_t i = 1; i < len; i+=2) {
-                uint8_t d1 = 0;
-                for(uint32_t j = 0; j < n; j++) {
-                    uint8_t power = pow(2, indices[j]);
-                    if((in_data[i-1] & power) > 0) {
-                        d1 += pow(2, j);
-                    }
+        uint32_t select_bits(uint32_t data, uint8_t* indices, uint8_t n) {
+            uint32_t result = 0;
+
+            for(uint32_t j = 0; j < n; j++) {
+                uint32_t power = pow(2, indices[j]);
+                if((data & power) > 0) {
+                    result += pow(2, j);
                 }
+            }
+
+            return result;
+        }
+
+        void fec_extract_data_only(uint8_t* in_data, uint32_t len, uint8_t* indices, uint8_t n, uint8_t* out_data) {
+            uint8_t out_index = 0;
+
+            for(uint32_t i = 0; i < len; i+=2) {
+                uint8_t d1 = 0;
+                d1 = select_bits(in_data[i], indices, n) & 0xff;
+
 
                 uint8_t d2 = 0;
-                for(uint32_t j = 0; j < n; j++) {
-                    uint8_t power = pow(2, indices[j]);
-                    if((in_data[i] & power) > 0) {
-                        d2 += pow(2, j);
-                    }
-                }
-                out_data[index] = (d1 << 4) | d1;
-                index++;
+                if(i+1 < len)
+                    d2 = select_bits(in_data[i+1], indices, n) & 0xff;
+
+                out_data[out_index] = (d1 << 4) | d2;
+                out_index++;
             }
         }
 

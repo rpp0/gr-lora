@@ -402,10 +402,6 @@
       <value>1</value>
     </param>
     <param>
-      <key>finetune</key>
-      <value>finetune</value>
-    </param>
-    <param>
       <key>freq</key>
       <value>capture_freq</value>
     </param>
@@ -432,6 +428,10 @@
     <param>
       <key>in_samp_rate</key>
       <value>samp_rate</value>
+    </param>
+    <param>
+      <key>sf</key>
+      <value>7</value>
     </param>
   </block>
   <block>
