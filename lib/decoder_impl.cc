@@ -233,7 +233,7 @@ namespace gr {
         for (int i = 0; i < window-1; i++) {
             result += (samples_1[i] - average_1) * (samples_2[i] - average_2) / (sd_1 * sd_2);
         }
-        result = result / window;
+        result = result / (window-1);
 
         return result;
     }
@@ -473,9 +473,8 @@ namespace gr {
         dewhiten(prng);
         hamming_decode(out_data);
 
-        // Nibbles are reversed for uneven spreading factors TODO why is this?
-        if(d_sf % 2 == 1)
-            nibble_reverse(out_data, d_payload_length);
+        // Nibbles are reversed TODO why is this?
+        nibble_reverse(out_data, d_payload_length);
 
         // Print result
         std::stringstream result;
@@ -493,6 +492,9 @@ namespace gr {
 
     void decoder_impl::deshuffle(const uint8_t* shuffle_pattern, bool is_header) {
         uint32_t to_decode = d_demodulated.size();
+
+        if(is_header)
+            to_decode = 5;
 
         for(uint32_t i = 0; i < to_decode; i++) {
             uint8_t original = d_demodulated[i];
@@ -513,7 +515,10 @@ namespace gr {
         d_debug << std::endl;
 
         // We're done with these words
-        d_demodulated.clear();
+        if(is_header)
+            d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin()+5);
+        else
+            d_demodulated.clear();
     }
 
     void decoder_impl::dewhiten(const uint8_t* prng) {
@@ -732,8 +737,7 @@ namespace gr {
                     d_payload_length = 3; // TODO: A bit messy. I think it's better to make an internal decoded std::vector
                     decode(decoded, true);
 
-                    if(d_sf % 2 == 1) // TODO: Why?
-                        nibble_reverse(decoded, 1);
+                    nibble_reverse(decoded, 1); // TODO: Why? Endianess?
                     d_payload_length = decoded[0];
                     d_cr = lookup_cr(decoded[1]);
 
