@@ -8,15 +8,15 @@ The gr-lora project aims to provide a collection of GNURadio blocks for receivin
 Features
 --------
 
-Though the core functionality of LoRa is described in various patents and blog posts (for a good resource, see [this RevSpace page](https://revspace.nl/DecodingLora)), most of the details are missing. However, the following features are fully supported by gr-lora:
+Though the core functionality of LoRa is described in various patents and blog posts (for a good resource, see [this RevSpace page](https://revspace.nl/DecodingLora)), most of the details are missing. The following features are fully supported by gr-lora:
 
-- Synchronizing to LoRa frames transmitted with a spreading factor of 7
+- Synchronizing to LoRa frames transmitted with any spreading factor
 - Deinterleaving
 - Dewhitening
-- Decoding + error correction of the LoRa PHDR length field
-- Decoding + error correction of frame payloads (all coding rates)
+- Decoding + Hamming error correction of the LoRa PHDR length field
+- Decoding + Hamming error correction of frame payloads (all coding rates)
 
-Decoding of other spreading factors is expected to be implemented in the near future. See the "Issues" page for more information.
+Not supported: CRC checks of the payload and header.
 
 
 Installation
@@ -72,6 +72,7 @@ See the LICENSE file for the license of this project. If you are working on a pr
 Changelog
 ---------
 
+- Version 0.4 : Support for all spreading factors, though SFs 11 and 12 are still slow / experimental
 - Version 0.3 : Support for all coding rates
 - Version 0.21: Fixed some issues reported by reletreby
 - Version 0.2 : C++ realtime decoder, manual finetuning for correcting frequency offsets of the transmitter.
