@@ -333,6 +333,8 @@ namespace gr {
         float instantaneous_freq[d_samples_per_symbol];
         float bins[d_number_of_bins];
 
+        samples_to_file("/tmp/data", &samples[0], d_samples_per_symbol, sizeof(gr_complex));
+
         // Determine instant phase
         for(unsigned int i = 0; i < d_samples_per_symbol; i++) {
             instantaneous_phase[i] = arg(samples[i]);
@@ -417,7 +419,7 @@ namespace gr {
 
             for(unsigned int j = 0; j < bits_per_word; j++) {
                 uint8_t power = pow(2, j);
-                unsigned int power_check = pow(2, offset_diag); // TODO: Here we are actually reversing endianess. This needs to be fixed in the future by implementing the interleaving similarly to how it is done in the Python based decoder.
+                unsigned int power_check = pow(2, offset_diag);
                 if((d_words[j] & power_check) > 0) { // Mask triggers
                     d += power;
                 }
@@ -433,7 +435,7 @@ namespace gr {
         }
 
         std::reverse(words_deinterleaved.begin(),words_deinterleaved.end());
-        //print_vector(words_deinterleaved, "D", sizeof(uint8_t)*8);
+        print_vector(d_debug, words_deinterleaved, "D", sizeof(uint8_t)*8);
 
         // Add to demodulated data
         for(int i = 0; i < words_deinterleaved.size(); i++) {
@@ -451,24 +453,29 @@ namespace gr {
         if(is_header) {
             prng = prng_header;
         } else {
-            if(d_cr == 4)
-                prng = prng_payload_cr8;
-            else if(d_cr == 3)
-                prng = prng_payload_cr7;
-            else if(d_cr == 2)
-                prng = prng_payload_cr6;
-            else if(d_cr == 1)
-                prng = prng_payload_cr5;
+            if(d_sf == 7)
+                prng = prng_payload_sf7;
+            else if(d_sf == 8)
+                prng = prng_payload_sf8;
+            else if(d_sf == 9)
+                prng = prng_payload_sf9;
+            else if(d_sf == 10)
+                prng = prng_payload_sf10;
+            else if(d_sf == 11)
+                prng = prng_payload_sf11;
+            else if(d_sf == 12)
+                prng = prng_payload_sf12;
             else
-                prng = prng_payload_cr8;
+                prng = prng_payload_sf7;
         }
 
-        deshuffle(shuffle_pattern);
+        deshuffle(shuffle_pattern, is_header);
         dewhiten(prng);
         hamming_decode(out_data);
 
-        // Nibbles are reversed
-        nibble_reverse(out_data, d_payload_length);
+        // Nibbles are reversed for uneven spreading factors TODO why is this?
+        if(d_sf % 2 == 1)
+            nibble_reverse(out_data, d_payload_length);
 
         // Print result
         std::stringstream result;
@@ -484,8 +491,10 @@ namespace gr {
         return 0;
     }
 
-    void decoder_impl::deshuffle(const uint8_t* shuffle_pattern) {
-        for(int i = 0; i < d_demodulated.size(); i++) {
+    void decoder_impl::deshuffle(const uint8_t* shuffle_pattern, bool is_header) {
+        uint32_t to_decode = d_demodulated.size();
+
+        for(uint32_t i = 0; i < to_decode; i++) {
             uint8_t original = d_demodulated[i];
             uint8_t result = 0;
 
@@ -499,8 +508,9 @@ namespace gr {
             d_words_deshuffled.push_back(result);
         }
 
-        //print_vector(d_words_deshuffled, "S", sizeof(uint8_t)*8);
-        //print_vector_raw(d_words_deshuffled, sizeof(uint8_t)*8);
+        //print_vector(d_debug, d_words_deshuffled, "S", sizeof(uint8_t)*8);
+        print_vector_raw(d_debug, d_words_deshuffled, sizeof(uint8_t)*8);
+        d_debug << std::endl;
 
         // We're done with these words
         d_demodulated.clear();
@@ -509,13 +519,13 @@ namespace gr {
     void decoder_impl::dewhiten(const uint8_t* prng) {
         for(int i = 0; i < d_words_deshuffled.size(); i++) {
             uint8_t xor_b = d_words_deshuffled[i] ^ prng[i];
-            xor_b = (xor_b & 0xF0) >> 4 | (xor_b & 0x0F) << 4; // TODO: reverse bit order is performed here, but is probably due to mistake in interleaving
+            xor_b = (xor_b & 0xF0) >> 4 | (xor_b & 0x0F) << 4; // TODO: reverse bit order is performed here, but is probably due to mistake in whitening or interleaving
             xor_b = (xor_b & 0xCC) >> 2 | (xor_b & 0x33) << 2;
             xor_b = (xor_b & 0xAA) >> 1 | (xor_b & 0x55) << 1;
             d_words_dewhitened.push_back(xor_b);
         }
 
-        //print_vector(d_words_dewhitened, "W", sizeof(uint8_t)*8);
+        print_vector(d_debug, d_words_dewhitened, "W", sizeof(uint8_t)*8);
 
         d_words_deshuffled.clear();
     }
@@ -526,9 +536,13 @@ namespace gr {
         fec_scheme fs = LIQUID_FEC_HAMMING84;
 
         if(d_cr == 4) {
-            fs = LIQUID_FEC_HAMMING84;
+            hamming_decode_soft(&d_words_dewhitened[0], d_words_dewhitened.size(), out_data);
+            d_words_dewhitened.clear();
+            return;
         } else if(d_cr == 3) {
-            fs = LIQUID_FEC_HAMMING84;
+            hamming_decode_soft(&d_words_dewhitened[0], d_words_dewhitened.size(), out_data);
+            d_words_dewhitened.clear();
+            return;
         } else if(d_cr == 2) {
             fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), data_indices, 4, out_data);
             d_words_dewhitened.clear();
@@ -539,13 +553,15 @@ namespace gr {
             return;
         }
 
+        /*fs = LIQUID_FEC_HAMMING84;
+
         unsigned int k = fec_get_enc_msg_length(fs, n);
         fec hamming = fec_create(fs, NULL);
 
         fec_decode(hamming, n, &d_words_dewhitened[0], out_data);
 
         d_words_dewhitened.clear();
-        fec_destroy(hamming);
+        fec_destroy(hamming);*/
     }
 
     void decoder_impl::nibble_reverse(uint8_t* out_data, int len) {
@@ -685,7 +701,7 @@ namespace gr {
                 double c = detect_downchirp(&input[0], d_samples_per_symbol);
                 d_debug << "Cd: " << c << std::endl;
 
-                if(c > 0.96f) {
+                if(c > 0.98f) {
                     d_debug << "SYNC: " << c << std::endl;
                     // Debug stuff
                     samples_to_file("/tmp/sync", &input[0], d_samples_per_symbol, sizeof(gr_complex));
@@ -716,7 +732,8 @@ namespace gr {
                     d_payload_length = 3; // TODO: A bit messy. I think it's better to make an internal decoded std::vector
                     decode(decoded, true);
 
-                    nibble_reverse(decoded, 1); // TODO: Why? Is the radio chip CPU 16-bit?
+                    if(d_sf % 2 == 1) // TODO: Why?
+                        nibble_reverse(decoded, 1);
                     d_payload_length = decoded[0];
                     d_cr = lookup_cr(decoded[1]);
 

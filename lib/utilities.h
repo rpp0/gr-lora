@@ -25,20 +25,20 @@ namespace gr {
         }
 
         template <typename T>
-        inline void print_vector(std::vector<T>& v, std::string prefix, int element_len_bits) {
-            std::cout << prefix << ": ";
+        inline void print_vector(std::ostream& out, std::vector<T>& v, std::string prefix, int element_len_bits) {
+            out << prefix << ": ";
             for(int i = 0; i < v.size(); i++) {
-                std::cout << to_bin(v[i], element_len_bits) << ", ";
+                out << to_bin(v[i], element_len_bits) << ", ";
             }
-            std::cout << std::endl << std::flush;
+            out << std::endl << std::flush;
         }
 
         template <typename T>
-        inline void print_vector_raw(std::vector<T>& v, int element_len_bits) {
+        inline void print_vector_raw(std::ostream& out, std::vector<T>& v, int element_len_bits) {
             for(int i = 0; i < v.size(); i++) {
-                std::cout << to_bin(v[i], element_len_bits);
+                out << to_bin(v[i], element_len_bits);
             }
-            std::cout << std::flush;
+            out << std::flush;
         }
 
         bool check_parity(std::string word, bool even) {
@@ -118,7 +118,7 @@ namespace gr {
             return pack_byte(p1, bit(v, 0), bit(v, 1), bit(v, 2), p2, bit(v, 3), p3, p4);
         }
 
-        uint8_t hamming_decode_soft(uint8_t v) {
+        uint8_t hamming_decode_soft_byte(uint8_t v) {
             // Precalculation
             // Which bits are covered (including self)?
             // p1 10110100
@@ -175,6 +175,22 @@ namespace gr {
             uint8_t d4 = bit(v, 5);
 
             return pack_nibble(d1, d2, d3, d4);
+        }
+
+        // Manual Hamming
+        void hamming_decode_soft(uint8_t* words, uint32_t len, uint8_t* out_data) {
+            uint32_t out_index = 0;
+            for(int i = 0; i < len; i+=2) {
+                uint8_t d1 = 0;
+                d1 = hamming_decode_soft_byte(words[i]);
+
+                uint8_t d2 = 0;
+                if(i+1 < len)
+                    d2 = hamming_decode_soft_byte(words[i+1]);
+
+                out_data[out_index] = (d1 << 4) | d2;
+                out_index++;
+            }
         }
 
   }

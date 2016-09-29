@@ -100,7 +100,7 @@ namespace gr {
         bool demodulate(gr_complex* samples, bool is_header);
         void deinterleave(int ppm);
         int decode(uint8_t* out_data, bool is_header);
-        void deshuffle(const uint8_t* shuffle_pattern);
+        void deshuffle(const uint8_t* shuffle_pattern, bool is_header);
         void dewhiten(const uint8_t* prng);
         void hamming_decode(uint8_t* out_data);
         void nibble_reverse(uint8_t* out_data, int len);
