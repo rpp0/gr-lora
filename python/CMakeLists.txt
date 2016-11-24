@@ -32,8 +32,16 @@ GR_PYTHON_INSTALL(
     FILES
     __init__.py
     lora_decoder.py
-    lora_receiver.py DESTINATION ${GR_PYTHON_DIR}/lora
+    lora_receiver.py
+    message_wireshark_sink.py DESTINATION ${GR_PYTHON_DIR}/lora
 )
+
+if(HAS_MONGODB)
+    GR_PYTHON_INSTALL(
+        FILES
+        message_mongodb_sink.py DESTINATION ${GR_PYTHON_DIR}/lora
+    )
+endif(HAS_MONGODB)
 
 ########################################################################
 # Handle the unit tests

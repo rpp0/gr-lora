@@ -22,5 +22,6 @@
 ########################################################################
 install(FILES
     api.h
-    decoder.h DESTINATION include/lora
+    decoder.h
+    message_file_sink.h DESTINATION include/lora
 )

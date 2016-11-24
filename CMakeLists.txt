@@ -182,3 +182,8 @@ endif(NOT CMAKE_MODULES_DIR)
 install(FILES cmake/Modules/loraConfig.cmake
     DESTINATION ${CMAKE_MODULES_DIR}/lora
 )
+
+########################################################################
+# gr-lora specific options
+########################################################################
+option(HAS_MONGODB "Support for storing data to MongoDB" OFF)

@@ -37,15 +37,15 @@ namespace gr {
   namespace lora {
 
     decoder::sptr
-    decoder::make(int sf) {
+    decoder::make(float samp_rate, int sf) {
       return gnuradio::get_initial_sptr
-        (new decoder_impl(sf));
+        (new decoder_impl(samp_rate, sf));
     }
 
     /*
      * The private constructor
      */
-    decoder_impl::decoder_impl(int sf) : gr::sync_block("decoder",
+    decoder_impl::decoder_impl(float samp_rate, int sf) : gr::sync_block("decoder",
             gr::io_signature::make(1, -1, sizeof(gr_complex)),
             gr::io_signature::make(0, 2, sizeof(float))) {
         d_state = DETECT;
@@ -56,12 +56,11 @@ namespace gr {
         d_bw = 125000;
         d_cr = 4;
         d_bits_per_second = (double)d_sf * (4.0f/4.0f+d_cr) / (pow(2.0f, d_sf) / d_bw);
-        d_samples_per_second = 1000000;
+        d_samples_per_second = samp_rate;
         d_symbols_per_second = (double)d_bw / pow(2.0f, d_sf);
         d_bits_per_symbol = (uint32_t)(d_bits_per_second / d_symbols_per_second);
         d_samples_per_symbol = (uint32_t)(d_samples_per_second / d_symbols_per_second);
-        d_delay_after_sync = d_samples_per_symbol / 4; //262;
-        //d_delay_after_sync += (uint32_t)d_delay_after_sync * 2.4f / 100.0f;
+        d_delay_after_sync = d_samples_per_symbol / 4;
         d_corr_decim_factor = 8; // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
         d_number_of_bins = (uint32_t)pow(2, d_sf);
         d_number_of_bins_hdr = d_number_of_bins / 4;
@@ -91,6 +90,10 @@ namespace gr {
         d_decim_factor = d_samples_per_symbol / d_number_of_bins;
 
         d_decim = firdecim_crcf_create(d_decim_factor, d_decim_h, DECIMATOR_FILTER_SIZE);
+
+        // Register gnuradio ports
+        message_port_register_out(pmt::mp("frames"));
+        message_port_register_out(pmt::mp("debug"));
     }
 
     /*
@@ -281,11 +284,11 @@ namespace gr {
         return std::sqrt(variance);
     }
 
-    float decoder_impl::detect_upchirp(const gr_complex *samples, uint32_t window, int32_t* index) {
+    float decoder_impl::detect_upchirp(const gr_complex *samples, uint32_t window, uint32_t slide, int32_t* index) {
         float samples_ifreq[window];
 
         instantaneous_frequency(samples, samples_ifreq, window);
-        return sliding_norm_cross_correlate(samples_ifreq, &d_upchirp_ifreq[0], window, d_samples_per_symbol / d_corr_decim_factor, index);
+        return sliding_norm_cross_correlate(samples_ifreq, &d_upchirp_ifreq[0], window, slide, index);
     }
 
     unsigned int decoder_impl::get_shift_fft(gr_complex* samples) {
@@ -482,10 +485,14 @@ namespace gr {
             result << " " << std::hex << std::setw(2) << std::setfill('0') << (int)out_data[i];
         }
 
-        if(!is_header)
+        if(!is_header) {
             std::cout << result.str() << std::endl;
-        else
+
+            pmt::pmt_t payload_blob = pmt::make_blob(out_data, sizeof(uint8_t) * d_payload_length);
+            message_port_pub(pmt::mp("frames"), payload_blob);
+        } else {
             std::cout << result.str();
+        }
 
         return 0;
     }
@@ -676,10 +683,20 @@ namespace gr {
         }
     }
 
+    void decoder_impl::msg_raw_chirp_debug(const gr_complex* raw_samples, uint32_t num_samples) {
+        pmt::pmt_t chirp_blob = pmt::make_blob(raw_samples, sizeof(gr_complex) * num_samples);
+        message_port_pub(pmt::mp("debug"), chirp_blob);
+    }
+
+    void decoder_impl::msg_lora_frame(const uint8_t *frame_bytes, uint32_t frame_len) {
+
+    }
+
     int decoder_impl::work(int noutput_items,
         gr_vector_const_void_star &input_items,
         gr_vector_void_star &output_items) {
-        gr_complex * input = (gr_complex*) input_items[0];
+        gr_complex* input = (gr_complex*) input_items[0];
+        gr_complex* raw_input = (gr_complex*) input_items[1];
         float *out = (float*)output_items[0];
 
         switch(d_state) {
@@ -688,7 +705,7 @@ namespace gr {
                 if(i != -1) {
                     uint32_t c_window = std::min(2*d_samples_per_symbol - i, d_samples_per_symbol);
                     int32_t index_correction = 0;
-                    float c = detect_upchirp(&input[i], c_window, &index_correction);
+                    float c = detect_upchirp(&input[i], c_window, d_samples_per_symbol / d_corr_decim_factor, &index_correction);
                     if(c > 0.8f) {
                         d_debug << "Cu: " << c << std::endl;
                         samples_to_file("/tmp/detectb", &input[i], d_samples_per_symbol, sizeof(gr_complex));
@@ -726,7 +743,7 @@ namespace gr {
             case PAUSE: {
                 d_state = DECODE_HEADER;
 
-                samples_debug(input, d_samples_per_symbol + d_delay_after_sync);
+                //samples_debug(input, d_samples_per_symbol + d_delay_after_sync);
                 consume_each(d_samples_per_symbol + d_delay_after_sync);
                 break;
             }
@@ -752,7 +769,8 @@ namespace gr {
                     d_state = DECODE_PAYLOAD;
                 }
 
-                samples_debug(input, d_samples_per_symbol);
+                msg_raw_chirp_debug(raw_input, d_samples_per_symbol);
+                //samples_debug(input, d_samples_per_symbol);
                 consume_each(d_samples_per_symbol);
                 break;
             }
@@ -769,7 +787,8 @@ namespace gr {
                     }
                 }
 
-                samples_debug(input, d_samples_per_symbol);
+                msg_raw_chirp_debug(raw_input, d_samples_per_symbol);
+                //samples_debug(input, d_samples_per_symbol);
                 consume_each(d_samples_per_symbol);
                 break;
             }
@@ -790,6 +809,10 @@ namespace gr {
     void decoder_impl::set_sf(uint8_t sf) {
         if(sf >= 7 && sf <= 13)
             d_sf = sf;
+    }
+
+    void decoder_impl::set_samp_rate(float samp_rate) {
+        d_samples_per_second = samp_rate;
     }
 
   } /* namespace lora */

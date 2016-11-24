@@ -675,41 +675,52 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifndef INCLUDED_LORA_DECODER_H
-#define INCLUDED_LORA_DECODER_H
-
-#include <lora/api.h>
-#include <gnuradio/sync_block.h>
+#include <gnuradio/io_signature.h>
+#include "message_file_sink_impl.h"
 
 namespace gr {
   namespace lora {
 
-    /*!
-     * \brief <+description of block+>
-     * \ingroup lora
-     *
+    message_file_sink::sptr
+    message_file_sink::make(const std::string path) {
+        return gnuradio::get_initial_sptr(new message_file_sink_impl(path));
+    }
+
+    /*
+     * The private constructor
      */
-    class LORA_API decoder : virtual public gr::sync_block
-    {
-     public:
-      typedef boost::shared_ptr<decoder> sptr;
+    message_file_sink_impl::message_file_sink_impl(const std::string path)
+      : gr::block("message_file_sink",
+              gr::io_signature::make(0, 0, 0),
+              gr::io_signature::make(0, 0, 0)) {
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of lora::decoder.
-       *
-       * To avoid accidental use of raw pointers, lora::decoder's
-       * constructor is in a private implementation
-       * class. lora::decoder::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(float samp_rate, int sf);
+        message_port_register_in(pmt::mp("in"));
+        set_msg_handler(pmt::mp("in"), boost::bind(&message_file_sink_impl::msg_handler, this, _1));
 
-      virtual void set_sf(uint8_t sf) = 0;
-      virtual void set_samp_rate(float samp_rate) = 0;
-    };
+        d_file.open(path, std::ios::out | std::ios::binary);
+    }
 
-  } // namespace lora
-} // namespace gr
+    /*
+     * Our virtual destructor.
+     */
+    message_file_sink_impl::~message_file_sink_impl() {
+        if(d_file.is_open())
+            d_file.close();
+    }
 
-#endif /* INCLUDED_LORA_DECODER_H */
+    /*
+     * Incoming message handler
+     */
+    void message_file_sink_impl::msg_handler(pmt::pmt_t msg) {
+        uint32_t length = pmt::length(msg);
+        // std::cout << "Writing " << length / sizeof(gr_complex) << " samples" << std::endl;
+        gr_complex* raw_samples = (gr_complex *)pmt::blob_data(msg);
+        d_file.write(reinterpret_cast<const char *>(raw_samples), length);
+    }
+
+  } /* namespace lora */
+} /* namespace gr */

@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive Realtime
-# Generated: Wed Sep 28 10:00:46 2016
+# Generated: Mon Nov  7 10:31:33 2016
 ##################################################
 
 if __name__ == '__main__':
@@ -81,7 +81,7 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         self.uhd_usrp_source_0.set_center_freq(capture_freq, 0)
         self.uhd_usrp_source_0.set_gain(15, 0)
         self.uhd_usrp_source_0.set_antenna('RX2', 0)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, 7, True)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, 7, 1000000)
         _finetune_sizer = wx.BoxSizer(wx.VERTICAL)
         self._finetune_text_box = forms.text_box(
         	parent=self.GetWin(),

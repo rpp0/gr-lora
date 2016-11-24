@@ -89,7 +89,7 @@ namespace gr {
         float sliding_norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window, uint32_t slide, int32_t* index);
         float norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window);
         float detect_downchirp(const gr_complex *samples, uint32_t window);
-        float detect_upchirp(const gr_complex *samples_1, uint32_t window, int32_t* index);
+        float detect_upchirp(const gr_complex *samples_1, uint32_t window, uint32_t slide, int32_t* index);
         float cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
         unsigned int get_shift_fft(gr_complex* samples);
         void determine_cfo(const gr_complex* samples);
@@ -108,10 +108,12 @@ namespace gr {
         inline void instantaneous_phase(const gr_complex* in_samples, float* out_iphase, uint32_t window);
         void instantaneous_frequency(const gr_complex* in_samples, float* out_ifreq, uint32_t window);
         uint8_t lookup_cr(uint8_t bytevalue);
+        void msg_raw_chirp_debug(const gr_complex *raw_samples, uint32_t num_samples);
+        void msg_lora_frame(const uint8_t *frame_bytes, uint32_t frame_len);
 
 
      public:
-        decoder_impl(int finetune);
+        decoder_impl(float samp_rate, int sf);
         ~decoder_impl();
 
         // Where all the action really happens
@@ -121,6 +123,7 @@ namespace gr {
 
         // GRC interfaces
         virtual void set_sf(uint8_t sf);
+        virtual void set_samp_rate(float samp_rate);
     };
 
   } // namespace lora

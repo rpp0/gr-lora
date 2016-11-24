@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<block>
+  <name>Message Wireshark Sink</name>
+  <key>lora_message_wireshark_sink</key>
+  <category>[LoRa]</category>
+  <import>import lora</import>
+  <make>lora.message_wireshark_sink()</make>
+
+  <sink>
+    <name>in</name>
+    <type>message</type>
+  </sink>
+</block>

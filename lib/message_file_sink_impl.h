@@ -675,41 +675,28 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
+#ifndef INCLUDED_LORA_MESSAGE_FILE_SINK_IMPL_H
+#define INCLUDED_LORA_MESSAGE_FILE_SINK_IMPL_H
 
-#ifndef INCLUDED_LORA_DECODER_H
-#define INCLUDED_LORA_DECODER_H
-
-#include <lora/api.h>
-#include <gnuradio/sync_block.h>
+#include <lora/message_file_sink.h>
+#include <string>
+#include <fstream>
 
 namespace gr {
   namespace lora {
 
-    /*!
-     * \brief <+description of block+>
-     * \ingroup lora
-     *
-     */
-    class LORA_API decoder : virtual public gr::sync_block
-    {
-     public:
-      typedef boost::shared_ptr<decoder> sptr;
+    class message_file_sink_impl : public message_file_sink {
+        private:
+            std::ofstream d_file;
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of lora::decoder.
-       *
-       * To avoid accidental use of raw pointers, lora::decoder's
-       * constructor is in a private implementation
-       * class. lora::decoder::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(float samp_rate, int sf);
+        public:
+            message_file_sink_impl(const std::string path);
+            ~message_file_sink_impl();
 
-      virtual void set_sf(uint8_t sf) = 0;
-      virtual void set_samp_rate(float samp_rate) = 0;
+            void msg_handler(pmt::pmt_t msg);
     };
 
   } // namespace lora
 } // namespace gr
 
-#endif /* INCLUDED_LORA_DECODER_H */
+#endif /* INCLUDED_LORA_MESSAGE_FILE_SINK_IMPL_H */

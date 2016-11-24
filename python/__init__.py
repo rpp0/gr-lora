@@ -33,4 +33,11 @@ except ImportError:
 # import any pure python here
 from lora_decoder import lora_decoder
 from lora_receiver import lora_receiver
+from message_wireshark_sink import message_wireshark_sink
 #
+
+# import optional blocks
+try:
+	from message_mongodb_sink import message_mongodb_sink
+except ImportError:
+	pass
