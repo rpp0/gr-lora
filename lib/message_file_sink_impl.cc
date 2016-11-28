@@ -701,7 +701,7 @@ namespace gr {
         message_port_register_in(pmt::mp("in"));
         set_msg_handler(pmt::mp("in"), boost::bind(&message_file_sink_impl::msg_handler, this, _1));
 
-        d_file.open(path, std::ios::out | std::ios::binary);
+        d_file.open(path.c_str(), std::ios::out | std::ios::binary);
     }
 
     /*
