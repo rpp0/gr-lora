@@ -20,7 +20,6 @@
 #
 
 from gnuradio import gr
-from lora_decoder import lora_decoder
 from gnuradio.filter import freq_xlating_fir_filter_ccf, firdes, fractional_resampler_cc
 from gnuradio.analog import quadrature_demod_cf
 from gnuradio.blocks import null_sink, delay
