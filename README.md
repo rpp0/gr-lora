@@ -5,10 +5,11 @@ The gr-lora project aims to provide a collection of GNURadio blocks for receivin
 
 ![alt text](https://github.com/rpp0/gr-lora/blob/master/examples/screenshot.png "gr-lora example")
 
+
 Features
 --------
 
-Though the core functionality of LoRa is described in various patents and blog posts (for a good resource, see [this RevSpace page](https://revspace.nl/DecodingLora)), most of the details are missing. The following features are fully supported by gr-lora:
+Though there is no official reference implementation of LoRa, the protocol is described in various patents and blog posts (for a good resource, see [this RevSpace page](https://revspace.nl/DecodingLora)). The following features are fully supported by gr-lora:
 
 - Synchronizing to LoRa frames transmitted with any spreading factor
 - Deinterleaving
@@ -16,7 +17,13 @@ Though the core functionality of LoRa is described in various patents and blog p
 - Decoding + Hamming error correction of the LoRa PHDR length field
 - Decoding + Hamming error correction of frame payloads (all coding rates)
 
-Not supported: CRC checks of the payload and header.
+Not supported yet: 
+
+- CRC checks of the payload and header
+- Decoding multiple channels simultaneously
+- Clock drift correction for very long frames
+
+This feature set is enough for basic, experimental usage with SDRs.
 
 
 Installation
@@ -61,6 +68,15 @@ Contributing
 ------------
 
 Contributions to the project are very much appreciated! If you have an idea for improvement or noticed a bug, feel free to submit an issue. If you're up for the challenge and would like to introduce a feature yourself, we kindly invite you to submit a pull request.
+
+
+Hardware
+--------
+
+Primarily, gr-lora was developed using a USRP and RN2483 LoRa chip. The following LoRa modules and SDRs were also tested and work with gr-lora:
+
+Transmitters: Pycom LoPy, Dragino LoRa Raspberry Pi HAT, Adafruit Feather 32u4, Microchip RN 2483 (custom board)
+Receivers: HackRF One, USRP B201, RTL-SDR
 
 
 Usage
