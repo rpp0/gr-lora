@@ -486,11 +486,13 @@ namespace gr {
         }
 
         if(!is_header) {
+            d_data.insert(d_data.end(), out_data, out_data + d_payload_length);
             std::cout << result.str() << std::endl;
 
-            pmt::pmt_t payload_blob = pmt::make_blob(out_data, sizeof(uint8_t) * d_payload_length);
+            pmt::pmt_t payload_blob = pmt::make_blob(&d_data[0], sizeof(uint8_t) * (d_payload_length + 3));
             message_port_pub(pmt::mp("frames"), payload_blob);
         } else {
+            d_data.insert(d_data.end(), out_data, out_data + 3);
             std::cout << result.str();
         }
 
@@ -784,6 +786,7 @@ namespace gr {
                         decode(decoded, false);
 
                         d_state = DETECT;
+                        d_data.clear();
                     }
                 }
 
