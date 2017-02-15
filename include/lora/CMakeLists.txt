@@ -23,5 +23,6 @@
 install(FILES
     api.h
     decoder.h
-    message_file_sink.h DESTINATION include/lora
+    message_file_sink.h
+    message_socket_sink.h DESTINATION include/lora
 )

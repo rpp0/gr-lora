@@ -679,7 +679,7 @@
 import numpy
 import pmt
 import socket
-from gnuradio import gr
+from gnuradio import gr, blocks
 from gnuradio.blocks import socket_pdu
 
 class message_wireshark_sink(gr.basic_block):
@@ -694,11 +694,29 @@ class message_wireshark_sink(gr.basic_block):
 
         self.message_port_register_in(pmt.intern("in"))
         self.set_msg_handler(pmt.intern("in"), self.msg_handler)
+		
+		# Register system_handler to stop execution when done.
+		self.message_port_register_in(pmt.intern("system"))
+        self.set_msg_handler(pmt.intern("system"), self.system_handler)
+		
         self.host = "127.0.0.1"
         self.port = 40868
-        #self.server = socket_pdu("UDP_SERVER", self.host, str(self.port))
+        ###self.server = socket_pdu("UDP_SERVER", self.host, str(self.port))
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def msg_handler(self, msg):
         msg = pmt.to_python(msg)
         self.client.sendto(msg, (self.host, self.port))
+
+    def system_handler(self, msg):
+        #### Sends 'done' message, but does NOT end flowchart execution!
+		#### This is apparently a known bug in the Python connection to the message system.
+		####	Examples:
+		####		https://lists.gnu.org/archive/html/discuss-gnuradio/2015-03/msg00223.html
+		####		
+		#### A GNU Radio block written in C++ works as expected.
+        #### Workaround by raising exception...
+        # print msg
+        print ("End transmission. Press CTRL+C to continue...")
+        # raise Exception("Continuing...")
+        exit(0)

@@ -28,6 +28,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 list(APPEND lora_sources
     decoder_impl.cc
     message_file_sink_impl.cc
+    message_socket_sink_impl.cc
 )
 
 set(lora_sources "${lora_sources}" PARENT_SCOPE)
@@ -65,6 +66,7 @@ include_directories(${CPPUNIT_INCLUDE_DIRS})
 list(APPEND test_lora_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/test_lora.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/qa_lora.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/qa_message_socket_sink.cc
 )
 
 add_executable(test-lora ${test_lora_sources})
