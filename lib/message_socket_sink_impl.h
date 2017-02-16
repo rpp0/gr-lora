@@ -684,26 +684,26 @@
 #include <lora/message_socket_sink.h>
 
 namespace gr {
-	namespace lora {
+    namespace lora {
 
-		class message_socket_sink_impl : public message_socket_sink {
-			private:
-				const std::string host = "127.0.0.1";
-				const int port         = 40868;
+        class message_socket_sink_impl : public message_socket_sink {
+            private:
+                const std::string host = "127.0.0.1";
+                const int port         = 40868;
 
-				// socket
-				struct sockaddr_in *_sock_addr;
-				int _socket;
+                // socket
+                struct sockaddr_in *_sock_addr;
+                int _socket;
 
-				void handle(pmt::pmt_t msg);
+                void handle(pmt::pmt_t msg);
 
-			public:
-				message_socket_sink_impl();
+            public:
+                message_socket_sink_impl();
 
-				~message_socket_sink_impl();
-		};
+                ~message_socket_sink_impl();
+        };
 
-	} // namespace lora
+    } // namespace lora
 } // namespace gr
 
 #endif /* INCLUDED_LORA_MESSAGE_SOCKET_SINK_IMPL_H */

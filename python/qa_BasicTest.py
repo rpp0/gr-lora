@@ -13,6 +13,15 @@ class qa_BasicTest (gr_unittest.TestCase):
     #   Listen on socket for data, append to list if any and return list of captured data.
     #
     def gatherFromSocket(self):
+    
+        ## or in  self.server.settimeout(0.5)  ?
+        #   try:
+        #       data = self.server.recv(8192)
+        #       if data:
+        #           total_data.append(data)
+        #   except:
+        #       pass
+    
         timeout = 0.5
         total_data = []
         data = ''
@@ -108,7 +117,7 @@ class qa_BasicTest (gr_unittest.TestCase):
         self.server          = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
-        self.server.setblocking(0)
+        self.server.setblocking(0)  ## or self.server.settimeout(0.5)  ?
 
         self.lastTestComplete = False
 
@@ -181,7 +190,7 @@ class qa_BasicTest (gr_unittest.TestCase):
             '71 1b 09 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22'
         ]
 
-        self.runWithFileSourceAndData('/home/william/lora-samples/usrpcr5.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/usrpcr5.cfile', expected_data)
         nextSeriesSetting = 1
         testResults.append([])
 
@@ -195,77 +204,80 @@ class qa_BasicTest (gr_unittest.TestCase):
     #
     def test_002 (self):
         expected_data = ["80 0b 01 01 23 45 67 89 ab cd ef"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_000.cfile', expected_data)
-
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_000.cfile', expected_data)
+        
+        # self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_000.cfile', expected_data)
+        # ...
+        
     #
     #   Unit test 3
     #
     def test_003 (self):
         expected_data = ["30 0b 02 11 11 11"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_001.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_001.cfile', expected_data)
 
     #
     #   Unit test 4
     #
     def test_004 (self):
         expected_data = ["30 0b 02 11 11 11"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_002.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_002.cfile', expected_data)
 
     #
     #   Unit test 5
     #
     def test_005 (self):
         expected_data = ["40 0b 07 aa aa aa aa"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_003.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_003.cfile', expected_data)
 
     #
     #   Unit test 6
     #
     def test_006 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_004.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_004.cfile', expected_data)
 
     #
     #   Unit test 7
     #
     def test_007 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_005.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_005.cfile', expected_data)
 
     #
     #   Unit test 8
     #
     def test_008 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_006.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_006.cfile', expected_data)
 
     #
     #   Unit test 9
     #
     def test_009 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_007.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_007.cfile', expected_data)
 
     #
     #   Unit test 10
     #
     def test_010 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_008.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_008.cfile', expected_data)
 
     #
     #   Unit test 11
     #
     def test_011 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_009.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_009.cfile', expected_data)
 
     #
     #   Unit test 12
     #
     def test_012 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_010.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_010.cfile', expected_data)
         nextSeriesSetting = 2
         testResults.append([])
 
@@ -278,77 +290,77 @@ class qa_BasicTest (gr_unittest.TestCase):
     #
     def test_013 (self):
         expected_data = ["80 0b 01 01 23 45 67 89 ab cd ef"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_000.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_000.cfile', expected_data)
 
     #
     #   Unit test 14
     #
     def test_014 (self):
         expected_data = ["30 0b 02 11 11 11"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_001.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_001.cfile', expected_data)
 
     #
     #   Unit test 15
     #
     def test_015 (self):
         expected_data = ["30 0b 02 11 11 11"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_002.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_002.cfile', expected_data)
 
     #
     #   Unit test 16
     #
     def test_016 (self):
         expected_data = ["40 0b 07 aa aa aa aa"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_003.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_003.cfile', expected_data)
 
     #
     #   Unit test 17
     #
     def test_017 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_004.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_004.cfile', expected_data)
 
     #
     #   Unit test 18
     #
     def test_018 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_005.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_005.cfile', expected_data)
 
     #
     #   Unit test 19
     #
     def test_019 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_006.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_006.cfile', expected_data)
 
     #
     #   Unit test 20
     #
     def test_020 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_007.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_007.cfile', expected_data)
 
     #
     #   Unit test 21
     #
     def test_021 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_008.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_008.cfile', expected_data)
 
     #
     #   Unit test 22
     #
     def test_022 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_009.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_009.cfile', expected_data)
 
     #
     #   Unit test 23
     #
     def test_023 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_010.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_010.cfile', expected_data)
         nextSeriesSetting = 3
         testResults.append([])
 
@@ -361,77 +373,77 @@ class qa_BasicTest (gr_unittest.TestCase):
     #
     def test_024 (self):
         expected_data = ["80 0b 01 01 23 45 67 89 ab cd ef"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_000.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_000.cfile', expected_data)
 
     #
     #   Unit test 25
     #
     def test_025 (self):
         expected_data = ["30 0b 02 11 11 11"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_001.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_001.cfile', expected_data)
 
     #
     #   Unit test 26
     #
     def test_026 (self):
         expected_data = ["30 0b 02 11 11 11"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_002.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_002.cfile', expected_data)
 
     #
     #   Unit test 27
     #
     def test_027 (self):
         expected_data = ["40 0b 07 aa aa aa aa"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_003.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_003.cfile', expected_data)
 
     #
     #   Unit test 28
     #
     def test_028 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_004.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_004.cfile', expected_data)
 
     #
     #   Unit test 29
     #
     def test_029 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_005.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_005.cfile', expected_data)
 
     #
     #   Unit test 30
     #
     def test_030 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_006.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_006.cfile', expected_data)
 
     #
     #   Unit test 31
     #
     def test_031 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_007.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_007.cfile', expected_data)
 
     #
     #   Unit test 32
     #
     def test_032 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_008.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_008.cfile', expected_data)
 
     #
     #   Unit test 33
     #
     def test_033 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_009.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_009.cfile', expected_data)
 
     #
     #   Unit test 34
     #
     def test_034 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_010.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_010.cfile', expected_data)
         nextSeriesSetting = 4
         testResults.append([])
 
@@ -444,77 +456,77 @@ class qa_BasicTest (gr_unittest.TestCase):
     #
     def test_035 (self):
         expected_data = ["80 0b 01 01 23 45 67 89 ab cd ef"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_000.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_000.cfile', expected_data)
 
     #
     #   Unit test 36
     #
     def test_036 (self):
         expected_data = ["30 0b 02 11 11 11"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_001.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_001.cfile', expected_data)
 
     #
     #   Unit test 37
     #
     def test_037 (self):
         expected_data = ["30 0b 02 11 11 11"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_002.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_002.cfile', expected_data)
 
     #
     #   Unit test 38
     #
     def test_038 (self):
         expected_data = ["40 0b 07 aa aa aa aa"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_003.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_003.cfile', expected_data)
 
     #
     #   Unit test 39
     #
     def test_039 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_004.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_004.cfile', expected_data)
 
     #
     #   Unit test 40
     #
     def test_040 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_005.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_005.cfile', expected_data)
 
     #
     #   Unit test 41
     #
     def test_041 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_006.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_006.cfile', expected_data)
 
     #
     #   Unit test 42
     #
     def test_042 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_007.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_007.cfile', expected_data)
 
     #
     #   Unit test 43
     #
     def test_043 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_008.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_008.cfile', expected_data)
 
     #
     #   Unit test 44
     #
     def test_044 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_009.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_009.cfile', expected_data)
 
     #
     #   Unit test 45
     #
     def test_045 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_010.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_010.cfile', expected_data)
         nextSeriesSetting = 5
         testResults.append([])
 
@@ -527,77 +539,77 @@ class qa_BasicTest (gr_unittest.TestCase):
     #
     def test_046 (self):
         expected_data = ["80 0b 01 01 23 45 67 89 ab cd ef"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_000.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_000.cfile', expected_data)
 
     #
     #   Unit test 47
     #
     def test_047 (self):
         expected_data = ["30 0b 02 11 11 11"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_001.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_001.cfile', expected_data)
 
     #
     #   Unit test 48
     #
     def test_048 (self):
         expected_data = ["30 0b 02 11 11 11"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_002.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_002.cfile', expected_data)
 
     #
     #   Unit test 49
     #
     def test_049 (self):
         expected_data = ["40 0b 07 aa aa aa aa"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_003.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_003.cfile', expected_data)
 
     #
     #   Unit test 50
     #
     def test_050 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_004.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_004.cfile', expected_data)
 
     #
     #   Unit test 51
     #
     def test_051 (self):
         expected_data = ["40 0b 07 ff ff ff ff"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_005.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_005.cfile', expected_data)
 
     #
     #   Unit test 52
     #
     def test_052 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 3
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_006.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_006.cfile', expected_data)
 
     #
     #   Unit test 53
     #
     def test_053 (self):
         expected_data = ["40 0b 07 55 55 55 55"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_007.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_007.cfile', expected_data)
 
     #
     #   Unit test 54
     #
     def test_054 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 1
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_008.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_008.cfile', expected_data)
 
     #
     #   Unit test 55
     #
     def test_055 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 5
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_009.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_009.cfile', expected_data)
 
     #
     #   Unit test 56
     #
     def test_056 (self):
         expected_data = ["40 0b 07 88 88 88 88"] * 10
-        self.runWithFileSourceAndData('/home/william/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_010.cfile', expected_data)
+        self.runWithFileSourceAndData('../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_010.cfile', expected_data)
         self.lastTestComplete = True
         # nextSeriesSetting = 6
         # testResults.append([])

@@ -683,28 +683,28 @@
 #include <gnuradio/block.h>
 
 namespace gr {
-	namespace lora {
-		/*!
-		* \brief Sink for messages, sent to socket a kept in a list.
-		* \ingroup lora
-		*
-		*/
-		class LORA_API message_socket_sink : virtual public gr::block {
-			public:
-				typedef boost::shared_ptr<message_socket_sink> sptr;
+    namespace lora {
+        /*!
+        * \brief Sink for messages, sent to socket.
+        * \ingroup lora
+        *
+        */
+        class LORA_API message_socket_sink : virtual public gr::block {
+            public:
+                typedef boost::shared_ptr<message_socket_sink> sptr;
 
-				/*!
-				* \brief Return a shared_ptr to a new instance of lora::message_socket_sink.
-				*
-				* To avoid accidental use of raw pointers, lora::message_socket_sink's
-				* constructor is in a private implementation
-				* class. lora::message_socket_sink::make is the public interface for
-				* creating new instances.
-				*/
-				static sptr make();
-		};
+                /*!
+                * \brief Return a shared_ptr to a new instance of lora::message_socket_sink.
+                *
+                * To avoid accidental use of raw pointers, lora::message_socket_sink's
+                * constructor is in a private implementation
+                * class. lora::message_socket_sink::make is the public interface for
+                * creating new instances.
+                */
+                static sptr make();
+        };
 
-	} // namespace lora
+    } // namespace lora
 } // namespace gr
 
 #endif /* INCLUDED_LORA_MESSAGE_SOCKET_SINK_H */

@@ -8,9 +8,11 @@ from loranode import RN2483Controller
 import lora, pmt, osmosdr
 from gnuradio import gr, blocks
 
+FileData = collections.namedtuple('FileData', ['path', 'data', 'times'])
+
 class Examplify:
 
-    def __init__(self, outputFile = '/tmp/examplify_data.cfile'):
+    def __init__(self, output_dir = './lora-samples/', output_prefix = 'examplify_data'):
         ##################################################
         # Variables                                      #
         ##################################################
@@ -26,10 +28,14 @@ class Examplify:
         self.pwr             = 1
         self.codingRate      = "4/6"    # 4/5 4/6 4/7
 
-        self.outputFile      = outputFile
+        self.output_dir      = output_dir
+        self.output_prefix   = output_prefix
+        self.output_ext      = '.cfile'
+        self.outputFile      = self.output_dir + self.output_prefix + self.output_ext
         self.pre_delay       = 0.150
         self.post_delay      = 0.350
         self.trans_delay     = 0.1
+        self.examples_output = []
 
         ##################################################
         # LoRa transmitter                               #
@@ -67,6 +73,9 @@ class Examplify:
 
     def setTransmitDelay(self, delay_s):
         self.trans_delay = delay_s
+        
+    def getOutput(self):
+        return self.examples_output
 
     def transmitRawData(self, data_list):
         print ("Transmitting...")
@@ -99,72 +108,57 @@ class Examplify:
         self.outputFile = output
         self.transmitToCapture(data_list)
         self.outputFile = prev
+        
+    def appendAndCaptureExample(data, times):
+        name = (self.output_prefix + "_cr{0:s}_bw{1:d}_sf{2:d}_crc{3:d}_pwr{4:d}_{5:03d}"
+                                        .format(self.codingRate.replace("/", "-"),
+                                                int(self.bw / 1e3),
+                                                self.sf,
+                                                1 if self.crc else 0,
+                                                self.pwr,
+                                                len(self.examples_output))
+                                   + self.output_ext)
 
+        self.examples_output.append( FileData( name, '["{0:s}"]'.format(data), times ) )
+        self.outputFile = self.output_dir + name
+        self.transmitToCapture([data] * times)
 
-FileData = collections.namedtuple('FileData', ['path', 'data', 'times'])
-
-def appendAndCaptureExample(examples_output, data, times, path, name):
-    name = (name + "_cr{0:s}_bw{1:d}_sf{2:d}_crc{3:d}_pwr{4:d}_{5:03d}"
-                    .format(e.codingRate.replace("/", "-"),
-                            int(e.bw / 1e3),
-                            e.sf,
-                            1 if e.crc else 0,
-                            e.pwr,
-                            len(examples_output))
-                 + ".cfile")
-
-    examples_output.append( FileData( name, '["{0:s}"]'.format(data), times ) )
-
-    e.transmitToFile([data] * times, path + name)
-
-def printToFile(file_path, examples_output):
-    f = open(file_path, 'a')
-    stro = '\n' + (' ' * 20) + 'FILE' + (' ' * 23) + '|' + (' ' * 10) + 'HEX'
-    f.write(stro + '\n')
-    print stro
-
-    stro = ('-' * 47) + '+' + ('-' * 27)
-    f.write(stro + '\n')
-    print stro
-
-    for x in examples_output:
-        stro = ' {0:45s} | {1:s} * {2:d}'.format(x[0], x[1], x[2])
+    def appendResultsToFile(file_path):
+        f = open(file_path, 'a')
+        stro = '\n' + (' ' * 20) + 'FILE' + (' ' * 23) + '|' + (' ' * 10) + 'HEX'
         f.write(stro + '\n')
         print stro
 
-    f.close()
+        stro = ('-' * 47) + '+' + ('-' * 27)
+        f.write(stro + '\n')
+        print stro
+
+        for x in self.examples_output:
+            stro = ' {0:45s} | {1:s} * {2:d}'.format(x[0], x[1], x[2])
+            f.write(stro + '\n')
+            print stro
+
+        f.close()
 
 
 if __name__ == '__main__':
-    examples_output = []
-    e = Examplify()
+    e = Examplify('./lora-samples/', 'hackrf')
 
-    appendAndCaptureExample(examples_output, "0123456789abcdef", 10,
-                            '/home/william/lora-samples/', 'hackrf')
+    e.appendAndCaptureExample("0123456789abcdef", 10)
 
-    appendAndCaptureExample(examples_output, "111111", 1,
-                            '/home/william/lora-samples/', 'hackrf')
-    appendAndCaptureExample(examples_output, "111111", 5,
-                            '/home/william/lora-samples/', 'hackrf')
+    e.appendAndCaptureExample("111111", 1)
+    e.appendAndCaptureExample("111111", 5)
 
-    appendAndCaptureExample(examples_output, "aaaaaaaa", 3,
-                            '/home/william/lora-samples/', 'hackrf')
+    e.appendAndCaptureExample("aaaaaaaa", 3)
 
-    appendAndCaptureExample(examples_output, "ffffffff", 1,
-                            '/home/william/lora-samples/', 'hackrf')
-    appendAndCaptureExample(examples_output, "ffffffff", 10,
-                            '/home/william/lora-samples/', 'hackrf')
+    e.appendAndCaptureExample("ffffffff", 1)
+    e.appendAndCaptureExample("ffffffff", 10)
 
-    appendAndCaptureExample(examples_output, "55555555", 3,
-                            '/home/william/lora-samples/', 'hackrf')
-    appendAndCaptureExample(examples_output, "55555555", 10,
-                            '/home/william/lora-samples/', 'hackrf')
+    e.appendAndCaptureExample("55555555", 3)
+    e.appendAndCaptureExample("55555555", 10)
 
-    appendAndCaptureExample(examples_output, "88888888", 1,
-                            '/home/william/lora-samples/', 'hackrf')
-    appendAndCaptureExample(examples_output, "88888888", 5,
-                            '/home/william/lora-samples/', 'hackrf')
-    appendAndCaptureExample(examples_output, "88888888", 10,
-                            '/home/william/lora-samples/', 'hackrf')
+    e.appendAndCaptureExample("88888888", 1)
+    e.appendAndCaptureExample("88888888", 5)
+    e.appendAndCaptureExample("88888888", 10)
 
-    printToFile('/home/william/lora-samples/expected_results.txt', examples_output)
+    e.appendResultsToFile('./expected_results.txt')

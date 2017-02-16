@@ -33,8 +33,8 @@ list(APPEND lora_sources
 
 set(lora_sources "${lora_sources}" PARENT_SCOPE)
 if(NOT lora_sources)
-	MESSAGE(STATUS "No C++ sources... skipping lib/")
-	return()
+    MESSAGE(STATUS "No C++ sources... skipping lib/")
+    return()
 endif(NOT lora_sources)
 
 add_library(gnuradio-lora SHARED ${lora_sources})

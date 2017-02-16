@@ -683,81 +683,81 @@
 #include "message_socket_sink_impl.h"
 
 namespace gr {
-	namespace lora {
+    namespace lora {
 
-		message_socket_sink::sptr message_socket_sink::make() {
-			return gnuradio::get_initial_sptr(new message_socket_sink_impl());
-		}
+        message_socket_sink::sptr message_socket_sink::make() {
+            return gnuradio::get_initial_sptr(new message_socket_sink_impl());
+        }
 
-		/**
-		 *	\brief The private constructor
-		 *
-		 *		Create a UDP socket connection to send the data through.
-		 */
-		message_socket_sink_impl::message_socket_sink_impl()
-		    : gr::block("message_socket_sink",
-		                gr::io_signature::make(0, 0, 0),
-		                gr::io_signature::make(0, 0, 0)) {
-			message_port_register_in(pmt::mp("in"));
-			set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, _1));
+        /**
+         *  \brief The private constructor
+         *
+         *      Create a UDP socket connection to send the data through.
+         */
+        message_socket_sink_impl::message_socket_sink_impl()
+            : gr::block("message_socket_sink",
+                        gr::io_signature::make(0, 0, 0),
+                        gr::io_signature::make(0, 0, 0)) {
+            message_port_register_in(pmt::mp("in"));
+            set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, _1));
 
-			this->_socket = socket(AF_INET, SOCK_DGRAM, 0);
+            this->_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-			if (this->_socket < 0) {
-				perror("[message_socket_sink] Failed to create socket!");
-				exit(EXIT_FAILURE);
-			}
+            if (this->_socket < 0) {
+                perror("[message_socket_sink] Failed to create socket!");
+                exit(EXIT_FAILURE);
+            }
 
-			this->_sock_addr                   = new struct sockaddr_in;
-			this->_sock_addr->sin_family       = AF_INET;
-			this->_sock_addr->sin_addr.s_addr  = htonl(INADDR_ANY);
-			this->_sock_addr->sin_port         = htons(0);    // Source port: 0 is any
+            this->_sock_addr                   = new struct sockaddr_in;
+            this->_sock_addr->sin_family       = AF_INET;
+            this->_sock_addr->sin_addr.s_addr  = htonl(INADDR_ANY);
+            this->_sock_addr->sin_port         = htons(0);    // Source port: 0 is any
 
-			if (bind(this->_socket,
-			         (const struct sockaddr*) this->_sock_addr,
-			         sizeof(*this->_sock_addr))
-			    < 0) {
-				perror("[message_socket_sink] Socket bind failed!");
-				exit(EXIT_FAILURE);
-			}
+            if (bind(this->_socket,
+                     (const struct sockaddr*) this->_sock_addr,
+                     sizeof(*this->_sock_addr))
+                < 0) {
+                perror("[message_socket_sink] Socket bind failed!");
+                exit(EXIT_FAILURE);
+            }
 
-			this->_sock_addr->sin_port         = htons(this->port);
-			// == "127.0.0.1" to int translation
-			inet_pton(AF_INET, this->host.c_str(), &this->_sock_addr->sin_addr.s_addr);
-		}
+            this->_sock_addr->sin_port         = htons(this->port);
+            // == "127.0.0.1" to int translation
+            inet_pton(AF_INET, this->host.c_str(), &this->_sock_addr->sin_addr.s_addr);
+        }
 
-		/**
-		 *	\brief	Our virtual destructor.
-		 */
-		message_socket_sink_impl::~message_socket_sink_impl() {
-			delete this->_sock_addr;
-			shutdown(this->_socket, 1);      // close transmissions
-		}
+        /**
+         *  \brief  Our virtual destructor.
+         */
+        message_socket_sink_impl::~message_socket_sink_impl() {
+            delete this->_sock_addr;
+            shutdown(this->_socket, 1);      // close transmissions
+        }
 
-		/**
-		 *	\brief	Handle a message and send its contents through an UDP packet to the loopback interface.
-		 */
-		void message_socket_sink_impl::handle(pmt::pmt_t msg) {
-			uint8_t *data = (uint8_t*) pmt::blob_data(msg);
-			size_t size = pmt::blob_length(msg);
+        /**
+         *  \brief  Handle a message and send its contents through an UDP packet to the loopback interface.
+         */
+        void message_socket_sink_impl::handle(pmt::pmt_t msg) {
+            uint8_t *data = (uint8_t*) pmt::blob_data(msg);
+            size_t size = pmt::blob_length(msg);
 
             #ifndef NDEBUG
-			    printf("Received message:\n\t");
+                printf("Received message:\n\t");
 
-				for (size_t i = 0; i < size; ++i)
-					printf("%02x ", data[i]);
+                for (size_t i = 0; i < size; ++i)
+                    printf("%02x ", data[i]);
 
-				putchar('\n');
+                putchar('\n');
             #endif
 
-			if (sendto(this->_socket, data, size, 0,
-			           (const struct sockaddr*) this->_sock_addr,
-			           sizeof(*this->_sock_addr))
-			    != size) {
-				perror("[message_socket_sink] Mismatch in number of bytes sent");
-				exit(EXIT_FAILURE);
-			}
-		}
+            if (sendto(this->_socket, data, size, 0,
+                       (const struct sockaddr*) this->_sock_addr,
+                       sizeof(*this->_sock_addr))
+                != size) {
+                perror("[message_socket_sink] Mismatch in number of bytes sent");
+                exit(EXIT_FAILURE);
+            }
+        }
 
-	} /* namespace lora */
+    } /* namespace lora */
 } /* namespace gr */

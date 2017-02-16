@@ -683,19 +683,19 @@
 #include <cppunit/TestCase.h>
 
 namespace gr {
-	namespace lora {
+    namespace lora {
 
-		class qa_message_socket_sink : public CppUnit::TestCase {
-			public:
-				CPPUNIT_TEST_SUITE(qa_message_socket_sink);
-				CPPUNIT_TEST(t1);
-				CPPUNIT_TEST_SUITE_END();
+        class qa_message_socket_sink : public CppUnit::TestCase {
+            public:
+                CPPUNIT_TEST_SUITE(qa_message_socket_sink);
+                CPPUNIT_TEST(t1);
+                CPPUNIT_TEST_SUITE_END();
 
-			private:
-				void t1();
-		};
+            private:
+                void t1();
+        };
 
-	} /* namespace lora */
+    } /* namespace lora */
 } /* namespace gr */
 
 #endif /* _QA_MESSAGE_SOCKET_SINK_H_ */

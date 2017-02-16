@@ -682,11 +682,11 @@
 #include <lora/message_socket_sink.h>
 
 namespace gr {
-	namespace lora {
+    namespace lora {
 
-		void qa_message_socket_sink::t1() {
-			// Put test here
-		}
+        void qa_message_socket_sink::t1() {
+            // Put test here
+        }
 
-	} /* namespace lora */
+    } /* namespace lora */
 } /* namespace gr */
