@@ -3,6 +3,7 @@
 import struct
 import time
 import collections
+import os
 from loranode import RN2483Controller
 
 import lora, pmt, osmosdr
@@ -12,12 +13,12 @@ FileData = collections.namedtuple('FileData', ['path', 'data', 'times'])
 
 class Examplify:
 
-    def __init__(self, output_dir = './lora-samples/', output_prefix = 'examplify_data'):
+    def __init__(self, spreadingFactor = 7, codingRate = "4/5", output_dir = './lora-samples/', output_prefix = 'examplify_data'):
         ##################################################
         # Variables                                      #
         ##################################################
         self.target_freq     = 868.1e6
-        self.sf              = 6        # 6 7 8 12
+        self.sf              = spreadingFactor  # 6 7 8 12
         self.samp_rate       = 1e6
         self.capture_freq    = 868.0e6
         self.bw              = 125e3
@@ -26,7 +27,13 @@ class Examplify:
         #self.bitrate         = self.sf * (1 / (2**self.sf / self.bw ))
         self.crc             = True
         self.pwr             = 1
-        self.codingRate      = "4/6"    # 4/5 4/6 4/7
+        self.codingRate      = codingRate      # 4/5 4/6 4/7
+
+        try:
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+        except:
+            Exception("Error creating output directory.")
 
         self.output_dir      = output_dir
         self.output_prefix   = output_prefix
@@ -40,12 +47,16 @@ class Examplify:
         ##################################################
         # LoRa transmitter                               #
         ##################################################
-        self.lc = RN2483Controller("/dev/lora")
-        self.lc.set_cr ( self.codingRate)
-        self.lc.set_bw ( self.bw / 1e3)
-        self.lc.set_sf ( self.sf )
-        self.lc.set_crc( "on" if self.crc else "off")
-        self.lc.set_pwr( self.pwr )
+        try:
+            self.lc = RN2483Controller("/dev/lora")
+            self.lc.set_cr ( self.codingRate)
+            self.lc.set_bw ( self.bw / 1e3)
+            self.lc.set_sf ( self.sf )
+            self.lc.set_crc( "on" if self.crc else "off")
+            self.lc.set_pwr( self.pwr )
+        except:
+            raise Exception("Error initialising LoRa transmitter: RN2483Controller")
+
 
         ##################################################
         # Blocks                                         #
@@ -73,18 +84,18 @@ class Examplify:
 
     def setTransmitDelay(self, delay_s):
         self.trans_delay = delay_s
-        
+
     def getOutput(self):
         return self.examples_output
 
     def transmitRawData(self, data_list):
         print ("Transmitting...")
         time.sleep(self.pre_delay)
-        
+
         for x in data_list:
             self.lc.send_p2p(x)
             time.sleep(self.trans_delay)
-            
+
         time.sleep(self.post_delay)
 
     def transmitToCapture(self, data_list):
@@ -108,8 +119,8 @@ class Examplify:
         self.outputFile = output
         self.transmitToCapture(data_list)
         self.outputFile = prev
-        
-    def appendAndCaptureExample(data, times):
+
+    def appendAndCaptureExample(self, data, times):
         name = (self.output_prefix + "_cr{0:s}_bw{1:d}_sf{2:d}_crc{3:d}_pwr{4:d}_{5:03d}"
                                         .format(self.codingRate.replace("/", "-"),
                                                 int(self.bw / 1e3),
@@ -123,7 +134,7 @@ class Examplify:
         self.outputFile = self.output_dir + name
         self.transmitToCapture([data] * times)
 
-    def appendResultsToFile(file_path):
+    def appendResultsToFile(self, file_path):
         f = open(file_path, 'a')
         stro = '\n' + (' ' * 20) + 'FILE' + (' ' * 23) + '|' + (' ' * 10) + 'HEX'
         f.write(stro + '\n')
@@ -142,7 +153,7 @@ class Examplify:
 
 
 if __name__ == '__main__':
-    e = Examplify('./lora-samples/', 'hackrf')
+    e = Examplify(6, "4/7", './lora-samples/', 'hackrf')
 
     e.appendAndCaptureExample("0123456789abcdef", 10)
 

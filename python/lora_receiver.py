@@ -69,13 +69,15 @@ class lora_receiver(gr.hier_block2):
         self.msg_connect((self.c_decoder, 'debug'), (self, 'debug'))
         self.msg_connect((self.c_decoder, 'frames'), (self, 'frames'))
 
-    def set_sf(self):
+    def get_sf(self):
         return self.sf
 
     def set_sf(self, sf):
         self.sf = sf
-        if self.realtime:
-            self.c_decoder.set_sf(self.sf)
+        ## hier_block2 does not have a realtime attribute:
+        ##     http://gnuradio.org/doc/sphinx/runtime.html?highlight=hier_block2#gnuradio.gr.hier_block2
+        # if self.realtime:
+        self.c_decoder.set_sf(self.sf)
 
     def get_offset(self):
         return self.offset
