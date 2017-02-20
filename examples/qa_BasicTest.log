@@ -1,0 +1,181 @@
+
+-------- Test Results on 2017-02-17 15:37:32 ---------
+Test serie   0: ['80 0b 01 01 23 45 67 89 ab cd ef'] * 10
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   5 out of  10 ( 50.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+  => Total passed: 5 out of 30  (16.67%)
+
+Test serie   1: ['80 0f 02 01 23 45 67 89 ab cd ef'] * 10
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   4 out of  10 ( 40.00%)
+  => Total passed: 4 out of 20  (20.00%)
+
+Test serie   2: ['80 0d 05 01 23 45 67 89 ab cd ef'] * 10
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   2 out of  10 ( 20.00%)
+  => Total passed: 2 out of 20  (10.00%)
+
+Test serie   3: ['30 0b 02 11 11 11'] * 1
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   1 out of   1 (100.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 1 out of 3  (33.33%)
+
+Test serie   4: ['30 0f 01 11 11 11'] * 1
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 0 out of 2  (0.00%)
+
+Test serie   5: ['30 0d 06 11 11 11'] * 1
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 0 out of 2  (0.00%)
+
+Test serie   6: ['30 0b 02 11 11 11'] * 5
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   3 out of   5 ( 60.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+  => Total passed: 3 out of 15  (20.00%)
+
+Test serie   7: ['30 0f 01 11 11 11'] * 5
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   2 out of   5 ( 40.00%)
+  => Total passed: 2 out of 10  (20.00%)
+
+Test serie   8: ['30 0d 06 11 11 11'] * 5
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   1 out of   5 ( 20.00%)
+  => Total passed: 1 out of 10  (10.00%)
+
+Test serie   9: ['40 0b 07 aa aa aa aa'] * 3
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   1 out of   3 ( 33.33%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+  => Total passed: 1 out of 9  (11.11%)
+
+Test serie  10: ['40 0f 04 aa aa aa aa'] * 3
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+  => Total passed: 0 out of 6  (0.00%)
+
+Test serie  11: ['40 0d 03 aa aa aa aa'] * 3
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   1 out of   3 ( 33.33%)
+  => Total passed: 1 out of 6  (16.67%)
+
+Test serie  12: ['40 0b 07 ff ff ff ff'] * 1
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 0 out of 3  (0.00%)
+
+Test serie  13: ['40 0f 04 ff ff ff ff'] * 1
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 0 out of 2  (0.00%)
+
+Test serie  14: ['40 0d 03 ff ff ff ff'] * 1
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   1 out of   1 (100.00%)
+  => Total passed: 1 out of 2  (50.00%)
+
+Test serie  15: ['40 0b 07 ff ff ff ff'] * 10
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   2 out of  10 ( 20.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+  => Total passed: 2 out of 30  (6.67%)
+
+Test serie  16: ['40 0f 04 ff ff ff ff'] * 10
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+  => Total passed: 0 out of 20  (0.00%)
+
+Test serie  17: ['40 0d 03 ff ff ff ff'] * 10
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   3 out of  10 ( 30.00%)
+  => Total passed: 3 out of 20  (15.00%)
+
+Test serie  18: ['40 0b 07 55 55 55 55'] * 3
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   1 out of   3 ( 33.33%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+  => Total passed: 1 out of 9  (11.11%)
+
+Test serie  19: ['40 0f 04 55 55 55 55'] * 3
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   1 out of   3 ( 33.33%)
+  => Total passed: 1 out of 6  (16.67%)
+
+Test serie  20: ['40 0d 03 55 55 55 55'] * 3
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
+  => Total passed: 0 out of 6  (0.00%)
+
+Test serie  21: ['40 0b 07 55 55 55 55'] * 10
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   2 out of  10 ( 20.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+  => Total passed: 2 out of 30  (6.67%)
+
+Test serie  22: ['40 0f 04 55 55 55 55'] * 10
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   5 out of  10 ( 50.00%)
+  => Total passed: 5 out of 20  (25.00%)
+
+Test serie  23: ['40 0d 03 55 55 55 55'] * 10
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   3 out of  10 ( 30.00%)
+  => Total passed: 3 out of 20  (15.00%)
+
+Test serie  24: ['40 0b 07 88 88 88 88'] * 1
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 0 out of 3  (0.00%)
+
+Test serie  25: ['40 0f 04 88 88 88 88'] * 1
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+  => Total passed: 0 out of 2  (0.00%)
+
+Test serie  26: ['40 0d 03 88 88 88 88'] * 1
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   1 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   1 out of   1 (100.00%)
+  => Total passed: 1 out of 2  (50.00%)
+
+Test serie  27: ['40 0b 07 88 88 88 88'] * 5
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   2 out of   5 ( 40.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+  => Total passed: 2 out of 15  (13.33%)
+
+Test serie  28: ['40 0f 04 88 88 88 88'] * 5
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+  => Total passed: 0 out of 10  (0.00%)
+
+Test serie  29: ['40 0d 03 88 88 88 88'] * 5
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   1 out of   5 ( 20.00%)
+  => Total passed: 1 out of 10  (10.00%)
+
+Test serie  30: ['40 0b 07 88 88 88 88'] * 10
+    Test   0 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   5 out of  10 ( 50.00%)
+    Test   1 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   2 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+  => Total passed: 5 out of 30  (16.67%)
+
+Test serie  31: ['40 0f 04 88 88 88 88'] * 10
+    Test   0 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+  => Total passed: 0 out of 20  (0.00%)
+
+Test serie  32: ['40 0d 03 88 88 88 88'] * 10
+    Test   0 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
+    Test   1 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   4 out of  10 ( 40.00%)
+  => Total passed: 4 out of 20  (20.00%)
+
+
+ ====== Total passed: 51 out of 413  (12.35%) ======
+ Ran 33 tests in 278.085s
