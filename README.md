@@ -17,7 +17,7 @@ Though there is no official reference implementation of LoRa, the protocol is de
 - Decoding + Hamming error correction of the LoRa PHDR length field
 - Decoding + Hamming error correction of frame payloads (all coding rates)
 
-Not supported yet: 
+Not supported yet:
 
 - CRC checks of the payload and header
 - Decoding multiple channels simultaneously
@@ -41,13 +41,13 @@ make && sudo make install
 The following dependencies are required:
 - numpy
 - scipy
-- liquid-dsp (https://github.com/jgaeddert/liquid-dsp)
+- [liquid-dsp](https://github.com/jgaeddert/liquid-dsp)
 
 
 Testing
 -------
 
-To test your installation, you can download one of the sample LoRa signals at https://github.com/rpp0/gr-lora-samples. Configure ```apps/lora_receive_file.py``` to use the sample and run the script. You should see the decoded sample data:
+To test your installation, you can download one of the sample LoRa signals at [rpp0/gr-lora-samples](https://github.com/rpp0/gr-lora-samples). Configure ```apps/lora_receive_file.py``` to use the sample and run the script. You should see the decoded sample data:
 
 ```
 $ ./lora_receive_file.py
@@ -62,6 +62,9 @@ Using Volk machine: avx2_64_mmx_orc
 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 a3 69 af 81 69
 ...
 ```
+
+Alternatively, if you have a LoRa transmitter, you can configure/modify  ```/examples/_examplify.py``` to generate example files and add them to ```python/qa_BasicTest.py``` as Unit Test, or to ```/examples/qa_BasicTest_Data.xml``` to run them automatically with ```python/qa_BasicTest_XML.py``` (```xmltodict``` module needed).
+Note that these can be run with their shell script in ```build\python```.
 
 
 Contributing
