@@ -1,87 +1,70 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <cstdint>
+
 namespace gr {
-  namespace lora {
+    namespace lora {
 
         template <typename T>
-        std::string to_bin(T v, int element_len_bits) {
-            T mask = 0;
-            unsigned int maxpow = element_len_bits;
+        std::string to_bin(T v, uint32_t bitwidth) {
+            unsigned long long maxpow = bitwidth ? (1ull << (bitwidth - 1)) : 0,
+                               mask;
+
             std::string result = "";
 
-            for(int i = 0; i < maxpow; i++) {
-                mask = pow(2, i);
-                //std::cout << (unsigned int)v << " AND " << mask << " is " << (v & mask) << std::endl;
-
-                if((v & mask) > 0) {
-                    result += "1";
-                } else {
-                    result += "0";
-                }
-            }
-
-          return result;
-        }
-
-        template <typename T>
-        inline void print_vector(std::ostream& out, std::vector<T>& v, std::string prefix, int element_len_bits) {
-            out << prefix << ": ";
-            for(int i = 0; i < v.size(); i++) {
-                out << to_bin(v[i], element_len_bits) << ", ";
-            }
-            out << std::endl << std::flush;
-        }
-
-        template <typename T>
-        inline void print_vector_raw(std::ostream& out, std::vector<T>& v, int element_len_bits) {
-            for(int i = 0; i < v.size(); i++) {
-                out << to_bin(v[i], element_len_bits);
-            }
-            out << std::flush;
-        }
-
-        bool check_parity(std::string word, bool even) {
-            int count = 0;
-
-            for(int i = 0; i < 7; i++) {
-                if(word[i] == '1')
-                    count += 1;
-            }
-
-            if(even)
-                return ((count % 2) == 0);
-            else
-                return (((count+1) % 2) == 0);
-        }
-
-        uint32_t select_bits(uint32_t data, uint8_t* indices, uint8_t n) {
-            uint32_t result = 0;
-
-            for(uint32_t j = 0; j < n; j++) {
-                uint32_t power = pow(2, indices[j]);
-                if((data & power) > 0) {
-                    result += pow(2, j);
-                }
+            for (mask = 0x1; mask <= maxpow; mask <<= 1) {
+                result += (v & mask) ? "1" : "0";
             }
 
             return result;
         }
 
-        void fec_extract_data_only(uint8_t* in_data, uint32_t len, uint8_t* indices, uint8_t n, uint8_t* out_data) {
-            uint8_t out_index = 0;
+        template <typename T>
+        inline void print_vector(std::ostream& out, std::vector<T>& v, std::string prefix, int element_len_bits) {
+            out << prefix << ": ";
 
-            for(uint32_t i = 0; i < len; i+=2) {
-                uint8_t d1 = 0;
-                d1 = select_bits(in_data[i], indices, n) & 0xff;
+            for (T x : v)
+                out << to_bin(x, element_len_bits) << ", ";
 
+            out << std::endl << std::flush;
+        }
 
-                uint8_t d2 = 0;
-                if(i+1 < len)
-                    d2 = select_bits(in_data[i+1], indices, n) & 0xff;
+        template <typename T>
+        inline void print_vector_raw(std::ostream& out, std::vector<T>& v, int element_len_bits) {
 
-                out_data[out_index] = (d1 << 4) | d2;
-                out_index++;
+            for (T x : v)
+                out << to_bin(x, element_len_bits);
+
+            out << std::flush;
+        }
+
+        bool check_parity(std::string& word, bool even) {
+            size_t count = 0, i = 0;
+
+            while(i < 7) {
+                if (word[i++] == '1')
+                    ++count;
+            }
+
+            return (count & 0x1) == (even ? 0 : 1);
+        }
+
+        uint32_t select_bits(uint32_t data, uint8_t *indices, uint8_t n) {
+            uint32_t r = 0;
+
+            for(uint8_t i = 0; i < n; ++i)
+                r |= (data & (1 << indices[i])) ? (1 << i) : 0;
+
+            return r;
+        }
+
+        void fec_extract_data_only(uint8_t *in_data, uint32_t len, uint8_t *indices, uint8_t n, uint8_t *out_data) {
+            for (uint32_t i = 0, out_index = 0; i < len; i += 2) {
+                uint8_t d1  = (select_bits(in_data[i], indices, n) & 0xff) << 4;
+                        d1 |= (i + 1 < len) ? select_bits(in_data[i + 1], indices, n) & 0xff : 0;
+
+                out_data[out_index++] = d1;
             }
         }
 
@@ -127,11 +110,7 @@ namespace gr {
             // p4 01010101
 
             // Syndrome matrix = columns of "cover bits" above
-            uint8_t H[16];
-
-            for(uint8_t i = 0; i < 16; i++) {
-                H[i] = 0;
-            }
+            uint8_t H[16] = { 0 };
 
             uint8_t i0 = pack_nibble(1, 0, 0, 0);
             uint8_t i1 = pack_nibble(0, 1, 1, 1);
@@ -164,9 +143,8 @@ namespace gr {
 
             uint8_t syndrome = pack_nibble((uint8_t)(p1 != p1c), (uint8_t)(p2 != p2c), (uint8_t)(p3 != p3c), (uint8_t)(p4 != p4c));
 
-            if(syndrome != 0) {
-                uint8_t index = H[syndrome];
-                v = v ^ pow2[index];
+            if (syndrome) {
+                v ^= pow2[  H[syndrome]  ];
             }
 
             uint8_t d1 = bit(v, 1);
@@ -178,22 +156,16 @@ namespace gr {
         }
 
         // Manual Hamming
-        void hamming_decode_soft(uint8_t* words, uint32_t len, uint8_t* out_data) {
-            uint32_t out_index = 0;
-            for(int i = 0; i < len; i+=2) {
-                uint8_t d1 = 0;
-                d1 = hamming_decode_soft_byte(words[i]);
+        void hamming_decode_soft(uint8_t *words, uint32_t len, uint8_t *out_data) {
+            for (uint32_t i = 0, out_index = 0; i < len; i += 2) {
+                uint8_t d1  = hamming_decode_soft_byte(words[i]) << 4;
+                        d1 |= (i + 1 < len) ? hamming_decode_soft_byte(words[i + 1]) : 0;
 
-                uint8_t d2 = 0;
-                if(i+1 < len)
-                    d2 = hamming_decode_soft_byte(words[i+1]);
-
-                out_data[out_index] = (d1 << 4) | d2;
-                out_index++;
+                out_data[out_index++] = d1;
             }
         }
 
-  }
+    }
 }
 
 #endif /* UTILITIES_H */
