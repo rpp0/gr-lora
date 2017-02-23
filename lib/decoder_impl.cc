@@ -558,9 +558,9 @@ namespace gr {
                     }
                 }
 
-        float sum = 0.0f;
-        for(int i = 0; i < d_samples_per_symbol-1; i++) {
-            sum += instantaneous_freq[i];
+                this->d_words_deshuffled.push_back(result);
+            }
+
             #ifndef NDEBUG
                 //print_vector(d_debug, d_words_deshuffled, "S", sizeof(uint8_t)*8);
                 print_vector_raw(this->d_debug, this->d_words_deshuffled, sizeof(uint8_t) * 8);
@@ -570,6 +570,7 @@ namespace gr {
             // We're done with these words
             if (is_header){
                 this->d_demodulated.erase(this->d_demodulated.begin(), this->d_demodulated.begin() + 5);
+            } else {
                 this->d_demodulated.clear();
             }
         }
@@ -577,12 +578,21 @@ namespace gr {
         void decoder_impl::dewhiten(const uint8_t *prng) {
             uint32_t i, len = this->d_words_deshuffled.size();
 
-        /*d_cfo_estimation = (*std::max_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1) + *std::min_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1)) / 2;*/
-    }
+            for (i = 0; i < len; i++) {
+                uint8_t xor_b = this->d_words_deshuffled[i] ^ prng[i];
 
-    void decoder_impl::correct_cfo(gr_complex* samples, int num_samples) {
-        for(uint32_t i = 0; i < num_samples; i++) {
-            samples[i] = samples[i] * gr_expj(2.0f * M_PI * -d_cfo_estimation * (d_dt * i));
+                // TODO: reverse bit order is performed here,
+                //       but is probably due to mistake in whitening or interleaving
+                xor_b = (xor_b & 0xF0) >> 4 | (xor_b & 0x0F) << 4;
+                xor_b = (xor_b & 0xCC) >> 2 | (xor_b & 0x33) << 2;
+                xor_b = (xor_b & 0xAA) >> 1 | (xor_b & 0x55) << 1;
+                this->d_words_dewhitened.push_back(xor_b);
+            }
+
+            #ifndef NDEBUG
+                print_vector(this->d_debug, this->d_words_dewhitened, "W", sizeof(uint8_t) * 8);
+            #endif
+
             this->d_words_deshuffled.clear();
         }
 
@@ -674,32 +684,50 @@ namespace gr {
             uint32_t rising = 0;
             static const uint32_t rising_required = 2;
 
-    void decoder_impl::msg_lora_frame(const uint8_t *frame_bytes, uint32_t frame_len) {
+            float theta1, theta2, theta3, theta4,
+                  grad_prev = 0.0f, grad_cur;
 
-    }
+            for (uint32_t i = 1; i < decimation; i++) {
+                theta1 =          arg(samples[ (i - 1) * decim_size ]);
+                theta2 = theta3 = arg(samples[  i      * decim_size ]);
+                theta4 =          arg(samples[ (i + 1) * decim_size ]);
 
-    int decoder_impl::work(int noutput_items,
-        gr_vector_const_void_star &input_items,
-        gr_vector_void_star &output_items) {
-        gr_complex* input = (gr_complex*) input_items[0];
-        gr_complex* raw_input = (gr_complex*) input_items[1];
-        float *out = (float*)output_items[0];
+                // Unwrap phase
+                while ( (theta2 - theta1) >  M_PI ) theta2 -= 2*M_PI;
+                while ( (theta2 - theta1) < -M_PI ) theta2 += 2*M_PI;
+                while ( (theta4 - theta3) >  M_PI ) theta4 -= 2*M_PI;
+                while ( (theta4 - theta3) < -M_PI ) theta4 += 2*M_PI;
 
-        switch(d_state) {
-            case DETECT: {
-                int i = find_preamble_start_fast(&input[0], 2*d_samples_per_symbol);
-                if(i != -1) {
-                    uint32_t c_window = std::min(2*d_samples_per_symbol - i, d_samples_per_symbol);
-                    int32_t index_correction = 0;
-                    float c = detect_upchirp(&input[i], c_window, d_samples_per_symbol / d_corr_decim_factor, &index_correction);
-                    if(c > 0.8f) {
-                        d_debug << "Cu: " << c << std::endl;
-                        samples_to_file("/tmp/detectb", &input[i], d_samples_per_symbol, sizeof(gr_complex));
-                        samples_to_file("/tmp/detect", &input[i+index_correction], d_samples_per_symbol, sizeof(gr_complex));
-                        d_corr_fails = 0;
-                        d_state = SYNC;
-                        consume_each(i+index_correction);
-                        break;
+                grad_cur = (theta4 - theta3 - theta2 + theta1) * mul;
+
+                if (grad_cur > grad_prev)
+                    rising++;
+
+                if (rising >= rising_required && grad_cur <= -20000) {
+                    // TODO: Make this a bit more logical, e.g. d_bw / decimation * 2 -> 2 steps down
+                    return i * decim_size;
+                }
+
+                #ifndef NDEBUG
+                    this->d_debug << "G:" << grad_cur << std::endl;
+                #endif
+
+                grad_prev = grad_cur;
+            }
+
+            return -1;
+        }
+
+        uint8_t decoder_impl::lookup_cr(uint8_t bytevalue) {
+            switch (bytevalue & 0x0f) {
+                case 0x01:  return 4;
+                case 0x0f:  return 3;
+                case 0x0d:  return 2;
+                case 0x0b:  return 1;
+                default:    return 4;
+            }
+        }
+
         void decoder_impl::msg_raw_chirp_debug(const gr_complex *raw_samples, uint32_t num_samples) {
             pmt::pmt_t chirp_blob = pmt::make_blob(raw_samples, sizeof(gr_complex) * num_samples);
             message_port_pub(pmt::mp("debug"), chirp_blob);
