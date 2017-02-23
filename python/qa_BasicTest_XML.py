@@ -6,7 +6,7 @@ import xmltodict
 
 from gnuradio import gr, gr_unittest, blocks
 
-TestResultData    = collections.namedtuple('TestResultData', ['fromfile', 'passing', 'total', 'rate'])
+TestResultData    = collections.namedtuple('TestResultData', ['id', 'fromfile', 'passing', 'total', 'rate'])
 TestSerieSettings = collections.namedtuple('TestSerieSettings', ['data', 'times'])
 
 class qa_BasicTest_XML (gr_unittest.TestCase):
@@ -33,7 +33,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
     #   Print received data, expected data and if they match.
     #   Also give feedback about successrate in the decoding (percentage correctly captured and decoded).
     #
-    def compareDataSets(self, total_data, expected_data, fromfile):
+    def compareDataSets(self, total_data, expected_data, fromfile, test_idx):
         global testResults
         total_passing = 0
 
@@ -56,7 +56,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 print "{0: 3d} :: mismatch:\n {1:s}".format(idx, data_str)
                 print "should be:\n {0:s}".format(expected_data[idx])
 
-        results = TestResultData(fromfile, total_passing, len(expected_data), float(total_passing) / len(expected_data) * 100.0)
+        results = TestResultData(test_idx, fromfile, total_passing, len(expected_data), float(total_passing) / len(expected_data) * 100.0)
         testResults[len(testResults) - 1].append(results)
         print ("\nPassed rate: {0:d} out of {1:d}  ({2:.2f}%)\n"
                 .format(results.passing, results.total, results.rate))
@@ -113,7 +113,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
         self.tb = None
         self.xmlTests = None
         self.server.close()
-        
+
         flog       = open(self.logFile, 'a')
         passed_t_a = 0
         passed_t   = 0
@@ -131,11 +131,11 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
             print(stro)
             flog.write(stro + '\n')
 
-            for i, x in enumerate(serie):
-                passed_t += x[1]
-                total_t  += x[2]
+            for x in serie:
+                passed_t += x.passing
+                total_t  += x.total
                 stro = ("    Test {0: 3d} :: {1:5s} {2:5s} {3:4s} {4:4s} {5:4s} :: passed {6: 3d} out of {7: 3d} ({8:6.2f}%)"
-                            .format(i, *(x[0].split('_')[1:-1] + [x[1]] + [x[2]] + [x[3]])))
+                            .format(x.id, *(x.fromfile.split('_')[1:-1] + [x.passing] + [x.total] + [x.rate])))
                 print(stro)
                 flog.write(stro + '\n')
 
@@ -158,7 +158,8 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
     #   Unit tests series from qa_BasicTest_Data.xml                                              #
     ###############################################################################################
     def test_000 (self):
-        prevData = ""
+        prevData  = ""
+        prevTimes = 0
 
         for test in self.xmlTests:
             # print (("Test {0: 3d}\n"
@@ -177,6 +178,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
             self.inputFile = str(test['file'])
             self.hasHDR    = True
             data           = test['expected-data-all']
+            times          = int(test['expected-times'])
 
             if not data:
                 data = test['expected-hdr']
@@ -187,10 +189,11 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                     data = data + " " + test['expected-data-only']
 
             if data and os.path.isfile(self.inputFile):
-                if data != prevData:
+                if (data != prevData) or (times != prevTimes):
                     testResults.append( [] )
-                    test_series.append( TestSerieSettings([data], int(test['expected-times'])) )
-                    prevData = data
+                    test_series.append( TestSerieSettings([data], times) )
+                    prevData  = data
+                    prevTimes = times
 
                 print "++++++++++  Starting test {0: 3d} from data in: \n  {1:s}\n".format(int(test['@id']), self.inputFile)
 
@@ -213,8 +216,8 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 total_data = self.gatherFromSocket(test_series[len(test_series) - 1].times)
                 self.compareDataSets(total_data,
                                      test_series[len(test_series) - 1].data * test_series[len(test_series) - 1].times,
-                                     os.path.splitext(os.path.basename(self.inputFile))[0])
-
+                                     os.path.splitext(os.path.basename(self.inputFile))[0],
+                                     int(test['@id']))
                 self.tb = None
             else:
                 print("No test data or file does not exist, skipping test {0: 3d}...".format(int(test['@id'])))
