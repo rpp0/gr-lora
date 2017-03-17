@@ -5,7 +5,26 @@
 
 namespace gr {
     namespace lora {
-
+	
+        /**
+         *  \brief  Clamp given value in the given range.
+         *
+         *  \tparam T
+         *          The type of variable to clamp.
+         *          <br>`d`, `min` and `max` must be of this type.
+         *  \param  d
+         *          The value to clamp.
+         *  \param  min
+         *          The lower bound of the range.
+         *  \param  max
+         *          The upper bound of the range.
+         */
+        template <class T>
+        inline T clamp(T d, T min, T max) {
+            const T t = d < min ? min : d;
+            return t > max ? max : t;
+        }
+	
         template <typename T>
         std::string to_bin(T v, uint32_t bitwidth) {
             unsigned long long maxpow = bitwidth ? (1ull << (bitwidth - 1)) : 0,

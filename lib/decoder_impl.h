@@ -49,9 +49,15 @@ namespace gr {
 
                 /// using std::complex = gr_complex
                 std::vector<gr_complex> d_downchirp;
-                std::vector<gr_complex> d_upchirp;
                 std::vector<float>      d_downchirp_ifreq;
+                float                   d_downchirp_avg;
+                float                   d_downchirp_stddev;
+
+                std::vector<gr_complex> d_upchirp;
                 std::vector<float>      d_upchirp_ifreq;
+                float                   d_upchirp_avg;
+                float                   d_upchirp_stddev;
+
                 std::vector<gr_complex> d_fft;
                 std::vector<gr_complex> d_mult;
 
@@ -94,13 +100,13 @@ namespace gr {
                 void    build_ideal_chirps(void);
                 void    samples_to_file(const std::string path, const gr_complex *v, uint32_t length, uint32_t elem_size);
                 void    samples_debug(const gr_complex *v, uint32_t length);
-                float   sliding_norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window, uint32_t slide, int32_t *index);
-                float   norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window);
+                float   sliding_norm_cross_correlate_upchirp(const float *samples, uint32_t window, uint32_t slide, int32_t *index);
+                float   norm_cross_correlate_downchirp(const float *samples, uint32_t window);
                 float   detect_downchirp(const gr_complex *samples, uint32_t window);
                 float   detect_upchirp(const gr_complex *samples_1, uint32_t window, uint32_t slide, int32_t *index);
                 float   cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
 
-                unsigned int get_shift_fft(gr_complex *samples);
+                unsigned int get_shift_fft(const gr_complex *samples);
 
                 void    determine_cfo(const gr_complex *samples);
                 void    correct_cfo(gr_complex *samples, uint32_t num_samples);

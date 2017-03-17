@@ -26,6 +26,7 @@
 #include <gnuradio/expj.h>
 #include <liquid/liquid.h>
 #include <numeric>
+#include <algorithm>
 #include "decoder_impl.h"
 #include "tables.h"
 #include "utilities.h"
@@ -34,7 +35,8 @@
 //#define CFO_CORRECT   1   /// Correct shift fft estimation
 
 
-#undef NDEBUG            /// Debug printing
+//#undef NDEBUG            /// Debug printing
+#include "dbugr.hpp"
 
 namespace gr {
     namespace lora {
@@ -55,8 +57,12 @@ namespace gr {
 
             if (sf < 6 || sf > 13) {
                 //throw std::invalid_argument("[LoRa Decoder] ERROR : Spreading factor should be between 6 and 12 (inclusive)!\n                       Other values are currently not supported.");
-                std::cerr << "[LoRa Decoder] ERROR : Spreading factor should be between 6 and 12 (inclusive)!\n                       Other values are currently not supported." << std::endl;
+                std::cerr << "[LoRa Decoder] ERROR : Spreading factor should be between 6 and 12 (inclusive)!" << std::endl
+                          << "                       Other values are currently not supported." << std::endl;
                 exit(1);
+            } else if (sf == 6) {
+                std::cerr << "[LoRa Decoder] WARNING : Spreading factor wrapped around to 12 due to incompatibility in hardware!" << std::endl;
+                sf = 12;
             }
 
             #ifndef NDEBUG
@@ -109,6 +115,10 @@ namespace gr {
             // Register gnuradio ports
             this->message_port_register_out(pmt::mp("frames"));
             this->message_port_register_out(pmt::mp("debug"));
+
+
+            // // Whitening empty file
+            // DBGR_QUICK_TO_FILE("/tmp/whitening_out", false, g, -1, "");
         }
 
         /**
@@ -148,8 +158,15 @@ namespace gr {
             }
 
             // Store instant. frequency
-            instantaneous_frequency(&this->d_downchirp[0], &this->d_downchirp_ifreq[0], this->d_samples_per_symbol);
-            instantaneous_frequency(&this->d_upchirp[0],   &this->d_upchirp_ifreq[0],   this->d_samples_per_symbol);
+            this->instantaneous_frequency(&this->d_downchirp[0], &this->d_downchirp_ifreq[0], this->d_samples_per_symbol);
+            this->instantaneous_frequency(&this->d_upchirp[0],   &this->d_upchirp_ifreq[0],   this->d_samples_per_symbol);
+
+            // Precalc for correlation
+            this->d_upchirp_avg      = std::accumulate(this->d_upchirp_ifreq.begin(), this->d_upchirp_ifreq.end(), 0.0f) / (float)this->d_samples_per_symbol;
+            this->d_upchirp_stddev   = this->stddev(&this->d_upchirp_ifreq[0], this->d_samples_per_symbol, this->d_upchirp_avg);
+
+            this->d_downchirp_avg    = std::accumulate(this->d_downchirp_ifreq.begin(), this->d_downchirp_ifreq.end(), 0.0f) / (float)this->d_samples_per_symbol;
+            this->d_downchirp_stddev = this->stddev(&this->d_downchirp_ifreq[0], this->d_samples_per_symbol, this->d_downchirp_avg);
 
             samples_to_file("/tmp/downchirp", &this->d_downchirp[0], this->d_downchirp.size(), sizeof(gr_complex));
             samples_to_file("/tmp/upchirp",   &this->d_upchirp[0],   this->d_upchirp.size(),   sizeof(gr_complex));
@@ -206,19 +223,24 @@ namespace gr {
         }
 
         void decoder_impl::instantaneous_frequency(const gr_complex *in_samples, float *out_ifreq, uint32_t window) {
-            float iphase[window];
-
             if (window < 2) {
                 // TODO: throw warning here
                 std::cerr << "LoRa Decoder Warning: window size < 2 !" << std::endl;
                 return;
             }
 
-            this->instantaneous_phase(in_samples, iphase, window);
+            /* instantaneous_phase */
+            float iphase_1, iphase_2;
 
-            // Instant freq
             for (uint32_t i = 1; i < window; i++) {
-                out_ifreq[i - 1] = iphase[i] - iphase[i - 1];
+                iphase_1 = std::arg(in_samples[i - 1]);
+                iphase_2 = std::arg(in_samples[i]);
+
+                // Unwrapped loops from liquid_unwrap_phase
+                while ( (iphase_2 - iphase_1) >  M_PI ) iphase_2 -= 2*M_PI;
+                while ( (iphase_2 - iphase_1) < -M_PI ) iphase_2 += 2*M_PI;
+
+                out_ifreq[i - 1] = iphase_2 - iphase_1;
             }
 
             // Make sure there is no strong gradient if this value is accessed by mistake
@@ -226,19 +248,23 @@ namespace gr {
         }
 
         inline void decoder_impl::instantaneous_phase(const gr_complex *in_samples, float *out_iphase, uint32_t window) {
-            for (uint32_t i = 0; i < window; i++) {
-                out_iphase[i] = arg(in_samples[i]);
-                // = the same as atan2(imag(in_samples[i]),real(in_samples[i]));
-            }
+            out_iphase[0] = std::arg(in_samples[0]);
 
-            liquid_unwrap_phase(out_iphase, window);
+            for (uint32_t i = 1; i < window; i++) {
+                out_iphase[i] = std::arg(in_samples[i]);
+                // = the same as atan2(imag(in_samples[i]),real(in_samples[i]));
+
+                // Unwrapped loops from liquid_unwrap_phase
+                while ( (out_iphase[i] - out_iphase[i-1]) >  M_PI ) out_iphase[i] -= 2*M_PI;
+                while ( (out_iphase[i] - out_iphase[i-1]) < -M_PI ) out_iphase[i] += 2*M_PI;
+            }
         }
 
         float decoder_impl::cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
             float result = 0.0f;
 
             for (int i = 0; i < window; i++) {
-                result += real(samples_1[i] * conj(samples_2[i]));
+                result += std::real(samples_1[i] * std::conj(samples_2[i]));
             }
 
             result /= (float)window;
@@ -249,25 +275,23 @@ namespace gr {
         float decoder_impl::detect_downchirp(const gr_complex *samples, uint32_t window) {
             float samples_ifreq[window];
 
-            instantaneous_frequency(samples, samples_ifreq, window);
-            return norm_cross_correlate(samples_ifreq, &this->d_downchirp_ifreq[0], window);
+            this->instantaneous_frequency(samples, samples_ifreq, window);
+            return this->norm_cross_correlate_downchirp(samples_ifreq, window - 1);
         }
 
         /**
          * Calculate normalized cross correlation of real values.
          * See https://en.wikipedia.org/wiki/Cross-correlation#Normalized_cross-correlation.
          */
-        float decoder_impl::norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window) {
+        float decoder_impl::norm_cross_correlate_downchirp(const float *samples, uint32_t window) {
             float result = 0.0f;
 
-            float average_1 = std::accumulate(samples_1, samples_1 + window, 0.0f) / window;
-            float average_2 = std::accumulate(samples_2, samples_2 + window, 0.0f) / window;
-            float sd_1      = stddev(samples_1, window, average_1);
-            float sd_2      = stddev(samples_2, window, average_2);
+            const float average = std::accumulate(samples, samples + window, 0.0f) / (float)(window);
+            const float sd      = this->stddev(samples, window, average);
 
-            for (uint32_t i = 0; i < window - 1; i++) {
-                result += (samples_1[i] - average_1) * (samples_2[i] - average_2)
-                          / (sd_1 * sd_2);
+            for (uint32_t i = 0; i < window; i++) {
+                result += (samples[i] - average) * (this->d_downchirp_ifreq[i] - this->d_downchirp_avg)
+                          / (sd * this->d_downchirp_stddev);
             }
 
             result /= (float)(window - 1);
@@ -275,41 +299,119 @@ namespace gr {
             return result;
         }
 
-        float decoder_impl::sliding_norm_cross_correlate(const float *samples_1, const float *samples_2, uint32_t window, uint32_t slide, int32_t *index) {
-            float correlations[slide * 2];
-            float samples_1_padded[window + slide * 2] = { 0.0f };
+        float decoder_impl::sliding_norm_cross_correlate_upchirp(const float *samples, uint32_t window, uint32_t slide, int32_t *index) {
+            (void) slide;
 
-            double average_1 = std::accumulate(samples_1, samples_1 + window, 0.0) / window;
-            double average_2 = std::accumulate(samples_2, samples_2 + window, 0.0) / window;
-            double sd_1      = stddev(samples_1, window, average_1);
-            double sd_2      = stddev(samples_2, window, average_2);
+            bool found_change = false;
+            uint32_t max = 0, min;
+            const uint32_t coeff = 16;
 
-            uint32_t i, j;
-            float result;
-
-            // Create padding on both sides of the samples
-            for (i = 0; i < window; i++) {
-                samples_1_padded[i + slide - 1] = samples_1[i];
-            }
-
-            // Slide and correlate
-            for (i = 0; i < 2 * slide; i++) {
-                result = 0.0f;
-
-                for (j = 0; j < window; j++) {
-                    result += (samples_1_padded[i + j] - average_1) * (samples_2[j] - average_2)
-                              / (sd_1 * sd_2);
+            for (uint32_t i = 0; i < window - coeff - 1; i += coeff / 2) {
+                if (samples[i] - samples[i + coeff]  > 0.2f) { // Goes down
+                    max = i;
+                    found_change = true;
+                    break;
                 }
-
-                correlations[i] = result / (float)window;
             }
 
-            // Determine best correlation
-            uint32_t argmax = (std::max_element(correlations, correlations + slide * 2) - correlations);
-            // Determine how much we have to slide before the best correlation is reached
-            *index = argmax - slide;
+            if (!found_change) {
+                return 0.0f;
+            }
 
-            return correlations[argmax];
+            max = std::max_element(samples + gr::lora::clamp((int)(max - coeff),  0, (int)window),
+                                   samples + gr::lora::clamp(max +        coeff, 0u,      window)) - samples;
+            min = std::min_element(samples + gr::lora::clamp(max +           1u, 0u,      window),
+                                   samples + gr::lora::clamp(max +   2u * coeff, 0u,      window)) - samples;
+
+            max += (min - max) / 2;
+
+            *index = max;
+
+            // Extra to allow falling edge on 99% of sample == Practically synced
+            // Should improve detection by not discarding almost synced samples, but doesn't..
+//            if ((max - coeff / 2) > (window * 0.98f)) {
+////                printf("ALREADY SYNCED\n");
+//                *index = 0;
+//                return 0.99f;
+//            }
+
+            float max_correlation = 0.0f;
+
+            const float average = std::accumulate(samples + max, samples + window, 0.0f) / (window - max);
+            const float au      = std::accumulate(&this->d_upchirp_ifreq[max], &this->d_upchirp_ifreq[window], 0.0f) / (window - max);
+            const float sd      = this->stddev(&samples[max], window - max, average) * this->stddev(&this->d_upchirp_ifreq[max], window - max, au);
+
+            for (uint32_t j = max; j < window; j++) {
+                max_correlation += (samples[j] - average) * (this->d_upchirp_ifreq[j] - au) / sd;
+            }
+
+            max_correlation /= (float)(window - max);
+            
+            return max_correlation;
+
+            /* NEWER *********************************************************************/
+            /// Perfect shift to ideal frequency
+//            const uint32_t t_low = window / 4,
+//                           t_mid = window / 2;
+
+//            // Average before compare
+//            const uint32_t coeff = 20;
+//            float avg = std::accumulate(&samples[t_mid] - coeff / 2, &samples[t_mid] + coeff / 2, 0.0f) / coeff;
+////            printf("%5d\t%12.6f\n", t_mid, avg);
+
+
+//            uint32_t idx = std::lower_bound( this->d_upchirp_ifreq.begin() + t_low,
+//                                             this->d_upchirp_ifreq.begin() + t_mid,
+//                                             avg)
+//                           - this->d_upchirp_ifreq.begin();
+//            if (idx <= t_low || idx >= t_mid) {
+//                return 0.5f;
+//            }
+//            *index = t_mid - idx;
+////            printf("idx %5d\n", idx);
+////            printf("slide with: %5d\n", idx - t_mid);
+////            printf("slide with: %5d\n", idx - t_mid - slide);
+//            printf("slide with: %5d\n", *index);
+
+//            return 0.9f;
+            /****************************************************************************/
+
+             /* OLD *********************************************************************/
+//            float samples_1_padded[window + slide * 2] = { 0.0f };
+
+//            float average = std::accumulate(samples, samples + window, 0.0f) / window;
+//            float sd      = this->stddev(samples, window, average);
+
+//            uint32_t i, j, max_cor_idx  = -1;
+//            float result, max_correlation = -1000.0f;
+
+//            // Create padding on both sides of the samples
+//            for (i = 0; i < window; i++) {
+//                samples_1_padded[i + slide - 1] = samples[i];
+//            }
+
+//            // Slide and correlate
+//            for (i = 0; i < 2 * slide; i++) {
+//                result = 0.0f;
+
+//                for (j = 0; j < window; j++) {
+//                    result += (samples_1_padded[i + j] - average) * (this->d_upchirp_ifreq[j] - this->d_upchirp_avg)
+//                              / (sd * this->d_upchirp_stddev);
+//                }
+
+//                // Determine best correlation
+//                result /= (float)window;
+//                if (result > max_correlation) {
+//                    max_correlation = result;
+//                    max_cor_idx = i;
+//                }
+//            }
+
+//            // Determine how much we have to slide before the best correlation is reached
+//            *index = max_cor_idx - slide;
+////            printf("slide with: %5d\n", *index);
+//            return max_correlation;
+             /****************************************************************************/
         }
 
         float decoder_impl::stddev(const float *values, uint32_t len, float mean) {
@@ -327,11 +429,12 @@ namespace gr {
         float decoder_impl::detect_upchirp(const gr_complex *samples, uint32_t window, uint32_t slide, int32_t *index) {
             float samples_ifreq[window];
 
-            instantaneous_frequency(samples, samples_ifreq, window);
-            return sliding_norm_cross_correlate(samples_ifreq, &this->d_upchirp_ifreq[0], window, slide, index);
+            this->instantaneous_frequency(samples, samples_ifreq, window);
+
+            return this->sliding_norm_cross_correlate_upchirp(samples_ifreq, window, slide, index);
         }
 
-        unsigned int decoder_impl::get_shift_fft(gr_complex *samples) {
+        unsigned int decoder_impl::get_shift_fft(const gr_complex *samples) {
             float      fft_mag[this->d_number_of_bins];
             gr_complex mult_hf[this->d_samples_per_symbol];
 
@@ -347,7 +450,7 @@ namespace gr {
 
             // Multiply with ideal downchirp
             for (uint32_t i = 0; i < this->d_samples_per_symbol; i++) {
-                mult_hf[i] = conj(samples[i] * this->d_downchirp[i]);
+                mult_hf[i] = std::conj(samples[i] * this->d_downchirp[i]);
             }
 
             samples_to_file("/tmp/mult", &mult_hf[0], this->d_samples_per_symbol, sizeof(gr_complex));
@@ -382,7 +485,7 @@ namespace gr {
 
             // Determine instant phase
             for (unsigned int i = 0; i < this->d_samples_per_symbol; i++) {
-                instantaneous_phase[i] = arg(samples[i]);
+                instantaneous_phase[i] = std::arg(samples[i]);
             }
 
             liquid_unwrap_phase(instantaneous_phase, this->d_samples_per_symbol);
@@ -407,7 +510,7 @@ namespace gr {
 
                 avg /= (float)osr;
 
-                float diff = abs(last_avg - avg);
+                const float diff = abs(last_avg - avg);
 
                 if (diff > max_if_diff) {
                     max_if_diff     = diff;
@@ -424,18 +527,16 @@ namespace gr {
 
         bool decoder_impl::demodulate(gr_complex *samples, bool is_header) {
             unsigned int bin_idx = this->max_frequency_gradient_idx(samples);
-            //unsigned int bin_idx = get_shift_fft(samples);
-            //unsigned int bin_idx_test = get_shift_fft(samples);
             unsigned int bin_idx_test = 0;
 
             // Header has additional redundancy
             if (is_header) {
-                bin_idx      /= 4;
-                bin_idx_test /= 4;
+                bin_idx      /= 4u;
+                bin_idx_test /= 4u;
             }
 
             // Decode (actually gray encode) the bin to get the symbol value
-            unsigned int word = gray_encode(bin_idx);
+            unsigned int word = /* LiquidDSP:: */ gray_encode(bin_idx);
             #ifndef NDEBUG
                 this->d_debug << gr::lora::to_bin(word, is_header ? this->d_sf - 2 : this->d_sf) << " " << bin_idx  << std::endl;
             #endif
@@ -453,7 +554,7 @@ namespace gr {
         }
 
         void decoder_impl::deinterleave(uint32_t ppm) {
-            unsigned int bits_per_word = this->d_words.size();
+            const unsigned int bits_per_word = this->d_words.size();
 
             if (bits_per_word > 8) {
                 // Not sure if this can ever occur. It would imply coding rate high than 4/8 e.g. 4/9.
@@ -469,15 +570,15 @@ namespace gr {
                 offset_diag = offset_start;
 
                 for (unsigned int j = 0; j < bits_per_word; j++) {
-                    uint8_t power = 1 << j;
-                    unsigned int power_check = 1 << offset_diag;
+                    const uint8_t power = 1 << j;
+                    const unsigned int power_check = 1 << offset_diag;
 
                     if (this->d_words[j] & power_check) { // Mask triggers
                         d += power;
                     }
 
-                    if (offset_diag)    offset_diag--;
-                    else                offset_diag = ppm - 1;
+                    if (offset_diag) offset_diag--;
+                    else             offset_diag = ppm - 1;
                 }
 
                 offset_start--;
@@ -578,6 +679,10 @@ namespace gr {
         void decoder_impl::dewhiten(const uint8_t *prng) {
             uint32_t i, len = this->d_words_deshuffled.size();
 
+            // // Whitening out
+            // if (prng != gr::lora::prng_header)
+                // DBGR_QUICK_TO_FILE("/tmp/whitening_out", true, this->d_words_deshuffled, len, "0x%02X,");
+
             for (i = 0; i < len; i++) {
                 uint8_t xor_b = this->d_words_deshuffled[i] ^ prng[i];
 
@@ -677,45 +782,68 @@ namespace gr {
         int decoder_impl::find_preamble_start_fast(gr_complex *samples, uint32_t len) {
             (void) len;
 
-            const uint32_t decimation = this->d_corr_decim_factor;
+            const uint32_t decimation = this->d_corr_decim_factor * 4;
             const uint32_t decim_size = this->d_samples_per_symbol / decimation;
+            const float detect_thresh = 0.01f;
 
-            const float mul = (float)this->d_samples_per_second / (2.0f * M_PI);
-            uint32_t rising = 0;
-            static const uint32_t rising_required = 2;
-
-            float theta1, theta2, theta3, theta4,
-                  grad_prev = 0.0f, grad_cur;
-
-            for (uint32_t i = 1; i < decimation; i++) {
-                theta1 =          arg(samples[ (i - 1) * decim_size ]);
-                theta2 = theta3 = arg(samples[  i      * decim_size ]);
-                theta4 =          arg(samples[ (i + 1) * decim_size ]);
-
-                // Unwrap phase
-                while ( (theta2 - theta1) >  M_PI ) theta2 -= 2*M_PI;
-                while ( (theta2 - theta1) < -M_PI ) theta2 += 2*M_PI;
-                while ( (theta4 - theta3) >  M_PI ) theta4 -= 2*M_PI;
-                while ( (theta4 - theta3) < -M_PI ) theta4 += 2*M_PI;
-
-                grad_cur = (theta4 - theta3 - theta2 + theta1) * mul;
-
-                if (grad_cur > grad_prev)
-                    rising++;
-
-                if (rising >= rising_required && grad_cur <= -20000) {
-                    // TODO: Make this a bit more logical, e.g. d_bw / decimation * 2 -> 2 steps down
+            // Absolute value
+            for (uint32_t i = 1; i < decimation - 1; i++) {
+                if (    std::abs(samples[ i      * decim_size]) > detect_thresh
+                    &&  std::abs(samples[(i - 1) * decim_size]) < std::abs(samples[i * decim_size])
+                    &&  std::abs(samples[(i + 1) * decim_size]) > std::abs(samples[i * decim_size])
+                   ) {
                     return i * decim_size;
                 }
-
-                #ifndef NDEBUG
-                    this->d_debug << "G:" << grad_cur << std::endl;
-                #endif
-
-                grad_prev = grad_cur;
             }
 
             return -1;
+
+            /* OLD ****************************************************************************/
+//            const uint32_t decimation = this->d_corr_decim_factor;
+//            const uint32_t decim_size = this->d_samples_per_symbol / decimation;
+
+//            if (std::abs(samples[ this->d_samples_per_symbol / 2]) > 0.01f) {
+
+//                const float mul = (float)this->d_samples_per_second / (2.0f * M_PI);
+//                uint32_t rising = 0;
+//                static const uint32_t rising_required = 2;
+
+//                float theta1, theta2, theta3, theta4,
+//                      grad_prev = 0.0f, grad_cur;
+
+//                for (uint32_t i = 1; i < decimation-1; i++) {
+//                    theta1 =          std::arg(samples[ (i - 1) * decim_size ]);
+//                    theta2 = theta3 = std::arg(samples[  i      * decim_size ]);
+//                    theta4 =          std::arg(samples[ (i + 1) * decim_size ]);
+
+//                    // Unwrap phase
+//                    while ( (theta2 - theta1) >  M_PI ) theta2 -= 2*M_PI;
+//                    while ( (theta2 - theta1) < -M_PI ) theta2 += 2*M_PI;
+//                    while ( (theta4 - theta3) >  M_PI ) theta4 -= 2*M_PI;
+//                    while ( (theta4 - theta3) < -M_PI ) theta4 += 2*M_PI;
+
+//                    /* - grad_prev --> happens in old code, but is less reliable? */
+//                    grad_cur = (theta4 - theta3 - theta2 + theta1) * mul /* - grad_prev */;
+
+//                    if (grad_cur > grad_prev)
+//                        rising++;
+
+//                    if (rising >= rising_required && grad_cur <= -20000) {
+//                        // TODO: Make this a bit more logical, e.g. d_bw / decimation * 2 -> 2 steps down
+//                        return i * decim_size;
+//                    }
+
+//                    #ifndef NDEBUG
+//                        this->d_debug << "G:" << grad_cur << std::endl;
+//                    #endif
+
+//                    grad_prev = grad_cur;
+//                }
+
+//            }
+//            return -1;
+            /**********************************************************************************/
+
         }
 
         uint8_t decoder_impl::lookup_cr(uint8_t bytevalue) {
@@ -751,10 +879,16 @@ namespace gr {
                 case gr::lora::DecoderState::DETECT: {
                     int i = this->find_preamble_start_fast(&input[0], 2 * this->d_samples_per_symbol);
 
+
                     if (i != -1) {
-                        uint32_t c_window = std::min(2 * this->d_samples_per_symbol - i,
-                                                     this->d_samples_per_symbol);
+                        // BUG: (2*d_samples_per_symbol - i) always bigger than d_samples_per_symbol
+                        //      Thus c_window is always d_samples_per_symbol?
+//                        uint32_t c_window = std::min(2 * this->d_samples_per_symbol - i,
+//                                                     this->d_samples_per_symbol);
+                        uint32_t c_window = this->d_samples_per_symbol;
+
                         int32_t index_correction = 0;
+
                         float c = this->detect_upchirp(&input[i],
                                                        c_window,
                                                        this->d_samples_per_symbol / this->d_corr_decim_factor,
@@ -790,6 +924,8 @@ namespace gr {
                         // Debug stuff
                         this->samples_to_file("/tmp/sync", &input[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
+                        printf("---------------------- SYNC!\n");
+
                         this->d_state = gr::lora::DecoderState::PAUSE;
                     } else {
                         this->d_corr_fails++;
@@ -808,7 +944,6 @@ namespace gr {
 
                 case gr::lora::DecoderState::PAUSE: {
                     this->d_state = gr::lora::DecoderState::DECODE_HEADER;
-
                     //samples_debug(input, d_samples_per_symbol + d_delay_after_sync);
                     this->consume_each(this->d_samples_per_symbol + this->d_delay_after_sync);
                     break;
@@ -828,11 +963,11 @@ namespace gr {
                         this->d_payload_length  = decoded[0];
                         this->d_cr              = this->lookup_cr(decoded[1]);
 
-                        int symbols_per_block   = this->d_cr + 4;
-                        int bits_needed         = this->d_payload_length * 8 + 16;
-                        float symbols_needed    = float(bits_needed) * (symbols_per_block / 4.0f) / float(this->d_sf);
-                        int blocks_needed       = ceil(symbols_needed / symbols_per_block);
-                        this->d_payload_symbols = blocks_needed * symbols_per_block;
+                        const int symbols_per_block = this->d_cr + 4;
+                        const float bits_needed     = float(this->d_payload_length) * 8.0f + 16.0f;
+                        const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(this->d_sf);
+                        const int blocks_needed     = std::ceil(symbols_needed / symbols_per_block);
+                        this->d_payload_symbols     = blocks_needed * symbols_per_block;
 
                         #ifndef NDEBUG
                             this->d_debug << "LEN: " << this->d_payload_length << " (" << this->d_payload_symbols << " symbols)" << std::endl;
@@ -868,6 +1003,7 @@ namespace gr {
                 }
 
                 case gr::lora::DecoderState::STOP: {
+
                     this->consume_each(this->d_samples_per_symbol);
                     break;
                 }

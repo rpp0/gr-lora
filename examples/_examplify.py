@@ -151,7 +151,6 @@ class Examplify:
 
         f.close()
 
-
 if __name__ == '__main__':
     e = Examplify(6, "4/7", './lora-samples/', 'hackrf')
 

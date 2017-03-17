@@ -682,6 +682,8 @@
 #include <gnuradio/io_signature.h>
 #include "message_socket_sink_impl.h"
 
+#define NDEBUG            /// Debug printing
+
 namespace gr {
     namespace lora {
 
