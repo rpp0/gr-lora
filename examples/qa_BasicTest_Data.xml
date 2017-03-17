@@ -504,7 +504,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>1</expected-times>
     </TEST>
-    <TEST id="61">
+    <TEST id="64">
         <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_009.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
@@ -512,7 +512,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="62">
+    <TEST id="65">
         <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_009.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
@@ -520,7 +520,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="63">
+    <TEST id="66">
         <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_009.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
@@ -528,7 +528,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="64">
+    <TEST id="67">
         <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_009.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
@@ -536,7 +536,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="65">
+    <TEST id="68">
         <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_009.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
@@ -544,7 +544,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="66">
+    <TEST id="69">
         <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_009.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
@@ -552,7 +552,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="67">
+    <TEST id="70">
         <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_009.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
@@ -560,7 +560,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>5</expected-times>
     </TEST>
-    <TEST id="68">
+    <TEST id="71">
         <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_010.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
@@ -568,7 +568,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>
-    <TEST id="69">
+    <TEST id="72">
         <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_010.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
@@ -576,7 +576,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>
-    <TEST id="70">
+    <TEST id="73">
         <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_010.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
@@ -584,7 +584,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>
-    <TEST id="71">
+    <TEST id="74">
         <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_010.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
@@ -592,7 +592,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>
-    <TEST id="72">
+    <TEST id="75">
         <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_010.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
@@ -600,7 +600,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>
-    <TEST id="73">
+    <TEST id="76">
         <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_010.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
@@ -608,7 +608,7 @@
         <expected-data-only>88 88 88 88</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>
-    <TEST id="74">
+    <TEST id="77">
         <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_010.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
