@@ -70,10 +70,10 @@ namespace gr {
                 this->d_debug.open("/tmp/grlora_debug_txt", std::ios::out);
             #endif
 
-            this->d_bw                 = 125000;
+            this->d_bw                 = 125000u;
             this->d_cr                 = 4;
             this->d_samples_per_second = samp_rate;
-            this->d_corr_decim_factor  = 8; // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
+            this->d_corr_decim_factor  = 8u; // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
             this->d_payload_symbols    = 0;
             this->d_cfo_estimation     = 0.0f;
             this->d_dt                 = 1.0f / this->d_samples_per_second;
@@ -105,7 +105,7 @@ namespace gr {
             float g[DECIMATOR_FILTER_SIZE];
             liquid_firdes_rrcos(8, 1, 0.5f, 0.3f, g); // Filter for interpolating
 
-            for (uint32_t i = 0; i < DECIMATOR_FILTER_SIZE; i++) // Reverse it to get decimation filter
+            for (uint32_t i = 0u; i < DECIMATOR_FILTER_SIZE; i++) // Reverse it to get decimation filter
                 this->d_decim_h[i] = g[DECIMATOR_FILTER_SIZE - i - 1];
 
             this->d_decim_factor = this->d_samples_per_symbol / this->d_number_of_bins;
@@ -149,7 +149,7 @@ namespace gr {
             double t;
             gr_complex cmx       = gr_complex(1.0f, 1.0f);
 
-            for (uint32_t i = 0; i < this->d_samples_per_symbol; i++) {
+            for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
                 // Width in number of samples = samples_per_symbol
                 // See https://en.wikipedia.org/wiki/Chirp#Linear
                 t = this->d_dt * i;
@@ -178,7 +178,7 @@ namespace gr {
                 out_file.open(path.c_str(), std::ios::out | std::ios::binary);
 
                 //for(std::vector<gr_complex>::const_iterator it = v.begin(); it != v.end(); ++it) {
-                for (uint32_t i = 0; i < length; i++) {
+                for (uint32_t i = 0u; i < length; i++) {
                     out_file.write(reinterpret_cast<const char *>(&v[i]), elem_size);
                 }
 
@@ -205,11 +205,11 @@ namespace gr {
             #endif
         }
 
-        bool decoder_impl::calc_energy_threshold(gr_complex *samples, int window_size, float threshold) {
+        bool decoder_impl::calc_energy_threshold(gr_complex *samples, uint32_t window_size, float threshold) {
             float result = 0.0f;
 
-            for (int i = 0; i < window_size; i++) {
-                float magn = abs(samples[i]);
+            for (uint32_t i = 0u; i < window_size; i++) {
+                const float magn = abs(samples[i]);
                 result += magn * magn;
             }
 
@@ -237,8 +237,8 @@ namespace gr {
                 iphase_2 = std::arg(in_samples[i]);
 
                 // Unwrapped loops from liquid_unwrap_phase
-                while ( (iphase_2 - iphase_1) >  M_PI ) iphase_2 -= 2*M_PI;
-                while ( (iphase_2 - iphase_1) < -M_PI ) iphase_2 += 2*M_PI;
+                while ( (iphase_2 - iphase_1) >  M_PI ) iphase_2 -= 2.0f*M_PI;
+                while ( (iphase_2 - iphase_1) < -M_PI ) iphase_2 += 2.0f*M_PI;
 
                 out_ifreq[i - 1] = iphase_2 - iphase_1;
             }
@@ -255,15 +255,15 @@ namespace gr {
                 // = the same as atan2(imag(in_samples[i]),real(in_samples[i]));
 
                 // Unwrapped loops from liquid_unwrap_phase
-                while ( (out_iphase[i] - out_iphase[i-1]) >  M_PI ) out_iphase[i] -= 2*M_PI;
-                while ( (out_iphase[i] - out_iphase[i-1]) < -M_PI ) out_iphase[i] += 2*M_PI;
+                while ( (out_iphase[i] - out_iphase[i-1]) >  M_PI ) out_iphase[i] -= 2.0f*M_PI;
+                while ( (out_iphase[i] - out_iphase[i-1]) < -M_PI ) out_iphase[i] += 2.0f*M_PI;
             }
         }
 
-        float decoder_impl::cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window) {
+        float decoder_impl::cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, uint32_t window) {
             float result = 0.0f;
 
-            for (int i = 0; i < window; i++) {
+            for (uint32_t i = 0u; i < window; i++) {
                 result += std::real(samples_1[i] * std::conj(samples_2[i]));
             }
 
@@ -289,7 +289,7 @@ namespace gr {
             const float average = std::accumulate(samples, samples + window, 0.0f) / (float)(window);
             const float sd      = this->stddev(samples, window, average);
 
-            for (uint32_t i = 0; i < window; i++) {
+            for (uint32_t i = 0u; i < window; i++) {
                 result += (samples[i] - average) * (this->d_downchirp_ifreq[i] - this->d_downchirp_avg)
                           / (sd * this->d_downchirp_stddev);
             }
@@ -303,10 +303,10 @@ namespace gr {
             (void) slide;
 
             bool found_change = false;
-            uint32_t max = 0, min;
-            const uint32_t coeff = 16;
+            uint32_t max = 0u, min;
+            const uint32_t coeff = 16u;
 
-            for (uint32_t i = 0; i < window - coeff - 1; i += coeff / 2) {
+            for (uint32_t i = 0u; i < window - coeff - 1u; i += coeff / 2u) {
                 if (samples[i] - samples[i + coeff]  > 0.2f) { // Goes down
                     max = i;
                     found_change = true;
@@ -417,7 +417,7 @@ namespace gr {
         float decoder_impl::stddev(const float *values, uint32_t len, float mean) {
             float variance = 0.0f, temp;
 
-            for (unsigned int i = 0; i < len; i++) {
+            for (uint32_t i = 0u; i < len; i++) {
                 temp = values[i] - mean;
                 variance += temp * temp;
             }
@@ -449,14 +449,14 @@ namespace gr {
             samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
             // Multiply with ideal downchirp
-            for (uint32_t i = 0; i < this->d_samples_per_symbol; i++) {
+            for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
                 mult_hf[i] = std::conj(samples[i] * this->d_downchirp[i]);
             }
 
             samples_to_file("/tmp/mult", &mult_hf[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
             // Perform decimation
-            for (uint32_t i = 0; i < this->d_number_of_bins; i++) {
+            for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
                 firdecim_crcf_execute(this->d_decim, &mult_hf[this->d_decim_factor * i], &d_mult[i]);
             }
 
@@ -466,8 +466,8 @@ namespace gr {
             fft_execute(this->d_q);
 
             // Get magnitude
-            for (uint32_t i = 0; i < this->d_number_of_bins; i++) {
-                fft_mag[i] = abs(this->d_fft[i]);
+            for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
+                fft_mag[i] = std::abs(this->d_fft[i]);
             }
 
             samples_to_file("/tmp/fft", &this->d_fft[0], this->d_number_of_bins, sizeof(gr_complex));
@@ -477,40 +477,42 @@ namespace gr {
         }
 
         unsigned int decoder_impl::max_frequency_gradient_idx(gr_complex *samples) {
-            float instantaneous_phase[this->d_samples_per_symbol];
             float instantaneous_freq [this->d_samples_per_symbol];
-            //float bins[this->d_number_of_bins];
+            float iphase_1, iphase_2;
+            const float  div             = (float)this->d_samples_per_second / (2.0f * M_PI);
+            float        max_if_diff     = 2000.0f;
+            unsigned int max_if_diff_idx = 0u;
 
             samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
-            // Determine instant phase
-            for (unsigned int i = 0; i < this->d_samples_per_symbol; i++) {
-                instantaneous_phase[i] = std::arg(samples[i]);
+									  
+            for (uint32_t i = 1u; i < this->d_samples_per_symbol; i++) {
+                iphase_1 = std::arg(samples[i - 1]);
+                iphase_2 = std::arg(samples[i]);
+
+																				 
+
+                // Unwrapped loops from liquid_unwrap_phase
+                while ( (iphase_2 - iphase_1) >  M_PI ) iphase_2 -= 2.0f*M_PI;
+                while ( (iphase_2 - iphase_1) < -M_PI ) iphase_2 += 2.0f*M_PI;
+
+																		   
+                instantaneous_freq[i - 1] = (iphase_2 - iphase_1) * div;
             }
 
-            liquid_unwrap_phase(instantaneous_phase, this->d_samples_per_symbol);
+            const uint32_t osr = this->d_samples_per_symbol / this->d_number_of_bins;
+            float last_avg     = instantaneous_freq[0];
 
-            float max_if_diff            = 2000.0f;
-            unsigned int max_if_diff_idx = 0;
-            const double div             = (double)this->d_samples_per_second / (2.0f * M_PI);
-
-            for (unsigned int i = 1; i < this->d_samples_per_symbol; i++) {
-                instantaneous_freq[i - 1] = (float)((instantaneous_phase[i] - instantaneous_phase[i - 1]) * div);
-            }
-
-            uint32_t osr   = this->d_samples_per_symbol / this->d_number_of_bins;
-            float last_avg = instantaneous_freq[0];
-
-            for (unsigned int i = 0; i < this->d_number_of_bins; i++) {
+            for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
                 float avg = 0.0f;
 
-                for (unsigned int j = 0; j < osr; j++) {
+                for (uint32_t j = 0u; j < osr; j++) {
                     avg += instantaneous_freq[(osr * i) + j];
                 }
 
                 avg /= (float)osr;
 
-                const float diff = abs(last_avg - avg);
+                const float diff = std::fabs(last_avg - avg);
 
                 if (diff > max_if_diff) {
                     max_if_diff     = diff;
@@ -526,9 +528,9 @@ namespace gr {
         }
 
         bool decoder_impl::demodulate(gr_complex *samples, bool is_header) {
-            unsigned int bin_idx = this->max_frequency_gradient_idx(samples);
-            unsigned int bin_idx_test = 0;
-
+            uint32_t bin_idx = this->max_frequency_gradient_idx(samples);
+            uint32_t bin_idx_test = 0u;
+															
             // Header has additional redundancy
             if (is_header) {
                 bin_idx      /= 4u;
@@ -556,29 +558,29 @@ namespace gr {
         void decoder_impl::deinterleave(uint32_t ppm) {
             const unsigned int bits_per_word = this->d_words.size();
 
-            if (bits_per_word > 8) {
+            if (bits_per_word > 8u) {
                 // Not sure if this can ever occur. It would imply coding rate high than 4/8 e.g. 4/9.
                 std::cerr << "More than 8 bits per word. uint8_t will not be sufficient! Bytes need to be stored in intermediate array and then packed into words_deinterleaved!" << std::endl;
             }
 
             std::deque<uint8_t> words_deinterleaved;
-            unsigned int offset_start = ppm - 1, offset_diag, i;
+            uint32_t offset_start = ppm - 1u, offset_diag, i;
             uint8_t d;
 
-            for (i = 0; i < ppm; i++) {
+            for (i = 0u; i < ppm; i++) {
                 d = 0;
                 offset_diag = offset_start;
 
-                for (unsigned int j = 0; j < bits_per_word; j++) {
-                    const uint8_t power = 1 << j;
-                    const unsigned int power_check = 1 << offset_diag;
+                for (uint32_t j = 0u; j < bits_per_word; j++) {
+                    const uint8_t  power       = 1u << j;
+                    const uint32_t power_check = 1u << offset_diag;
 
                     if (this->d_words[j] & power_check) { // Mask triggers
                         d += power;
                     }
 
                     if (offset_diag) offset_diag--;
-                    else             offset_diag = ppm - 1;
+                    else             offset_diag = ppm - 1u;
                 }
 
                 offset_start--;
@@ -625,7 +627,7 @@ namespace gr {
             // Print result
             std::stringstream result;
 
-            for (uint32_t i = 0; i < this->d_payload_length; i++) {
+            for (uint32_t i = 0u; i < this->d_payload_length; i++) {
                 result << " " << std::hex << std::setw(2) << std::setfill('0') << (int)out_data[i];
             }
 
@@ -649,11 +651,11 @@ namespace gr {
             const uint32_t len       = sizeof(shuffle_pattern) / sizeof(uint8_t);
             uint8_t original, result;
 
-            for (uint32_t i = 0; i < to_decode; i++) {
+            for (uint32_t i = 0u; i < to_decode; i++) {
                 original = this->d_demodulated[i];
                 result   = 0;
 
-                for (uint32_t j = 0; j < len; j++) {
+                for (uint32_t j = 0u; j < len; j++) {
                     if (original & (1 << shuffle_pattern[j])) {
                         result |= 1 << j;
                     }
@@ -683,7 +685,7 @@ namespace gr {
             // if (prng != gr::lora::prng_header)
                 // DBGR_QUICK_TO_FILE("/tmp/whitening_out", true, this->d_words_deshuffled, len, "0x%02X,");
 
-            for (i = 0; i < len; i++) {
+            for (i = 0u; i < len; i++) {
                 uint8_t xor_b = this->d_words_deshuffled[i] ^ prng[i];
 
                 // TODO: reverse bit order is performed here,
@@ -728,8 +730,8 @@ namespace gr {
             fec_destroy(hamming);*/
         }
 
-        void decoder_impl::nibble_reverse(uint8_t *out_data, int len) {
-            for (int i = 0; i < len; i++) {
+        void decoder_impl::nibble_reverse(uint8_t *out_data, uint32_t len) {
+            for (uint32_t i = 0u; i < len; i++) {
                 out_data[i] = ((out_data[i] & 0x0f) << 4) | ((out_data[i] & 0xf0) >> 4);
             }
         }
@@ -740,7 +742,7 @@ namespace gr {
             double div = (double) this->d_samples_per_second / (2.0f * M_PI);
 
             // Determine instant phase
-            for (unsigned int i = 0; i < this->d_samples_per_symbol; i++) {
+            for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
                 instantaneous_phase[i] = arg(samples[i]);
             }
 
@@ -753,11 +755,11 @@ namespace gr {
 
             float sum = 0.0f;
 
-            for (uint32_t i = 1; i < this->d_samples_per_symbol; i++) {
-                sum += (float)((instantaneous_phase[i] - instantaneous_phase[i - 1]) * div);
+            for (uint32_t i = 1u; i < this->d_samples_per_symbol; i++) {
+                sum += (float)((instantaneous_phase[i] - instantaneous_phase[i - 1u]) * div);
             }
 
-            this->d_cfo_estimation = sum / (float)(this->d_samples_per_symbol - 1);
+            this->d_cfo_estimation = sum / (float)(this->d_samples_per_symbol - 1u);
 
             /*d_cfo_estimation = (*std::max_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1) + *std::min_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1)) / 2;*/
         }
@@ -765,13 +767,13 @@ namespace gr {
         void decoder_impl::correct_cfo(gr_complex *samples, uint32_t num_samples) {
             const float mul = 2.0f * M_PI * -this->d_cfo_estimation * this->d_dt;
 
-            for (uint32_t i = 0; i < num_samples; i++) {
+            for (uint32_t i = 0u; i < num_samples; i++) {
                 samples[i] *= gr_expj(mul * i);
             }
         }
 
         int decoder_impl::find_preamble_start(gr_complex *samples) {
-            for (uint32_t i = 0; i < this->d_samples_per_symbol; i++) {
+            for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
                 if (!this->get_shift_fft(&samples[i]))
                     return i;
             }
@@ -782,15 +784,15 @@ namespace gr {
         int decoder_impl::find_preamble_start_fast(gr_complex *samples, uint32_t len) {
             (void) len;
 
-            const uint32_t decimation = this->d_corr_decim_factor * 4;
+            const uint32_t decimation = this->d_corr_decim_factor * 4u;
             const uint32_t decim_size = this->d_samples_per_symbol / decimation;
             const float detect_thresh = 0.01f;
 
             // Absolute value
-            for (uint32_t i = 1; i < decimation - 1; i++) {
-                if (    std::abs(samples[ i      * decim_size]) > detect_thresh
-                    &&  std::abs(samples[(i - 1) * decim_size]) < std::abs(samples[i * decim_size])
-                    &&  std::abs(samples[(i + 1) * decim_size]) > std::abs(samples[i * decim_size])
+            for (uint32_t i = 1u; i < decimation - 1u; i++) {
+                if (    std::abs(samples[ i       * decim_size]) > detect_thresh
+                    &&  std::abs(samples[(i - 1u) * decim_size]) < std::abs(samples[i * decim_size])
+                    &&  std::abs(samples[(i + 1u) * decim_size]) > std::abs(samples[i * decim_size])
                    ) {
                     return i * decim_size;
                 }
@@ -817,10 +819,10 @@ namespace gr {
 //                    theta4 =          std::arg(samples[ (i + 1) * decim_size ]);
 
 //                    // Unwrap phase
-//                    while ( (theta2 - theta1) >  M_PI ) theta2 -= 2*M_PI;
-//                    while ( (theta2 - theta1) < -M_PI ) theta2 += 2*M_PI;
-//                    while ( (theta4 - theta3) >  M_PI ) theta4 -= 2*M_PI;
-//                    while ( (theta4 - theta3) < -M_PI ) theta4 += 2*M_PI;
+//                    while ( (theta2 - theta1) >  M_PI ) theta2 -= 2.0f*M_PI;
+//                    while ( (theta2 - theta1) < -M_PI ) theta2 += 2.0f*M_PI;
+//                    while ( (theta4 - theta3) >  M_PI ) theta4 -= 2.0f*M_PI;
+//                    while ( (theta4 - theta3) < -M_PI ) theta4 += 2.0f*M_PI;
 
 //                    /* - grad_prev --> happens in old code, but is less reliable? */
 //                    grad_cur = (theta4 - theta3 - theta2 + theta1) * mul /* - grad_prev */;
@@ -900,14 +902,17 @@ namespace gr {
                             #endif
                             this->samples_to_file("/tmp/detectb", &input[i],                    this->d_samples_per_symbol, sizeof(gr_complex));
                             this->samples_to_file("/tmp/detect",  &input[i + index_correction], this->d_samples_per_symbol, sizeof(gr_complex));
-                            this->d_corr_fails = 0;
+                            this->d_corr_fails = 0u;
                             this->d_state = gr::lora::DecoderState::SYNC;
                             this->consume_each(i + index_correction);
                             break;
                         }
+                        // Consume just 1 sample after preamble to have more chances to sync later
+                        this->consume_each(i + this->d_samples_per_symbol);
+                    } else {
+                        // Consume 2 samples (usual) to skip noise faster before preamble has been found
+                        this->consume_each(2 * this->d_samples_per_symbol);
                     }
-
-                    this->consume_each(2 * this->d_samples_per_symbol);
                     break;
                 }
 
@@ -955,7 +960,7 @@ namespace gr {
                     if (this->demodulate(input, true)) {
                         uint8_t decoded[3];
                         // TODO: A bit messy. I think it's better to make an internal decoded std::vector
-                        this->d_payload_length  = 3;
+                        this->d_payload_length  = 3u;
 
                         this->decode(decoded, true);
 
@@ -966,7 +971,7 @@ namespace gr {
                         const int symbols_per_block = this->d_cr + 4;
                         const float bits_needed     = float(this->d_payload_length) * 8.0f + 16.0f;
                         const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(this->d_sf);
-                        const int blocks_needed     = std::ceil(symbols_needed / symbols_per_block);
+                        const int blocks_needed     = (int)std::ceil(symbols_needed / symbols_per_block);
                         this->d_payload_symbols     = blocks_needed * symbols_per_block;
 
                         #ifndef NDEBUG

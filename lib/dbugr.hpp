@@ -40,21 +40,21 @@
             DBGR_out_file.open("/tmp/DBGR.txt", std::ios::out);                                                 \
                                                                                                                 \
                                                                                                                 \
-            printf("DBGR_Ideal\n");                                                                             \
+            /*printf("DBGR_Ideal\n");*/                                                                             \
             for (DBGR_j = 0; DBGR_j < int32_t(WINDOW); DBGR_j++) {                                              \
                 sprintf(DBGR_buf, "%f\n", IDEAL_SIG_FP[DBGR_j]);                                                \
                 DBGR_out_file.write(DBGR_buf,   strlen(DBGR_buf));                                              \
             }   DBGR_out_file.write(DBGR_delim, strlen(DBGR_delim));                                            \
                                                                                                                 \
-            printf("%s", DBGR_delim);                                                                           \
+            /*printf("%s", DBGR_delim);*/                                                                           \
                                                                                                                 \
-            printf("DBGR_Before\n");                                                                            \
+            /*printf("DBGR_Before\n");*/                                                                            \
             for (DBGR_j = 0; DBGR_j < int32_t(WINDOW); DBGR_j++) {                                              \
                 sprintf(DBGR_buf, "%f\n", gr::lora::clamp(SAMPLE_SIG_FP[DBGR_j], -0.5f, 0.5f));                 \
                 DBGR_out_file.write(DBGR_buf,   strlen(DBGR_buf));                                              \
             }   DBGR_out_file.write(DBGR_delim, strlen(DBGR_delim));                                            \
                                                                                                                 \
-            printf("%s", DBGR_delim);                                                                           \
+            /*printf("%s", DBGR_delim);*/                                                                           \
                                                                                                                 \
             printf("DBGR_After %d of %d in %d\n", MIN, MAX, WINDOW);                                            \
             for (DBGR_j = OFFSET; DBGR_j < int32_t(OFFSET > 0 ? WINDOW : MAX); DBGR_j++) {                      \
@@ -73,7 +73,7 @@
                 printf("%s", DBGR_delim);                                                                       \
             }*/                                                                                                 \
                                                                                                                 \
-            printf("DBGR_End\n");                                                                               \
+            /*printf("DBGR_End\n");*/                                                                               \
             DBGR_out_file.close();                                                                              \
             if(PAUSE) DBGR_PAUSE(MSG);                                                                          \
         } while(0)

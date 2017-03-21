@@ -63,8 +63,9 @@ Using Volk machine: avx2_64_mmx_orc
 ...
 ```
 
-Alternatively, if you have a LoRa transmitter, you can configure/modify  ```/examples/_examplify.py``` to generate example files and add them to ```python/qa_BasicTest.py``` as Unit Test, or to ```/examples/qa_BasicTest_Data.xml``` to run them automatically with ```python/qa_BasicTest_XML.py``` (```xmltodict``` module needed).
-Note that these can be run with their shell script in ```build\python```.
+Alternatively, if you have a LoRa transmitter, you can configure/modify  ```/examples/_examplify.py``` to generate example files and add them to ```/examples/qa_BasicTest_Data.xml``` to run them automatically with ```python/qa_BasicTest_XML.py``` (```xmltodict``` module needed).
+Note that this script should be run with its shell script in ```build/python```.
+This is to ensure compatibility with ```make test```.
 
 
 Contributing
@@ -91,6 +92,7 @@ See the LICENSE file for the license of this project. If you are working on a pr
 Changelog
 ---------
 
+- Version 0.5 : Major overhaul of preamble detection and upchirp syncing
 - Version 0.4 : Support for all spreading factors, though SFs 11 and 12 are still slow / experimental
 - Version 0.3 : Support for all coding rates
 - Version 0.21: Fixed some issues reported by reletreby

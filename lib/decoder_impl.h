@@ -73,7 +73,7 @@ namespace gr {
                 uint32_t    d_number_of_bins;
                 uint32_t    d_number_of_bins_hdr;
                 uint32_t    d_compression;
-                uint32_t    d_payload_symbols;
+                 int32_t    d_payload_symbols;
                 uint32_t    d_payload_length;
                 uint32_t    d_corr_fails;
 
@@ -96,7 +96,7 @@ namespace gr {
                 int             d_cfo_step;
                 double          d_dt;
 
-                bool    calc_energy_threshold(gr_complex *samples, int window_size, float threshold);
+                bool    calc_energy_threshold(gr_complex *samples, uint32_t window_size, float threshold);
                 void    build_ideal_chirps(void);
                 void    samples_to_file(const std::string path, const gr_complex *v, uint32_t length, uint32_t elem_size);
                 void    samples_debug(const gr_complex *v, uint32_t length);
@@ -104,7 +104,7 @@ namespace gr {
                 float   norm_cross_correlate_downchirp(const float *samples, uint32_t window);
                 float   detect_downchirp(const gr_complex *samples, uint32_t window);
                 float   detect_upchirp(const gr_complex *samples_1, uint32_t window, uint32_t slide, int32_t *index);
-                float   cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, int window);
+                float   cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, uint32_t window);
 
                 unsigned int get_shift_fft(const gr_complex *samples);
 
@@ -121,7 +121,7 @@ namespace gr {
                 void    deshuffle(const uint8_t *shuffle_pattern, bool is_header);
                 void    dewhiten(const uint8_t *prng);
                 void    hamming_decode(uint8_t *out_data);
-                void    nibble_reverse(uint8_t *out_data, int len);
+                void    nibble_reverse(uint8_t *out_data, uint32_t len);
                 float   stddev(const float *values, uint32_t len, float mean);
 
                 inline void instantaneous_phase(const gr_complex *in_samples, float *out_iphase, uint32_t window);
