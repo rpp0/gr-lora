@@ -13,7 +13,7 @@ FileData = collections.namedtuple('FileData', ['path', 'data', 'times'])
 
 class Examplify:
 
-    def __init__(self, spreadingFactor = 7, codingRate = "4/5", output_dir = './lora-samples/', output_prefix = 'examplify_data'):
+    def __init__(self, spreadingFactor = 7, codingRate = "4/5", output_dir = './lora-samples/', output_prefix = 'examplify_data', gains = [10, 20, 20]):
         ##################################################
         # Variables                                      #
         ##################################################
@@ -70,11 +70,15 @@ class Examplify:
         self.osmosdr_source_0.set_dc_offset_mode(0, 0)
         self.osmosdr_source_0.set_iq_balance_mode(0, 0)
         self.osmosdr_source_0.set_gain_mode(False, 0)
-        self.osmosdr_source_0.set_gain(10, 0)
-        self.osmosdr_source_0.set_if_gain(20, 0)
-        self.osmosdr_source_0.set_bb_gain(20, 0)
+        self.osmosdr_source_0.set_gain(gains[0], 0)
+        self.osmosdr_source_0.set_if_gain(gains[1], 0)
+        self.osmosdr_source_0.set_bb_gain(gains[2], 0)
         self.osmosdr_source_0.set_antenna('', 0)
         self.osmosdr_source_0.set_bandwidth(0, 0)
+
+    def __del__(self):
+        self.lc = None
+        self.tb = None
 
     def setPreDelay(self, delay_s):
         self.pre_delay = delay_s
@@ -120,14 +124,14 @@ class Examplify:
         self.transmitToCapture(data_list)
         self.outputFile = prev
 
-    def appendAndCaptureExample(self, data, times):
+    def appendAndCaptureExample(self, data, times, idx = 0):
         name = (self.output_prefix + "_cr{0:s}_bw{1:d}_sf{2:d}_crc{3:d}_pwr{4:d}_{5:03d}"
                                         .format(self.codingRate.replace("/", "-"),
                                                 int(self.bw / 1e3),
                                                 self.sf,
                                                 1 if self.crc else 0,
                                                 self.pwr,
-                                                len(self.examples_output))
+                                                len(self.examples_output) if idx == 0 else (idx - 1))
                                    + self.output_ext)
 
         self.examples_output.append( FileData( name, '["{0:s}"]'.format(data), times ) )
@@ -151,24 +155,87 @@ class Examplify:
 
         f.close()
 
+    def appendToXML(self, file_path, idx = 0):
+        # To xml
+        # f = open("qa_BasicTest_Data_" + self.output_prefix + ".xml", 'w')
+        # f.write('<?xml version="1.0" encoding="UTF-8"?>\n<lora-test-data set="{0:s}">\n'.format(self.output_prefix))
+
+        f = open(file_path, 'a')
+
+        for i, x in enumerate(self.examples_output):
+            f.write('    <TEST id="{0:d}">\n'.format(idx if idx > 0 else (i+1)))
+            f.write('        <file>../../examples/lora-samples/{0:s}</file>\n'.format(x[0]))
+            f.write('        <spreading-factor>{0:d}</spreading-factor>\n'.format(self.sf))
+            f.write('        <expected-data-all />\n        <expected-hdr />\n')
+            f.write('        <expected-data-only>{0:s}</expected-data-only>\n'
+                        .format(' '.join([ x[1][2:-2][i:i+2] for i in range(0, len(x[1][2:-2]), 2) ])))
+            f.write('        <expected-times>{0:d}</expected-times>\n'.format(x[2]))
+            f.write('    </TEST>\n')
+        # f.write('</lora-test-data>')
+        f.close()
+
 if __name__ == '__main__':
-    e = Examplify(6, "4/7", './lora-samples/', 'hackrf')
+    # e = Examplify(7, "4/6", './lora-samples/', '2345')
+    #
+    # e.appendAndCaptureExample("0123456789abcdef", 10)
+    #
+    # e.appendAndCaptureExample("111111", 1)
+    # e.appendAndCaptureExample("111111", 5)
+    #
+    # e.appendAndCaptureExample("aaaaaaaa", 3)
+    #
+    # e.appendAndCaptureExample("ffffffff", 1)
+    # e.appendAndCaptureExample("ffffffff", 10)
+    #
+    # e.appendAndCaptureExample("55555555", 3)
+    # e.appendAndCaptureExample("55555555", 10)
+    #
+    # e.appendAndCaptureExample("88888888", 1)
+    # e.appendAndCaptureExample("88888888", 5)
+    # e.appendAndCaptureExample("88888888", 10)
 
-    e.appendAndCaptureExample("0123456789abcdef", 10)
+    # e.appendResultsToFile('./expected_results.txt')
 
-    e.appendAndCaptureExample("111111", 1)
-    e.appendAndCaptureExample("111111", 5)
+    exampledir = "./lora-samples/"
+    testprefix = "usrp"
+    xmlfiledir = "./qa_BasicTest_Data_" + testprefix + ".xml"
+    gains      = [32, 38, 38]  #  [10, 20, 20], for usrp: [32, 38, 38]
+    idx        = 1
 
-    e.appendAndCaptureExample("aaaaaaaa", 3)
+    f = open(xmlfiledir, 'w')
+    f.write('<?xml version="1.0" encoding="UTF-8"?>\n<lora-test-data set="{0:s}">\n'.format(testprefix))
+    f.close()
 
-    e.appendAndCaptureExample("ffffffff", 1)
-    e.appendAndCaptureExample("ffffffff", 10)
+    sampleset = [ ( 7, "4/5", 1),
+                  ( 8, "4/5", 1),
+                  (12, "4/5", 1),
+                  ( 6, "4/7", 1),
+                  ( 7, "4/7", 1),
+                  ( 6, "4/6", 1),
+                  ( 7, "4/6", 1)
+                ]
+    testset   = [ ("0123456789abcdef", 10),
+                  ("111111", 1),
+                  ("111111", 5),
+                  ("aaaaaaaa", 3),
+                  ("ffffffff", 1),
+                  ("ffffffff", 10),
+                  ("55555555", 3),
+                  ("55555555", 10),
+                  ("88888888", 1),
+                  ("88888888", 5),
+                  ("88888888", 10)
+                ]
 
-    e.appendAndCaptureExample("55555555", 3)
-    e.appendAndCaptureExample("55555555", 10)
+    for t in testset:
+        for i, s in enumerate(sampleset):
+            e = Examplify(s[0], s[1], exampledir, testprefix, gains)
+            e.appendAndCaptureExample(t[0], t[1], s[2])
+            e.appendToXML(xmlfiledir, idx)
+            e = None
+            sampleset[i] = (s[0], s[1], s[2] + 1)
+            idx = idx + 1
 
-    e.appendAndCaptureExample("88888888", 1)
-    e.appendAndCaptureExample("88888888", 5)
-    e.appendAndCaptureExample("88888888", 10)
-
-    e.appendResultsToFile('./expected_results.txt')
+    f = open(xmlfiledir, 'a')
+    f.write('</lora-test-data>\n')
+    f.close()

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lora-test-data>
+    <TEST id="2">
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_000.cfile</file>
+        <spreading-factor>8</spreading-factor>
+        <expected-data-all />
+        <expected-hdr /><!-- 80 0b 01 -->
+        <expected-data-only>01 23 45 67 89 ab cd ef</expected-data-only>
+        <expected-times>10</expected-times>
+    </TEST>
+    <TEST id="4">
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_000.cfile</file>
+        <spreading-factor>6</spreading-factor>
+        <expected-data-all />
+        <expected-hdr />
+        <expected-data-only>01 23 45 67 89 ab cd ef</expected-data-only>
+        <expected-times>10</expected-times>
+    </TEST>
+    <TEST id="1">
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_000.cfile</file>
+        <spreading-factor>7</spreading-factor>
+        <expected-data-all />
+        <expected-hdr />
+        <expected-data-only>01 23 45 67 89 ab cd ef</expected-data-only>
+        <expected-times>10</expected-times>
+    </TEST>
+    <TEST id="7">
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_000.cfile</file>
+        <spreading-factor>7</spreading-factor>
+        <expected-data-all />
+        <expected-hdr />
+        <expected-data-only>01 23 45 67 89 ab cd ef</expected-data-only>
+        <expected-times>10</expected-times>
+    </TEST>
+    <TEST id="66">
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_009.cfile</file>
+        <spreading-factor>12</spreading-factor>
+        <expected-data-all />
+        <expected-hdr />
+        <expected-data-only>88 88 88 88</expected-data-only>
+        <expected-times>5</expected-times>
+    </TEST>
+</lora-test-data>
