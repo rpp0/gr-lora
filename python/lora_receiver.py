@@ -39,6 +39,7 @@ class lora_receiver(gr.hier_block2):
         # Parameters
         self.offset = offset
         self.sf = sf
+        self.threshold = 0.01
         self.in_samp_rate = in_samp_rate
         self.out_samp_rate = out_samp_rate
         bw = 125000
@@ -85,3 +86,10 @@ class lora_receiver(gr.hier_block2):
     def set_offset(self, offset):
         self.offset = offset
         self.channelizer.set_center_freq(self.offset)
+
+    def get_threshold(self):
+        return self.threshold
+
+    def set_threshold(self, threshold):
+        self.threshold = threshold
+        self.c_decoder.set_abs_threshold(self.threshold)

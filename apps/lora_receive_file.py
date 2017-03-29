@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive File
-# Generated: Mon Nov  7 10:31:45 2016
+# Generated: Tue Mar 28 16:46:38 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -40,7 +40,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         # Variables
         ##################################################
         self.target_freq = target_freq = 868.1e6
-        self.sf = sf = 12
+        self.sf = sf = 7
         self.samp_rate = samp_rate = 10e6
         self.capture_freq = capture_freq = 866.0e6
         self.bw = bw = 125e3

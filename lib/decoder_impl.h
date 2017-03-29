@@ -50,13 +50,9 @@ namespace gr {
                 /// using std::complex = gr_complex
                 std::vector<gr_complex> d_downchirp;
                 std::vector<float>      d_downchirp_ifreq;
-                float                   d_downchirp_avg;
-                float                   d_downchirp_stddev;
 
                 std::vector<gr_complex> d_upchirp;
                 std::vector<float>      d_upchirp_ifreq;
-                float                   d_upchirp_avg;
-                float                   d_upchirp_stddev;
 
                 std::vector<gr_complex> d_fft;
                 std::vector<gr_complex> d_mult;
@@ -76,6 +72,7 @@ namespace gr {
                  int32_t    d_payload_symbols;
                 uint32_t    d_payload_length;
                 uint32_t    d_corr_fails;
+                float       d_energy_threshold;
 
                 std::vector<unsigned int>   d_words;
                 std::vector<uint8_t>        d_demodulated;
@@ -101,10 +98,11 @@ namespace gr {
                 void    samples_to_file(const std::string path, const gr_complex *v, uint32_t length, uint32_t elem_size);
                 void    samples_debug(const gr_complex *v, uint32_t length);
                 float   sliding_norm_cross_correlate_upchirp(const float *samples, uint32_t window, uint32_t slide, int32_t *index);
-                float   norm_cross_correlate_downchirp(const float *samples, uint32_t window);
                 float   detect_downchirp(const gr_complex *samples, uint32_t window);
                 float   detect_upchirp(const gr_complex *samples_1, uint32_t window, uint32_t slide, int32_t *index);
                 float   cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, uint32_t window);
+                float   cross_correlate_ifreq(const float *samples, std::vector<float>& ideal_chirp, uint32_t from_idx, uint32_t to_idx);
+                int32_t slide_phase_shift_upchirp_perfect(const float* samples, uint32_t window);
 
                 unsigned int get_shift_fft(const gr_complex *samples);
 
@@ -125,7 +123,7 @@ namespace gr {
                 float   stddev(const float *values, uint32_t len, float mean);
 
                 inline void instantaneous_phase(const gr_complex *in_samples, float *out_iphase, uint32_t window);
-                void        instantaneous_frequency(const gr_complex *in_samples, float *out_ifreq, uint32_t window);
+                inline void instantaneous_frequency(const gr_complex *in_samples, float *out_ifreq, uint32_t window);
 
                 uint8_t lookup_cr(uint8_t bytevalue);
                 void    msg_raw_chirp_debug(const gr_complex *raw_samples, uint32_t num_samples);
@@ -143,6 +141,7 @@ namespace gr {
                 /// GRC interfaces
                 virtual void set_sf(uint8_t sf);
                 virtual void set_samp_rate(float samp_rate);
+                virtual void set_abs_threshold(float threshold);
         };
     } // namespace lora
 } // namespace gr

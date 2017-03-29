@@ -706,6 +706,7 @@ namespace gr {
 
       virtual void set_sf(uint8_t sf) = 0;
       virtual void set_samp_rate(float samp_rate) = 0;
+      virtual void set_abs_threshold(float threshold) = 0;
     };
 
   } // namespace lora

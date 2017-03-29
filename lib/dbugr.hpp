@@ -6,6 +6,8 @@
 
 #include "utilities.h"
 
+#define CLAMP_VAL   1000000.0f  //0.7f
+
 #undef  NDEBUG
 //#define NDEBUG
 
@@ -50,7 +52,7 @@
                                                                                                                 \
             /*printf("DBGR_Before\n");*/                                                                            \
             for (DBGR_j = 0; DBGR_j < int32_t(WINDOW); DBGR_j++) {                                              \
-                sprintf(DBGR_buf, "%f\n", gr::lora::clamp(SAMPLE_SIG_FP[DBGR_j], -0.5f, 0.5f));                 \
+                sprintf(DBGR_buf, "%f\n", gr::lora::clamp(SAMPLE_SIG_FP[DBGR_j], -CLAMP_VAL, CLAMP_VAL));                 \
                 DBGR_out_file.write(DBGR_buf,   strlen(DBGR_buf));                                              \
             }   DBGR_out_file.write(DBGR_delim, strlen(DBGR_delim));                                            \
                                                                                                                 \
@@ -58,7 +60,7 @@
                                                                                                                 \
             printf("DBGR_After %d of %d in %d\n", MIN, MAX, WINDOW);                                            \
             for (DBGR_j = OFFSET; DBGR_j < int32_t(OFFSET > 0 ? WINDOW : MAX); DBGR_j++) {                      \
-                sprintf(DBGR_buf, "%f\n", gr::lora::clamp(*(SAMPLE_SIG_FP + DBGR_j), -0.5f, 0.5f));             \
+                sprintf(DBGR_buf, "%f\n", gr::lora::clamp(*(SAMPLE_SIG_FP + DBGR_j), -CLAMP_VAL, CLAMP_VAL));             \
                 DBGR_out_file.write(DBGR_buf,   strlen(DBGR_buf));                                              \
             }   DBGR_out_file.write(DBGR_delim, strlen(DBGR_delim));                                            \
                                                                                                                 \

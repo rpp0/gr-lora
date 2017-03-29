@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<lora-test-data>
+<lora-test-data set="extra">
     <TEST id="2">
         <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_000.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
-        <expected-hdr /><!-- 80 0b 01 -->
+        <expected-hdr />
         <expected-data-only>01 23 45 67 89 ab cd ef</expected-data-only>
         <expected-times>10</expected-times>
     </TEST>

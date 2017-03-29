@@ -9,6 +9,7 @@
   <callback>set_sf($sf)</callback>
   <callback>set_offset($offset)</callback>
   <callback>set_out_samp_rate($out_samp_rate)</callback>
+  <callback>set_threshold($threshold)</callback>
 
   <param>
     <name>Spreading factor</name>
@@ -19,6 +20,13 @@
    <param>
      <name>Sample rate</name>
      <key>in_samp_rate</key>
+     <type>float</type>
+   </param>
+
+   <param>
+     <name>Detection threshold</name>
+     <key>threshold</key>
+     <value>0.01</value>
      <type>float</type>
    </param>
 
