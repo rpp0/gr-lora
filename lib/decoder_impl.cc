@@ -60,7 +60,21 @@ namespace gr {
                 std::cerr << "[LoRa Decoder] ERROR : Spreading factor should be between 6 and 12 (inclusive)!" << std::endl
                           << "                       Other values are currently not supported." << std::endl;
                 exit(1);
-            } else if (sf == 6) {
+            }
+
+            // Set whitening sequence
+            switch(sf) {
+                case  6: this->d_whitening_sequence = gr::lora::prng_payload_sf12; break; // Using _sf6 results in worse accuracy...
+                case  7: this->d_whitening_sequence = gr::lora::prng_payload_sf7;  break;
+                case  8: this->d_whitening_sequence = gr::lora::prng_payload_sf8;  break;
+                case  9: this->d_whitening_sequence = gr::lora::prng_payload_sf9;  break;
+                case 10: this->d_whitening_sequence = gr::lora::prng_payload_sf10; break;
+                case 11: this->d_whitening_sequence = gr::lora::prng_payload_sf11; break;
+                case 12: this->d_whitening_sequence = gr::lora::prng_payload_sf12; break;
+                default: this->d_whitening_sequence = gr::lora::prng_payload_sf7;  break;
+            }
+
+            if (sf == 6) {
                 std::cerr << "[LoRa Decoder] WARNING : Spreading factor wrapped around to 12 due to incompatibility in hardware!" << std::endl;
                 sf = 12;
             }
@@ -95,6 +109,7 @@ namespace gr {
             std::cout << "Header bins per symbol: " << this->d_number_of_bins_hdr << std::endl;
             std::cout << "Samples per symbol: \t"   << this->d_samples_per_symbol << std::endl;
             std::cout << "Decimation: \t\t"         << (this->d_samples_per_symbol / this->d_number_of_bins) << std::endl;
+            //std::cout << "Magnitude threshold:\t"   << this->d_energy_threshold   << std::endl;
 
             this->build_ideal_chirps();
 
@@ -356,10 +371,10 @@ namespace gr {
         }
 
         float decoder_impl::stddev(const float *values, uint32_t len, float mean) {
-            float variance = 0.0f, temp;
+            float variance = 0.0f;
 
             for (uint32_t i = 0u; i < len; i++) {
-                temp = values[i] - mean;
+                const float temp = values[i] - mean;
                 variance += temp * temp;
             }
 
@@ -422,49 +437,23 @@ namespace gr {
 
         unsigned int decoder_impl::max_frequency_gradient_idx(gr_complex *samples) {
             float instantaneous_freq [this->d_samples_per_symbol];
-            float iphase_1, iphase_2;
-            const float  div             = (float)this->d_samples_per_second / (2.0f * M_PI);
-            float        max_if_diff     = 2000.0f;
+            float        max_if_diff     = 0.0f; //2000.0f;
             unsigned int max_if_diff_idx = 0u;
 
             samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
-            for (uint32_t i = 1u; i < this->d_samples_per_symbol; i++) {
-                iphase_1 = std::arg(samples[i - 1]);
-                iphase_2 = std::arg(samples[i]);
-
-                // Unwrapped loops from liquid_unwrap_phase
-                while ( (iphase_2 - iphase_1) >  M_PI ) iphase_2 -= 2.0f*M_PI;
-                while ( (iphase_2 - iphase_1) < -M_PI ) iphase_2 += 2.0f*M_PI;
-
-                instantaneous_freq[i - 1] = (iphase_2 - iphase_1) * div;
-            }
+            this->instantaneous_frequency(samples, instantaneous_freq, this->d_samples_per_symbol);
 
             const uint32_t osr = this->d_samples_per_symbol / this->d_number_of_bins;
-            float last_avg     = instantaneous_freq[0];
-
-            for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
-                float avg = 0.0f;
-
-                for (uint32_t j = 0u; j < osr; j++) {
-                    avg += instantaneous_freq[(osr * i) + j];
+            for (uint32_t i = 0u; i < this->d_number_of_bins - 1u; i++) {
+                if (instantaneous_freq[osr * i] - instantaneous_freq[osr * (i + 1u)] > 0.2f) {
+                    return i + 1u;
                 }
-
-                avg /= (float)osr;
-
-                const float diff = std::fabs(last_avg - avg);
-
-                if (diff > max_if_diff) {
-                    max_if_diff     = diff;
-                    max_if_diff_idx = i;
-                }
-
-                last_avg = avg;
             }
 
-            //std::cout << "!!!" << max_if_diff << std::endl;
-
-            return max_if_diff_idx;
+            return (instantaneous_freq[0u] - instantaneous_freq[osr])
+                    > (instantaneous_freq[(this->d_number_of_bins - 1u) * osr] - instantaneous_freq[this->d_number_of_bins * osr])
+                    ? 0u : this->d_number_of_bins;
         }
 
         bool decoder_impl::demodulate(gr_complex *samples, bool is_header) {
@@ -540,25 +529,10 @@ namespace gr {
         }
 
         int decoder_impl::decode(uint8_t *out_data, bool is_header) {
-            const uint8_t *prng = NULL;
             const uint8_t shuffle_pattern[] = {7, 6, 3, 4, 2, 1, 0, 5};
 
-            if (is_header) {
-                prng = gr::lora::prng_header;
-            } else {
-                switch(this->d_sf) {
-                    case  7: prng = gr::lora::prng_payload_sf7;  break;
-                    case  8: prng = gr::lora::prng_payload_sf8;  break;
-                    case  9: prng = gr::lora::prng_payload_sf9;  break;
-                    case 10: prng = gr::lora::prng_payload_sf10; break;
-                    case 11: prng = gr::lora::prng_payload_sf11; break;
-                    case 12: prng = gr::lora::prng_payload_sf12; break;
-                    default: prng = gr::lora::prng_payload_sf7;  break;
-                }
-            }
-
             this->deshuffle(shuffle_pattern, is_header);
-            this->dewhiten(prng);
+            this->dewhiten(is_header ? gr::lora::prng_header : this->d_whitening_sequence);
             this->hamming_decode(out_data);
 
             // Nibbles are reversed TODO why is this?

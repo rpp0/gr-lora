@@ -13,7 +13,7 @@ import lora
 LoRaReceiver = collections.namedtuple('LoRaReceiver', ['name', 'available'])
 
 class LoRaReceiveAll:
-    def __init__(self, receiver, spreadingFactor = 7, samp_rate = 1e6, capture_freq = 868.0e6, target_freq = 868.1e6):
+    def __init__(self, receiver, spreadingFactor = 7, samp_rate = 1e6, capture_freq = 868.0e6, target_freq = 868.1e6, threshold = 0.01):
         ##################################################
         # Variables                                      #
         ##################################################
@@ -28,14 +28,15 @@ class LoRaReceiveAll:
         # self.crc             = True
         # self.pwr             = 1
         # self.codingRate      = codingRate      # 4/5 4/6 4/7
+        self.threshold       = threshold
 
         ##################################################
         # Blocks                                         #
         ##################################################
         self.tb = gr.top_block ()
 
-        self.source = receiver
-        self.lora_lora_receiver_0 = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate)
+        self.source               = receiver
+        self.lora_lora_receiver_0 = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate, self.threshold)
         self.blocks_throttle_0    = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
 
         self.tb.connect( (self.source, 0),            (self.blocks_throttle_0, 0))

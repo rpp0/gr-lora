@@ -6,13 +6,14 @@
 
 #include "utilities.h"
 
-#define CLAMP_VAL   1000000.0f  //0.7f
+#define CLAMP_VAL   0.7f  //1000000.0f  //0.7f
 
 #undef  NDEBUG
 //#define NDEBUG
 
 #ifdef NDEBUG
     #define DBGR_PAUSE(MSG)
+    #define DBGR_QUICK_TO_FILE(FILEPATH, APPEND, DATA, SIZE, FORMAT)
     #define DBGR_WRITE_SIGNAL(IDEAL_SIG_FP, SAMPLE_SIG_FP, WINDOW, OFFSET, MIN, MAX, FULL, PAUSE, MSG)
 #else
     #define DBGR_PAUSE(MSG)     system("read -rsp $'" #MSG "\nPress any key to continue...\n' -n 1 key")
@@ -69,7 +70,7 @@
             /*if (FULL) {                                                                                       \
                 printf("DBGR_Full\n");                                                                          \
                 for (DBGR_j = 0; DBGR_j < WINDOW; DBGR_j++) {                                                   \
-                    sprintf(buf, "%f\n\0", SAMPLE_SIG_FP[DBGR_j]);                                              \
+                    sprintf(DBGR_buf, "%f\n\0", SAMPLE_SIG_FP[DBGR_j]);                                         \
                     DBGR_out_file.write(DBGR_buf,   strlen(DBGR_buf));                                          \
                 }   DBGR_out_file.write(DBGR_delim, strlen(DBGR_delim));                                        \
                 printf("%s", DBGR_delim);                                                                       \

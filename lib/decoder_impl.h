@@ -57,41 +57,42 @@ namespace gr {
                 std::vector<gr_complex> d_fft;
                 std::vector<gr_complex> d_mult;
 
-                uint8_t     d_sf;
-                uint32_t    d_bw;
-                uint8_t     d_cr;
-                double      d_bits_per_second;
-                uint32_t    d_delay_after_sync;
-                uint32_t    d_samples_per_second;
-                double      d_symbols_per_second;
-                uint32_t    d_bits_per_symbol;
-                uint32_t    d_samples_per_symbol;
-                uint32_t    d_number_of_bins;
-                uint32_t    d_number_of_bins_hdr;
-                uint32_t    d_compression;
-                 int32_t    d_payload_symbols;
-                uint32_t    d_payload_length;
-                uint32_t    d_corr_fails;
-                float       d_energy_threshold;
+                uint8_t        d_sf;
+                uint32_t       d_bw;
+                uint8_t        d_cr;
+                double         d_bits_per_second;
+                uint32_t       d_delay_after_sync;
+                uint32_t       d_samples_per_second;
+                double         d_symbols_per_second;
+                uint32_t       d_bits_per_symbol;
+                uint32_t       d_samples_per_symbol;
+                uint32_t       d_number_of_bins;
+                uint32_t       d_number_of_bins_hdr;
+                uint32_t       d_compression;
+                 int32_t       d_payload_symbols;
+                uint32_t       d_payload_length;
+                uint32_t       d_corr_fails;
+                float          d_energy_threshold;
+                const uint8_t *d_whitening_sequence;
 
-                std::vector<unsigned int>   d_words;
-                std::vector<uint8_t>        d_demodulated;
-                std::vector<uint8_t>        d_words_deshuffled;
-                std::vector<uint8_t>        d_words_dewhitened;
-                std::vector<uint8_t>        d_data;
+                std::vector<unsigned int> d_words;
+                std::vector<uint8_t>      d_demodulated;
+                std::vector<uint8_t>      d_words_deshuffled;
+                std::vector<uint8_t>      d_words_dewhitened;
+                std::vector<uint8_t>      d_data;
 
                 std::ofstream d_debug_samples;
                 std::ofstream d_debug;
 
                 fftplan d_q;
 
-                float           d_decim_h[DECIMATOR_FILTER_SIZE];
-                uint32_t        d_corr_decim_factor;
-                int             d_decim_factor;
-                firdecim_crcf   d_decim = nullptr;
-                float           d_cfo_estimation;
-                int             d_cfo_step;
-                double          d_dt;
+                float         d_decim_h[DECIMATOR_FILTER_SIZE];
+                uint32_t      d_corr_decim_factor;
+                int           d_decim_factor;
+                firdecim_crcf d_decim = nullptr;
+                float         d_cfo_estimation;
+                int           d_cfo_step;
+                double        d_dt;
 
                 bool    calc_energy_threshold(gr_complex *samples, uint32_t window_size, float threshold);
                 void    build_ideal_chirps(void);
