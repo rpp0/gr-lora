@@ -7,7 +7,7 @@ namespace gr {
     namespace lora {
 
         /**
-         *  \brief  Clamp given value in the given range.
+         *  \brief  Clamp gevin value in the given range.
          *
          *  \tparam T
          *          The type of variable to clamp.
