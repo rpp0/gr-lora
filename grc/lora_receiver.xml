@@ -4,11 +4,12 @@
   <key>lora_lora_receiver</key>
   <category>[LoRa]</category>
   <import>import lora</import>
-  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $sf, $out_samp_rate)</make>
+  <make>lora.lora_receiver($in_samp_rate, $freq, $offset, $sf, $out_samp_rate, $threshold)</make>
 
   <callback>set_sf($sf)</callback>
   <callback>set_offset($offset)</callback>
   <callback>set_out_samp_rate($out_samp_rate)</callback>
+  <callback>set_threshold($threshold)</callback>
 
   <param>
     <name>Spreading factor</name>
@@ -19,18 +20,28 @@
    <param>
      <name>Sample rate</name>
      <key>in_samp_rate</key>
+     <value>1e6</value>
+     <type>float</type>
+   </param>
+
+   <param>
+     <name>Detection threshold</name>
+     <key>threshold</key>
+     <value>0.01</value>
      <type>float</type>
    </param>
 
   <param>
     <name>Frequency</name>
     <key>freq</key>
+    <value>868e6</value>
     <type>float</type>
   </param>
 
   <param>
     <name>Offset</name>
     <key>offset</key>
+    <value>100e3</value>
     <type>float</type>
   </param>
 

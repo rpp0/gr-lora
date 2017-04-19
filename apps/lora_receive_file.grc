@@ -326,7 +326,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>12</value>
+      <value>7</value>
     </param>
   </block>
   <block>
@@ -508,6 +508,10 @@
       <value></value>
     </param>
     <param>
+      <key>threshold</key>
+      <value>0.01</value>
+    </param>
+    <param>
       <key>_enabled</key>
       <value>1</value>
     </param>
@@ -528,12 +532,20 @@
       <value>lora_lora_receiver_0</value>
     </param>
     <param>
+      <key>maxoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
       <key>offset</key>
       <value>offset</value>
     </param>
     <param>
-      <key>realtime</key>
-      <value>False</value>
+      <key>out_samp_rate</key>
+      <value>1000000</value>
     </param>
     <param>
       <key>in_samp_rate</key>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<lora-test-data>
+<lora-test-data set="hackrf">
     <TEST id="1">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_000.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0b 01 -->
@@ -9,7 +9,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="2">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_000.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0b 01 -->
@@ -17,7 +17,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="3">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_000.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0b 01 -->
@@ -25,7 +25,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="4">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_000.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0f 02 -->
@@ -33,7 +33,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="5">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_000.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0f 02 -->
@@ -41,7 +41,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="6">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_000.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0d 05 -->
@@ -49,7 +49,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="7">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_000.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_000.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 80 0d 05 -->
@@ -57,7 +57,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="8">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_001.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0b 02 -->
@@ -65,7 +65,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="9">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_001.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0b 02 -->
@@ -73,7 +73,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="10">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_001.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0b 02 -->
@@ -81,7 +81,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="11">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_001.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0f 01 -->
@@ -89,7 +89,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="12">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_001.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0f 01 -->
@@ -97,7 +97,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="13">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_001.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0d 06 -->
@@ -105,7 +105,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="14">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_001.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_001.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0d 06 -->
@@ -113,7 +113,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="15">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_002.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0b 02 -->
@@ -121,7 +121,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="16">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_002.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0b 02 -->
@@ -129,7 +129,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="17">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_002.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0b 02 -->
@@ -137,7 +137,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="18">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_002.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0f 01 -->
@@ -145,7 +145,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="19">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_002.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0f 01 -->
@@ -153,7 +153,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="20">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_002.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0d 06 -->
@@ -161,7 +161,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="21">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_002.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_002.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 30 0d 06 -->
@@ -169,7 +169,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="22">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_003.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -177,7 +177,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="23">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_003.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -185,7 +185,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="24">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_003.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -193,7 +193,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="25">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_003.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -201,7 +201,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="26">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_003.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -209,7 +209,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="27">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_003.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -217,7 +217,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="28">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_003.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_003.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -225,7 +225,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="29">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_004.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -233,7 +233,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="30">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_004.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -241,7 +241,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="31">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_004.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -249,7 +249,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="32">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_004.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -257,7 +257,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="33">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_004.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -265,7 +265,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="34">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_004.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -273,7 +273,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="35">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_004.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_004.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -281,7 +281,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="36">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_005.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -289,7 +289,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="37">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_005.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -297,7 +297,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="38">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_005.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -305,7 +305,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="39">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_005.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -313,7 +313,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="40">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_005.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -321,7 +321,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="41">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_005.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 03 -->
@@ -329,7 +329,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="42">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_005.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_005.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 03 -->
@@ -337,7 +337,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="43">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_006.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -345,7 +345,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="44">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_006.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -353,7 +353,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="45">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_006.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -361,7 +361,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="46">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_006.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -369,7 +369,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="47">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_006.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -377,7 +377,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="48">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_006.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -385,7 +385,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="49">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_006.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_006.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -393,7 +393,7 @@
         <expected-times>3</expected-times>
     </TEST>
     <TEST id="50">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_007.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -401,7 +401,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="51">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_007.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -409,7 +409,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="52">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_007.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -417,7 +417,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="53">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_007.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -425,7 +425,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="54">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_007.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -433,7 +433,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="55">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_007.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -441,7 +441,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="56">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_007.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_007.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -449,7 +449,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="57">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_008.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -457,7 +457,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="58">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_008.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -465,7 +465,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="59">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_008.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -473,7 +473,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="60">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_008.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -481,7 +481,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="61">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_008.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -489,7 +489,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="62">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_008.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -497,7 +497,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="63">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_008.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_008.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -505,7 +505,7 @@
         <expected-times>1</expected-times>
     </TEST>
     <TEST id="64">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_009.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -513,7 +513,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="65">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_009.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -521,7 +521,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="66">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_009.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -529,7 +529,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="67">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_009.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -537,7 +537,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="68">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_009.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -545,7 +545,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="69">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_009.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -553,7 +553,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="70">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_009.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_009.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -561,7 +561,7 @@
         <expected-times>5</expected-times>
     </TEST>
     <TEST id="71">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf7_crc1_pwr1_010.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -569,7 +569,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="72">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf8_crc1_pwr1_010.cfile</file>
         <spreading-factor>8</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -577,7 +577,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="73">
-        <file>./examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-5_bw125_sf12_crc1_pwr1_010.cfile</file>
         <spreading-factor>12</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0b 07 -->
@@ -585,7 +585,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="74">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf6_crc1_pwr1_010.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -593,7 +593,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="75">
-        <file>./examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-7_bw125_sf7_crc1_pwr1_010.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0f 04 -->
@@ -601,7 +601,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="76">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf6_crc1_pwr1_010.cfile</file>
         <spreading-factor>6</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->
@@ -609,7 +609,7 @@
         <expected-times>10</expected-times>
     </TEST>
     <TEST id="77">
-        <file>./examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_010.cfile</file>
+        <file>../../examples/lora-samples/hackrf_cr4-6_bw125_sf7_crc1_pwr1_010.cfile</file>
         <spreading-factor>7</spreading-factor>
         <expected-data-all />
         <expected-hdr /><!-- 40 0d 03 -->

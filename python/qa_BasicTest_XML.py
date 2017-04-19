@@ -93,13 +93,22 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
         self.server.bind((self.host, self.port))
         self.server.setblocking(0)  ## or self.server.settimeout(0.5)  ?
 
-        self.logFile         = './examples/qa_BasicTest.log'
+        # gr-lora/python
+        current_dir          = os.path.dirname(os.path.realpath(__file__)) + "/"
 
-        self.xmlFile         = './examples/qa_BasicTest_Data.xml'
+        self.xmlFile         = current_dir + '../examples/qa_BasicTest_Data.xml'
 
         if os.path.isfile(self.xmlFile):
             f = open(self.xmlFile, 'r')
-            self.xmlTests = xmltodict.parse(f.read())["lora-test-data"]["TEST"]
+
+            self.xmlTests = xmltodict.parse(f.read())["lora-test-data"]
+
+            self.logFile  = current_dir + '../examples/qa_BasicTest_' + self.xmlTests['@set'] + '.log'
+
+            self.xmlTests = self.xmlTests["TEST"]
+
+            if type(self.xmlTests) is not list:
+                self.xmlTests = [ self.xmlTests ]
             f.close()
         else:
             raise Exception("[BasicTest_XML] '" + self.xmlFile + "' does not exist!")

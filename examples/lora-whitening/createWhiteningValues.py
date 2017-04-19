@@ -3,7 +3,11 @@ import collections
 import os
 from loranode import RN2483Controller
 
-from ../_examplify.py import Examplify
+# from ../_examplify.py import Examplify
+
+import os
+os.sys.path.append(os.path.dirname(os.path.abspath('.')))
+from _examplify import Examplify
 
 import lora, pmt, osmosdr
 from gnuradio import gr, blocks
@@ -43,7 +47,7 @@ class ReceiveWhitening:
                 if os.path.isfile(self.outputFile):
                     inf = open(self.tempFile, 'r')
                     seq = inf.read()
-                    print(seq)
+                    # print(seq)
                     out = open(self.outputFile, 'a')
                     out.write(seq)
                     out.close()
@@ -56,10 +60,26 @@ class ReceiveWhitening:
             raise Exception("[ReceiveWhitening] Inputfile '" + self.inputFile + "' does not exist!")
 
 if __name__ == '__main__':
-    ofile = 'tmp/tmp_whitening.cfile'
+    ofile = '/tmp/tmp_whitening.cfile'
 
-    examplifr = Examplify(7, "4/7")
-    whitening = ReceiveWhitening(7, './test_out.csv')
+    testset = [ (7, "4/6"), (7, "4/7"), (8, "4/5"), (12, "4/6"), (9, "4/5"), (10, "4/5"), (11, "4/5"), (6, "4/5")]
 
-    examplifr.transmitToFile(["00000000000"] * 10, ofile)
-    whitening.captureSequence(ofile)
+    for settings in testset:
+        dataf = './test_out_SF{0:d}_CR{1:s}.csv'.format(settings[0], '-'.join(settings[1].split('/')))
+        out = open(dataf, 'a')
+        out.close()
+
+        examplifr = Examplify(settings[0], settings[1], gains = [32, 38, 38])
+        whitening = ReceiveWhitening(settings[0], dataf)
+
+        for i in range(8):
+            print("Sample {0:d} of 16".format(i))
+            examplifr.transmitToFile(['0' * 256] * 4, ofile)
+            whitening.captureSequence(ofile)
+        for i in range(8):
+            print("Sample {0:d} of 16".format(i + 8))
+            examplifr.transmitToFile(['0' * 256] * 8, ofile)
+            whitening.captureSequence(ofile)
+
+        examplifr = None
+        whitening = None
