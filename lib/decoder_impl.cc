@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2016 Pieter Robyns.
+ * Copyright 2017 Pieter Robyns, William Thenaers.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -315,9 +315,13 @@ namespace gr {
         float decoder_impl::sliding_norm_cross_correlate_upchirp(const float *samples, uint32_t window, uint32_t slide, int32_t *index) {
             (void) slide;
 
-            bool found_change = false;
-            uint32_t max = 0u, min;
-            const uint32_t coeff = 16u;
+            bool found_change     = false;
+            uint32_t max          = 0u, min;
+            
+            const uint32_t coeff  = (this->d_sf + this->d_sf + this->d_sf >> 1u);
+            const uint32_t len    = window / 2u;
+            
+            float max_correlation = 0.0f;
 
             for (uint32_t i = 0u; i < window - coeff - 1u; i += coeff / 2u) {
                 if (samples[i] - samples[i + coeff]  > 0.2f) { // Goes down
@@ -331,23 +335,20 @@ namespace gr {
                 return 0.0f;
             }
 
-            max = std::max_element(samples + gr::lora::clamp((int)(max - coeff),  0, (int)window),
-                                   samples + gr::lora::clamp(max +        coeff, 0u,      window)) - samples;
-            min = std::min_element(samples + gr::lora::clamp(max +           1u, 0u,      window),
-                                   samples + gr::lora::clamp(max +   2u * coeff, 0u,      window)) - samples;
+            max = std::max_element(samples + gr::lora::clamp((int)(max -  2u * coeff),  0, (int)window),
+                                   samples + gr::lora::clamp(max +              coeff, 0u,      window)) - samples;
+            min = std::min_element(samples + gr::lora::clamp(max +                 1u, 0u,      window),
+                                   samples + gr::lora::clamp(max +         3u * coeff, 0u,      window)) - samples;
 
-            max += (min - max) / 2;
-            *index = max;
-
-            // Extra to allow falling edge on 99% of sample == Practically synced
-            // Should improve detection by not discarding almost synced samples, but doesn't..
-//            if ((max - coeff / 2) > (window * 0.98f)) {
-////                printf("ALREADY SYNCED\n");
-//                *index = 0;
-//                return 0.99f;
-//            }
-
-            return this->cross_correlate_ifreq(samples, this->d_upchirp_ifreq, max, window);
+            for (int32_t i = max; i < min; i++) {
+                const float max_corr = this->cross_correlate_ifreq(samples + i, this->d_upchirp_ifreq, 0u, len);
+                if (max_corr > max_correlation) {
+                    *index = i;
+                    max_correlation = max_corr;
+                }
+            }
+            
+            return max_correlation;
         }
 
         /**
@@ -437,8 +438,6 @@ namespace gr {
 
         unsigned int decoder_impl::max_frequency_gradient_idx(gr_complex *samples) {
             float instantaneous_freq [this->d_samples_per_symbol];
-            float        max_if_diff     = 0.0f; //2000.0f;
-            unsigned int max_if_diff_idx = 0u;
 
             samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
@@ -770,7 +769,7 @@ namespace gr {
                                                        this->d_samples_per_symbol / this->d_corr_decim_factor,
                                                        &index_correction);
 
-                        if (c > 0.8f) {
+                        if (c > 0.9f) {
                             #ifndef NDEBUG
                                 this->d_debug << "Cu: " << c << std::endl;
                             #endif
