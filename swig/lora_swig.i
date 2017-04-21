@@ -10,6 +10,7 @@
 %{
 #include "lora/decoder.h"
 #include "lora/message_file_sink.h"
+#include "lora/message_socket_sink.h"
 %}
 
 
@@ -17,3 +18,5 @@
 GR_SWIG_BLOCK_MAGIC2(lora, decoder);
 %include "lora/message_file_sink.h"
 GR_SWIG_BLOCK_MAGIC2(lora, message_file_sink);
+%include "lora/message_socket_sink.h"
+GR_SWIG_BLOCK_MAGIC2(lora, message_socket_sink);

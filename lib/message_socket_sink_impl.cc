@@ -675,41 +675,91 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
+#ifdef HAVE_CONFIG_H
+    #include "config.h"
+#endif
 
-#ifndef INCLUDED_LORA_DECODER_H
-#define INCLUDED_LORA_DECODER_H
+#include <gnuradio/io_signature.h>
+#include "message_socket_sink_impl.h"
 
-#include <lora/api.h>
-#include <gnuradio/sync_block.h>
+#define NDEBUG            /// Debug printing
 
 namespace gr {
-  namespace lora {
+    namespace lora {
 
-    /*!
-     * \brief <+description of block+>
-     * \ingroup lora
-     *
-     */
-    class LORA_API decoder : virtual public gr::sync_block {
-     public:
-      typedef boost::shared_ptr<decoder> sptr;
+        message_socket_sink::sptr message_socket_sink::make() {
+            return gnuradio::get_initial_sptr(new message_socket_sink_impl());
+        }
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of lora::decoder.
-       *
-       * To avoid accidental use of raw pointers, lora::decoder's
-       * constructor is in a private implementation
-       * class. lora::decoder::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(float samp_rate, int sf);
+        /**
+         *  \brief The private constructor
+         *
+         *      Create a UDP socket connection to send the data through.
+         */
+        message_socket_sink_impl::message_socket_sink_impl()
+            : gr::block("message_socket_sink",
+                        gr::io_signature::make(0, 0, 0),
+                        gr::io_signature::make(0, 0, 0)) {
+            message_port_register_in(pmt::mp("in"));
+            set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, _1));
 
-      virtual void set_sf(uint8_t sf) = 0;
-      virtual void set_samp_rate(float samp_rate) = 0;
-      virtual void set_abs_threshold(float threshold) = 0;
-    };
+            this->_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-  } // namespace lora
-} // namespace gr
+            if (this->_socket < 0) {
+                perror("[message_socket_sink] Failed to create socket!");
+                exit(EXIT_FAILURE);
+            }
 
-#endif /* INCLUDED_LORA_DECODER_H */
+            this->_sock_addr                   = new struct sockaddr_in;
+            this->_sock_addr->sin_family       = AF_INET;
+            this->_sock_addr->sin_addr.s_addr  = htonl(INADDR_ANY);
+            this->_sock_addr->sin_port         = htons(0);    // Source port: 0 is any
+
+            if (bind(this->_socket,
+                     (const struct sockaddr*) this->_sock_addr,
+                     sizeof(*this->_sock_addr))
+                < 0) {
+                perror("[message_socket_sink] Socket bind failed!");
+                exit(EXIT_FAILURE);
+            }
+
+            this->_sock_addr->sin_port         = htons(this->port);
+            // == "127.0.0.1" to int translation
+            inet_pton(AF_INET, this->host.c_str(), &this->_sock_addr->sin_addr.s_addr);
+        }
+
+        /**
+         *  \brief  Our virtual destructor.
+         */
+        message_socket_sink_impl::~message_socket_sink_impl() {
+            delete this->_sock_addr;
+            shutdown(this->_socket, 1);      // close transmissions
+        }
+
+        /**
+         *  \brief  Handle a message and send its contents through an UDP packet to the loopback interface.
+         */
+        void message_socket_sink_impl::handle(pmt::pmt_t msg) {
+            uint8_t *data = (uint8_t*) pmt::blob_data(msg);
+            size_t size = pmt::blob_length(msg);
+
+            #ifndef NDEBUG
+                printf("Received message:\n\t");
+
+                for (size_t i = 0; i < size; ++i)
+                    printf("%02x ", data[i]);
+
+                putchar('\n');
+            #endif
+
+            if (sendto(this->_socket, data, size, 0,
+                       (const struct sockaddr*) this->_sock_addr,
+                       sizeof(*this->_sock_addr))
+                != size) {
+                perror("[message_socket_sink] Mismatch in number of bytes sent");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+    } /* namespace lora */
+} /* namespace gr */

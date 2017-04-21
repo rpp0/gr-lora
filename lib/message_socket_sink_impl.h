@@ -675,41 +675,35 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
+#ifndef INCLUDED_LORA_MESSAGE_SOCKET_SINK_IMPL_H
+#define INCLUDED_LORA_MESSAGE_SOCKET_SINK_IMPL_H
 
-#ifndef INCLUDED_LORA_DECODER_H
-#define INCLUDED_LORA_DECODER_H
-
-#include <lora/api.h>
-#include <gnuradio/sync_block.h>
+#include <string>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <lora/message_socket_sink.h>
 
 namespace gr {
-  namespace lora {
+    namespace lora {
 
-    /*!
-     * \brief <+description of block+>
-     * \ingroup lora
-     *
-     */
-    class LORA_API decoder : virtual public gr::sync_block {
-     public:
-      typedef boost::shared_ptr<decoder> sptr;
+        class message_socket_sink_impl : public message_socket_sink {
+            private:
+                const std::string host = "127.0.0.1";
+                const int port         = 40868;
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of lora::decoder.
-       *
-       * To avoid accidental use of raw pointers, lora::decoder's
-       * constructor is in a private implementation
-       * class. lora::decoder::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(float samp_rate, int sf);
+                // socket
+                struct sockaddr_in *_sock_addr;
+                int _socket;
 
-      virtual void set_sf(uint8_t sf) = 0;
-      virtual void set_samp_rate(float samp_rate) = 0;
-      virtual void set_abs_threshold(float threshold) = 0;
-    };
+                void handle(pmt::pmt_t msg);
 
-  } // namespace lora
+            public:
+                message_socket_sink_impl();
+
+                ~message_socket_sink_impl();
+        };
+
+    } // namespace lora
 } // namespace gr
 
-#endif /* INCLUDED_LORA_DECODER_H */
+#endif /* INCLUDED_LORA_MESSAGE_SOCKET_SINK_IMPL_H */

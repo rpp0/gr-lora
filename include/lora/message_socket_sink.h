@@ -676,40 +676,35 @@
  */
 
 
-#ifndef INCLUDED_LORA_DECODER_H
-#define INCLUDED_LORA_DECODER_H
+#ifndef INCLUDED_LORA_MESSAGE_SOCKET_SINK_H
+#define INCLUDED_LORA_MESSAGE_SOCKET_SINK_H
 
 #include <lora/api.h>
-#include <gnuradio/sync_block.h>
+#include <gnuradio/block.h>
 
 namespace gr {
-  namespace lora {
+    namespace lora {
+        /*!
+        * \brief Sink for messages, sent to socket.
+        * \ingroup lora
+        *
+        */
+        class LORA_API message_socket_sink : virtual public gr::block {
+            public:
+                typedef boost::shared_ptr<message_socket_sink> sptr;
 
-    /*!
-     * \brief <+description of block+>
-     * \ingroup lora
-     *
-     */
-    class LORA_API decoder : virtual public gr::sync_block {
-     public:
-      typedef boost::shared_ptr<decoder> sptr;
+                /*!
+                * \brief Return a shared_ptr to a new instance of lora::message_socket_sink.
+                *
+                * To avoid accidental use of raw pointers, lora::message_socket_sink's
+                * constructor is in a private implementation
+                * class. lora::message_socket_sink::make is the public interface for
+                * creating new instances.
+                */
+                static sptr make();
+        };
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of lora::decoder.
-       *
-       * To avoid accidental use of raw pointers, lora::decoder's
-       * constructor is in a private implementation
-       * class. lora::decoder::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(float samp_rate, int sf);
-
-      virtual void set_sf(uint8_t sf) = 0;
-      virtual void set_samp_rate(float samp_rate) = 0;
-      virtual void set_abs_threshold(float threshold) = 0;
-    };
-
-  } // namespace lora
+    } // namespace lora
 } // namespace gr
 
-#endif /* INCLUDED_LORA_DECODER_H */
+#endif /* INCLUDED_LORA_MESSAGE_SOCKET_SINK_H */

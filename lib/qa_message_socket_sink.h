@@ -676,40 +676,26 @@
  */
 
 
-#ifndef INCLUDED_LORA_DECODER_H
-#define INCLUDED_LORA_DECODER_H
+#ifndef _QA_MESSAGE_SOCKET_SINK_H_
+#define _QA_MESSAGE_SOCKET_SINK_H_
 
-#include <lora/api.h>
-#include <gnuradio/sync_block.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/TestCase.h>
 
 namespace gr {
-  namespace lora {
+    namespace lora {
 
-    /*!
-     * \brief <+description of block+>
-     * \ingroup lora
-     *
-     */
-    class LORA_API decoder : virtual public gr::sync_block {
-     public:
-      typedef boost::shared_ptr<decoder> sptr;
+        class qa_message_socket_sink : public CppUnit::TestCase {
+            public:
+                CPPUNIT_TEST_SUITE(qa_message_socket_sink);
+                CPPUNIT_TEST(t1);
+                CPPUNIT_TEST_SUITE_END();
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of lora::decoder.
-       *
-       * To avoid accidental use of raw pointers, lora::decoder's
-       * constructor is in a private implementation
-       * class. lora::decoder::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(float samp_rate, int sf);
+            private:
+                void t1();
+        };
 
-      virtual void set_sf(uint8_t sf) = 0;
-      virtual void set_samp_rate(float samp_rate) = 0;
-      virtual void set_abs_threshold(float threshold) = 0;
-    };
+    } /* namespace lora */
+} /* namespace gr */
 
-  } // namespace lora
-} // namespace gr
-
-#endif /* INCLUDED_LORA_DECODER_H */
+#endif /* _QA_MESSAGE_SOCKET_SINK_H_ */

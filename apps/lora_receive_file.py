@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive File
-# Generated: Mon Nov  7 10:31:45 2016
+# Generated: Thu Mar 30 15:01:18 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -40,7 +40,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         # Variables
         ##################################################
         self.target_freq = target_freq = 868.1e6
-        self.sf = sf = 12
+        self.sf = sf = 7
         self.samp_rate = samp_rate = 10e6
         self.capture_freq = capture_freq = 866.0e6
         self.bw = bw = 125e3
@@ -69,7 +69,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         	peak_hold=False,
         )
         self.Add(self.wxgui_fftsink2_1.win)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, 7, 1000000)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, 7, 1000000, 0.01)
         _finetune_sizer = wx.BoxSizer(wx.VERTICAL)
         self._finetune_text_box = forms.text_box(
         	parent=self.GetWin(),
