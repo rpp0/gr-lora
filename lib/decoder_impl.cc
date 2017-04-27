@@ -34,8 +34,9 @@
 //#define NO_TMP_WRITES 1   /// Debug output file write
 #define CFO_CORRECT   1   /// Correct shift fft estimation
 
-
 //#undef NDEBUG            /// Debug printing
+//#define NDEBUG        /// No debug printing
+
 #include "dbugr.hpp"
 
 namespace gr {
@@ -133,8 +134,9 @@ namespace gr {
             this->message_port_register_out(pmt::mp("frames"));
             this->message_port_register_out(pmt::mp("debug"));
 
-            // // Whitening empty file
-            // DBGR_QUICK_TO_FILE("/tmp/whitening_out", false, g, -1, "");
+
+            // Whitening empty file
+//            DBGR_QUICK_TO_FILE("/tmp/whitening_out", false, g, -1, "");
         }
 
         /**
@@ -291,16 +293,16 @@ namespace gr {
          * Calculate normalized cross correlation of real values.
          * See https://en.wikipedia.org/wiki/Cross-correlation#Normalized_cross-correlation.
          */
-        float decoder_impl::cross_correlate_ifreq(const float *samples, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx) {
+        float decoder_impl::cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx) {
             float result = 0.0f;
 
-            const float average   = std::accumulate(samples + from_idx    , samples + to_idx    , 0.0f) / (float)(to_idx - from_idx);
-            const float chirp_avg = std::accumulate(&ideal_chirp[from_idx], &ideal_chirp[to_idx], 0.0f) / (float)(to_idx - from_idx);
-            const float sd        =   this->stddev(samples + from_idx     , (to_idx - from_idx) , average)
-                                    * this->stddev(&ideal_chirp[from_idx] , (to_idx - from_idx) , chirp_avg);
+            const float average   = std::accumulate(samples_ifreq + from_idx, samples_ifreq + to_idx, 0.0f) / (float)(to_idx - from_idx);
+            const float chirp_avg = std::accumulate(&ideal_chirp[from_idx]  , &ideal_chirp[to_idx]  , 0.0f) / (float)(to_idx - from_idx);
+            const float sd        =   this->stddev(samples_ifreq + from_idx , (to_idx - from_idx) , average)
+                                    * this->stddev(&ideal_chirp[from_idx]   , (to_idx - from_idx) , chirp_avg);
 
             for (uint32_t i = from_idx; i < to_idx; i++) {
-                result += (samples[i] - average) * (ideal_chirp[i] - chirp_avg) / sd;
+                result += (samples_ifreq[i] - average) * (ideal_chirp[i] - chirp_avg) / sd;
             }
 
             result /= (float)(to_idx - from_idx - 1u);
@@ -315,20 +317,18 @@ namespace gr {
             return this->cross_correlate_ifreq(samples_ifreq, this->d_downchirp_ifreq, 0u, window);
         }
 
-        float decoder_impl::sliding_norm_cross_correlate_upchirp(const float *samples, const uint32_t window, const uint32_t slide, int32_t *index) {
-            (void) slide;
-
+        float decoder_impl::sliding_norm_cross_correlate_upchirp(const float *samples_ifreq, const uint32_t window, int32_t *index) {
             bool found_change      = false;
             uint32_t local_max_idx = 0u, local_min_idx;
 
             const uint32_t coeff   = (this->d_sf + this->d_sf + this->d_sf / 2u);
-            const uint32_t len     = window / 2u;
+            const uint32_t len     = this->d_samples_per_symbol;
 
             float max_correlation  = 0.0f;
 
             // Approximate local maximum
             for (uint32_t i = 0u; i < window - coeff - 1u; i += coeff / 2u) {
-                if (samples[i] - samples[i + coeff]  > 0.2f) { // Goes down
+                if (samples_ifreq[i] - samples_ifreq[i + coeff]  > 0.2f) { // Goes down
                     local_max_idx = i;
                     found_change = true;
                     break;
@@ -340,17 +340,19 @@ namespace gr {
             }
 
             // Find top and bottom of falling edge after first upchirp in window
-            local_max_idx = std::max_element(samples + gr::lora::clamp((int)(local_max_idx -  2u * coeff),  0, (int)window),
-                                             samples + gr::lora::clamp(local_max_idx +              coeff, 0u,      window)) - samples;
-            local_min_idx = std::min_element(samples + gr::lora::clamp(local_max_idx +                 1u, 0u,      window),
-                                             samples + gr::lora::clamp(local_max_idx +         3u * coeff, 0u,      window)) - samples;
+            local_max_idx = std::max_element(samples_ifreq + gr::lora::clamp((int)(local_max_idx -  2u * coeff),  0, (int)window),
+                                             samples_ifreq + gr::lora::clamp(local_max_idx +              coeff, 0u,      window)) - samples_ifreq;
+            local_min_idx = std::min_element(samples_ifreq + gr::lora::clamp(local_max_idx +                 1u, 0u,      window),
+                                             samples_ifreq + gr::lora::clamp(local_max_idx +         3u * coeff, 0u,      window)) - samples_ifreq;
 
             // Cross correlate between start and end of falling edge instead of entire window
-            for (int32_t i = local_max_idx; i < local_min_idx; i++) {
-                const float max_corr = this->cross_correlate_ifreq(samples + i, this->d_upchirp_ifreq, 0u, len);
+            for (uint32_t i = local_max_idx; i < local_min_idx; i++) {
+                const float max_corr = this->cross_correlate_ifreq(samples_ifreq + i, this->d_upchirp_ifreq, 0u, /*std::min(len, window - i)*/ len);
                 if (max_corr > max_correlation) {
                     *index = i;
                     max_correlation = max_corr;
+                } else if (max_corr < max_correlation) {
+                    break;
                 }
             }
 
@@ -361,14 +363,14 @@ namespace gr {
          *  Slide the given chirp perfectly on top of the ideal upchirp (phase shift).
          *  Currently unused.
          */
-        int32_t decoder_impl::slide_phase_shift_upchirp_perfect(const float* samples, const uint32_t window) {
+        int32_t decoder_impl::slide_phase_shift_upchirp_perfect(const float* samples_ifreq, const uint32_t window) {
             /// Perfect shift to ideal frequency
             const uint32_t t_low = window / 4u,
                            t_mid = window / 2u;
 
             // Average before compare
             const uint32_t coeff = 20u;
-            float avg = std::accumulate(&samples[t_mid] - coeff / 2u, &samples[t_mid] + coeff / 2u, 0.0f) / coeff;
+            float avg = std::accumulate(&samples_ifreq[t_mid] - coeff / 2u, &samples_ifreq[t_mid] + coeff / 2u, 0.0f) / coeff;
 
             uint32_t idx = std::lower_bound( this->d_upchirp_ifreq.begin() + t_low,
                                              this->d_upchirp_ifreq.begin() + t_mid,
@@ -390,12 +392,11 @@ namespace gr {
             return std::sqrt(variance);
         }
 
-        float decoder_impl::detect_upchirp(const gr_complex *samples, const uint32_t window, const uint32_t slide, int32_t *index) {
+        float decoder_impl::detect_upchirp(const gr_complex *samples, const uint32_t window, int32_t *index) {
             float samples_ifreq[window];
-
             this->instantaneous_frequency(samples, samples_ifreq, window);
 
-            return this->sliding_norm_cross_correlate_upchirp(samples_ifreq, window, slide, index);
+            return this->sliding_norm_cross_correlate_upchirp(samples_ifreq, window, index);
         }
 
         /**
@@ -447,22 +448,22 @@ namespace gr {
         }
 
         unsigned int decoder_impl::max_frequency_gradient_idx(const gr_complex *samples) {
-            float instantaneous_freq [this->d_samples_per_symbol];
+            float samples_ifreq[this->d_samples_per_symbol];
 
             samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
-            this->instantaneous_frequency(samples, instantaneous_freq, this->d_samples_per_symbol);
+            this->instantaneous_frequency(samples, samples_ifreq, this->d_samples_per_symbol);
 
             const uint32_t osr = this->d_samples_per_symbol / this->d_number_of_bins;
 
             for (uint32_t i = 0u; i < this->d_number_of_bins - 1u; i++) {
-                if (instantaneous_freq[osr*i] - instantaneous_freq[osr * (i + 1u)] > 0.2f) {
+                if (samples_ifreq[osr*i] - samples_ifreq[osr * (i + 1u)] > 0.2f) {
                     return i + 1u;
                 }
             }
 
-            return (instantaneous_freq[0u] - instantaneous_freq[osr])
-                    > (instantaneous_freq[(this->d_number_of_bins - 1u) * osr] - instantaneous_freq[this->d_number_of_bins * osr])
+            return (samples_ifreq[0u] - samples_ifreq[osr])
+                    > (samples_ifreq[(this->d_number_of_bins - 1u) * osr] - samples_ifreq[this->d_number_of_bins * osr])
                     ? 0u : this->d_number_of_bins;
         }
 
@@ -605,9 +606,10 @@ namespace gr {
         void decoder_impl::dewhiten(const uint8_t *prng) {
             const uint32_t len = this->d_words_deshuffled.size();
 
-            // // Whitening out
-            // if (prng != gr::lora::prng_header)
-                // DBGR_QUICK_TO_FILE("/tmp/whitening_out", true, this->d_words_deshuffled, len, "0x%02X,");
+            // Whitening out
+//            if (prng != gr::lora::prng_header)
+//                DBGR_QUICK_TO_FILE("/tmp/whitening_out", true, this->d_words_deshuffled, len, "0x%02X,");
+
 
             for (uint32_t i = 0u; i < len; i++) {
                 uint8_t xor_b = this->d_words_deshuffled[i] ^ prng[i];
@@ -635,7 +637,7 @@ namespace gr {
                     gr::lora::hamming_decode_soft(&this->d_words_dewhitened[0], this->d_words_dewhitened.size(), out_data);
                     break;
                 case 2: case 1: // TODO: Report parity error to the user
-                    gr::lora::fec_extract_data_only(&this->d_words_dewhitened[0], this->d_words_dewhitened.size(), data_indices, 4, out_data);
+                    gr::lora::fec_extract_data_only(&this->d_words_dewhitened[0], this->d_words_dewhitened.size(), data_indices, 4u, out_data);
                     break;
             }
 
@@ -710,9 +712,7 @@ namespace gr {
             return -1;
         }
 
-        int decoder_impl::find_preamble_start_fast(const gr_complex *samples, const uint32_t len) {
-            (void) len;
-
+        int decoder_impl::find_preamble_start_fast(const gr_complex *samples) {
             const uint32_t decimation = this->d_corr_decim_factor * 4u;
             const uint32_t decim_size = this->d_samples_per_symbol / decimation;
 
@@ -758,24 +758,19 @@ namespace gr {
             const gr_complex *raw_input = (gr_complex *) input_items[1];
 //            float *out = (float *)output_items[0];
 
+            DBGR_START_TIME_MEASUREMENT(false, gr::lora::DecoderStateToString(this->d_state).c_str());
+
             switch (this->d_state) {
                 case gr::lora::DecoderState::DETECT: {
-                    const int i = this->find_preamble_start_fast(&input[0], 2u * this->d_samples_per_symbol);
+                    const int i = this->find_preamble_start_fast(input);
                     //int i = this->find_preamble_start(&input[0]);
                     //int i = this->calc_energy_threshold(&input[0], 2u * this->d_samples_per_symbol, this->d_energy_threshold);
 
                     if (i != -1) {
-                        // BUG: (2*d_samples_per_symbol - i) always bigger than d_samples_per_symbol
-                        //      Thus c_window is always d_samples_per_symbol?
-//                        uint32_t c_window = std::min(2 * this->d_samples_per_symbol - i,
-//                                                     this->d_samples_per_symbol);
-                        const uint32_t c_window = this->d_samples_per_symbol;
-
                         int32_t index_correction = 0;
 
                         float c = this->detect_upchirp(&input[i],
-                                                       c_window * 2u,
-                                                       this->d_samples_per_symbol / this->d_corr_decim_factor,
+                                                       this->d_samples_per_symbol * 2u,
                                                        &index_correction);
 
                         if (c > 0.9f) {
@@ -800,7 +795,8 @@ namespace gr {
                 }
 
                 case gr::lora::DecoderState::SYNC: {
-                    double c = this->detect_downchirp(&input[0], this->d_samples_per_symbol);
+                    float c = this->detect_downchirp(input, this->d_samples_per_symbol);
+
                     #ifndef NDEBUG
                         this->d_debug << "Cd: " << c << std::endl;
                     #endif
@@ -810,7 +806,7 @@ namespace gr {
                             this->d_debug << "SYNC: " << c << std::endl;
                         #endif
                         // Debug stuff
-                        this->samples_to_file("/tmp/sync", &input[0], this->d_samples_per_symbol, sizeof(gr_complex));
+                        this->samples_to_file("/tmp/sync", input, this->d_samples_per_symbol, sizeof(gr_complex));
 
                         //printf("---------------------- SYNC!  with %f\n", c);
 
@@ -875,7 +871,7 @@ namespace gr {
                     // Failsafe if decoding length reaches end of actual data == noise reached?
                     // Could be replaced be rejecting packets with CRC mismatch...
                     if (std::abs(input[0]) < this->d_energy_threshold) {
-//                        printf("\n*** Decode payload reached end of data! (payload length in HDR is wrong)\n");
+                        //printf("\n*** Decode payload reached end of data! (payload length in HDR is wrong)\n");
                         this->d_payload_symbols = 0;
                     }
                     //**************************************************************************
@@ -890,12 +886,16 @@ namespace gr {
 
                             this->d_state = gr::lora::DecoderState::DETECT;
                             this->d_data.clear();
+
+                            DBGR_STOP_TIME_MEASUREMENT(true);
+                            DBGR_PAUSE();
                         }
                     }
 
                     this->msg_raw_chirp_debug(raw_input, this->d_samples_per_symbol);
                     //samples_debug(input, d_samples_per_symbol);
                     this->consume_each(this->d_samples_per_symbol);
+
                     break;
                 }
 
@@ -909,6 +909,8 @@ namespace gr {
                     break;
                 }
             }
+
+            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
             // Tell runtime system how many output items we produced.
             return 0;

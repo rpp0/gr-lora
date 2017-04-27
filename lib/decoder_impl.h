@@ -43,6 +43,11 @@ namespace gr {
             STOP
         };
 
+        static std::string DecoderStateToString(DecoderState s) {
+            static std::string DecoderStateLUT[] = { "DETECT", "SYNC", "PAUSE", "DECODE_HEADER", "DECODE_PAYLOAD", "STOP" };
+            return DecoderStateLUT[ (size_t)s ];
+        }
+
         class decoder_impl : public decoder {
             private:
                 DecoderState            d_state;
@@ -98,19 +103,19 @@ namespace gr {
                 void    build_ideal_chirps(void);
                 void    samples_to_file(const std::string path, const gr_complex *v, const uint32_t length, const uint32_t elem_size);
                 void    samples_debug(const gr_complex *v, const uint32_t length);
-                float   sliding_norm_cross_correlate_upchirp(const float *samples, const uint32_t window, const uint32_t slide, int32_t *index);
+                float   sliding_norm_cross_correlate_upchirp(const float *samples_ifreq, const uint32_t window, int32_t *index);
                 float   detect_downchirp(const gr_complex *samples, const uint32_t window);
-                float   detect_upchirp(const gr_complex *samples_1, const uint32_t window, const uint32_t slide, int32_t *index);
+                float   detect_upchirp(const gr_complex *samples, const uint32_t window, int32_t *index);
                 float   cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, const uint32_t window);
-                float   cross_correlate_ifreq(const float *samples, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx);
-                int32_t slide_phase_shift_upchirp_perfect(const float* samples, const uint32_t window);
+                float   cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx);
+                int32_t slide_phase_shift_upchirp_perfect(const float* samples_ifreq, const uint32_t window);
 
                 unsigned int get_shift_fft(const gr_complex *samples);
 
                 void    determine_cfo(const gr_complex *samples);
                 void    correct_cfo(gr_complex *samples, const uint32_t num_samples);
                 int     find_preamble_start(const gr_complex *samples);
-                int     find_preamble_start_fast(const gr_complex *samples, const uint32_t len);
+                int     find_preamble_start_fast(const gr_complex *samples);
 
                 unsigned int max_frequency_gradient_idx(const gr_complex *samples);
 

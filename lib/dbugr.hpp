@@ -3,13 +3,16 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <chrono>
 
 #include "utilities.h"
 
 #define CLAMP_VAL   0.7f  //1000000.0f  //0.7f
 
-#undef  NDEBUG
-//#define NDEBUG
+#undef NDEBUG            /// Debug printing
+//#define NDEBUG           /// No debug printing
+
+//#define DBGR_CHRONO      /// Measure execution time
 
 #ifdef NDEBUG
     #define DBGR_PAUSE(MSG)
@@ -80,6 +83,42 @@
             DBGR_out_file.close();                                                                              \
             if(PAUSE) DBGR_PAUSE(MSG);                                                                          \
         } while(0)
+#endif
+
+// Chrono
+#ifndef DBGR_CHRONO
+    #define DBGR_START_TIME_MEASUREMENT(OUT, MSG)
+    #define DBGR_START_TIME_MEASUREMENT_SAME_SCOPE(OUT, MSG)
+    #define DBGR_INTERMEDIATE_TIME_MEASUREMENT()
+    #define DBGR_STOP_TIME_MEASUREMENT(OUT)
+#else
+    static int64_t DBGR_global_time    = 0ll;
+    static bool DBGR_totalled_time     = false;
+    static bool DBGR_intermediate_time = false;
+
+    #define DBGR_START_TIME_MEASUREMENT(OUT, MSG) \
+        DBGR_intermediate_time = OUT; \
+        if (DBGR_intermediate_time) printf("[CHRONO] : Start in % 15s", MSG); \
+        DBGR_totalled_time = false; \
+        auto DBGR_start_time = std::chrono::high_resolution_clock::now();
+
+    #define DBGR_START_TIME_MEASUREMENT_SAME_SCOPE(OUT, MSG) \
+        DBGR_intermediate_time = OUT; \
+        if (DBGR_intermediate_time) printf("[CHRONO] : Start with % 15s", MSG); \
+        DBGR_totalled_time = false; \
+        DBGR_start_time = std::chrono::high_resolution_clock::now();
+
+    #define DBGR_INTERMEDIATE_TIME_MEASUREMENT() \
+        if (!DBGR_totalled_time) { \
+            int64_t DBGR_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - DBGR_start_time).count(); \
+            DBGR_global_time += DBGR_duration; \
+            if (DBGR_intermediate_time) printf(" and took %fms\n", DBGR_duration / 1e6); \
+        }
+
+    #define DBGR_STOP_TIME_MEASUREMENT(OUT) \
+        if (OUT) printf("[CHRONO] : Packet took %fms to process.\n", DBGR_global_time / 1e6); \
+        DBGR_global_time = 0ll; \
+        DBGR_totalled_time = true;
 #endif
 
 #endif // DBUGR_HPP
