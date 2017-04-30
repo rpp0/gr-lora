@@ -880,7 +880,8 @@ namespace gr {
                         this->d_payload_symbols -= (4u + this->d_cr);
 
                         if (this->d_payload_symbols <= 0) {
-                            uint8_t decoded[this->d_payload_length] = { 0u };
+                            uint8_t decoded[this->d_payload_length];
+                            memset( decoded, 0u, this->d_payload_length * sizeof(uint8_t) );
 
                             this->decode(decoded, false);
 
