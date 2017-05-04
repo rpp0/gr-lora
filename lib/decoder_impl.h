@@ -80,11 +80,11 @@ namespace gr {
                 float          d_energy_threshold;
                 const uint8_t *d_whitening_sequence;
 
-                std::vector<unsigned int> d_words;
-                std::vector<uint8_t>      d_demodulated;
-                std::vector<uint8_t>      d_words_deshuffled;
-                std::vector<uint8_t>      d_words_dewhitened;
-                std::vector<uint8_t>      d_data;
+                std::vector<uint32_t> d_words;
+                std::vector<uint8_t>  d_demodulated;
+                std::vector<uint8_t>  d_words_deshuffled;
+                std::vector<uint8_t>  d_words_dewhitened;
+                std::vector<uint8_t>  d_data;
 
                 std::ofstream d_debug_samples;
                 std::ofstream d_debug;
@@ -110,7 +110,7 @@ namespace gr {
                 float   cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx);
                 int32_t slide_phase_shift_upchirp_perfect(const float* samples_ifreq, const uint32_t window);
 
-                unsigned int get_shift_fft(const gr_complex *samples);
+                uint32_t get_shift_fft(const gr_complex *samples);
 
                 void    determine_cfo(const gr_complex *samples);
                 void    correct_cfo(gr_complex *samples, const uint32_t num_samples);

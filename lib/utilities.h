@@ -24,6 +24,27 @@ namespace gr {
             const T t = d < min ? min : d;
             return t > max ? max : t;
         }
+		
+		/**
+         *  \brief  Rotate the given bits to the left.
+         *
+         *  \param  bits
+         *          The value to rotate.
+         *  \param  count
+         *          The amount of bits to rotate (shift to left and add to right).
+         *  \param  size
+         *          The size in bits used in `bits`. 
+		 *          <BR>e.g. 1 byte given       => size = 8
+		 *          <BR>e.g. only 6 bits in use => size = 6, and all bits higher than (1 << size-1) will be zeroed.
+         */
+		static inline uint32_t rotl(uint32_t bits, uint32_t count = 1u, const uint32_t size = 8u) {
+            const uint32_t len_mask = (1u << size) - 1u;
+
+            count %= size;      // Limit bit rotate count to size
+            bits  &= len_mask;  // Limit given bits to size
+
+            return ((bits << count) & len_mask) | (bits >> (size - count));
+        }
 
         template <typename T>
         std::string to_bin(const T v, const uint32_t bitwidth) {
