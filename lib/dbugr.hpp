@@ -83,6 +83,7 @@
             DBGR_out_file.close();                                                                              \
             if(PAUSE) DBGR_PAUSE(MSG);                                                                          \
         } while(0)
+
 #endif
 
 // Chrono
@@ -91,14 +92,39 @@
     #define DBGR_START_TIME_MEASUREMENT_SAME_SCOPE(OUT, MSG)
     #define DBGR_INTERMEDIATE_TIME_MEASUREMENT()
     #define DBGR_STOP_TIME_MEASUREMENT(OUT)
+    #define DBGR_TIME_MEASUREMENT_TO_FILE(PRE)
 #else
     static int64_t DBGR_global_time    = 0ll;
     static bool DBGR_totalled_time     = false;
     static bool DBGR_intermediate_time = false;
+    static bool DBGR_time_to_file      = false;
+    static std::string DBGR_fileprefix = "";
+    static std::string DBGR_filename   = "";
+
+
+    #define DBGR_QUICK_TO_FILE(FILEPATH, APPEND, DATA, SIZE, FORMAT)                                            \
+        do {                                                                                                    \
+            int32_t DBGR_j;                                                                                     \
+            char DBGR_buf[20];                                                                                  \
+            std::ofstream DBGR_out_file;                                                                        \
+            DBGR_out_file.open(FILEPATH, std::ios::out | (APPEND ? std::ios::app : std::ios::out ));            \
+                                                                                                                \
+            for (DBGR_j = 0; DBGR_j < int32_t(SIZE); DBGR_j++) {                                                \
+                sprintf(DBGR_buf, FORMAT, DATA[DBGR_j]);                                                        \
+                DBGR_out_file.write(DBGR_buf, strlen(DBGR_buf));                                                \
+            }                                                                                                   \
+                                                                                                                \
+            if (APPEND) DBGR_out_file.write("\n", sizeof(char));                                                \
+                                                                                                                \
+        } while(0)                                                                                              \
+
 
     #define DBGR_START_TIME_MEASUREMENT(OUT, MSG) \
         DBGR_intermediate_time = OUT; \
-        if (DBGR_intermediate_time) printf("[CHRONO] : Start in % 15s", MSG); \
+        if (DBGR_intermediate_time) printf("[CHRONO] : Start in % 15s", std::string(MSG).c_str()); \
+        if (DBGR_time_to_file) { \
+            DBGR_filename = "/tmp/" + DBGR_fileprefix + "_" + std::string(MSG); \
+        } \
         DBGR_totalled_time = false; \
         auto DBGR_start_time = std::chrono::high_resolution_clock::now();
 
@@ -112,13 +138,22 @@
         if (!DBGR_totalled_time) { \
             int64_t DBGR_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - DBGR_start_time).count(); \
             DBGR_global_time += DBGR_duration; \
-            if (DBGR_intermediate_time) printf(" and took %fms\n", DBGR_duration / 1e6); \
+            const float DBGR_ms_duration[] = { DBGR_duration / 1e6f }; \
+            if (DBGR_intermediate_time) printf(" and took %fms\n", DBGR_ms_duration[0]); \
+            if (DBGR_time_to_file) { \
+                DBGR_QUICK_TO_FILE(DBGR_filename, true, DBGR_ms_duration, 1, "%f"); \
+            } \
         }
 
     #define DBGR_STOP_TIME_MEASUREMENT(OUT) \
         if (OUT) printf("[CHRONO] : Packet took %fms to process.\n", DBGR_global_time / 1e6); \
         DBGR_global_time = 0ll; \
         DBGR_totalled_time = true;
+
+    #define DBGR_TIME_MEASUREMENT_TO_FILE(PRE) \
+        DBGR_time_to_file = true; \
+        if (DBGR_fileprefix.length() == 0) DBGR_fileprefix = "lora-time_" + std::string(PRE);
+
 #endif
 
 #endif // DBUGR_HPP
