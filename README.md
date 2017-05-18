@@ -1,4 +1,4 @@
-gr-lora [![Build status](https://api.travis-ci.org/Wosser1sProductions/gr-lora.svg)](https://travis-ci.org/Wosser1sProductions/gr-lora)
+gr-lora [![Build status](https://api.travis-ci.org/rpp0/gr-lora.svg)](https://travis-ci.org/rpp0/gr-lora)
 =======
 
 The gr-lora project aims to provide a collection of GNURadio blocks for receiving LoRa modulated radio messages using Software Defined Radio (SDR). More information about LoRa itself can be found on [the website of the LoRa Alliance](https://www.lora-alliance.org/).
