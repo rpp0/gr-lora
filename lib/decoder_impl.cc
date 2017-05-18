@@ -32,7 +32,7 @@
 #include "utilities.h"
 
 //#define NO_TMP_WRITES 1   /// Debug output file write
-#define CFO_CORRECT   1   /// Correct shift fft estimation
+//#define CFO_CORRECT   1   /// Correct shift fft estimation
 
 //#undef NDEBUG            /// Debug printing
 //#define NDEBUG        /// No debug printing
@@ -351,7 +351,7 @@ namespace gr {
 
             // Cross correlate between start and end of falling edge instead of entire window
             for (uint32_t i = local_max_idx; i < local_min_idx; i++) {
-                const float max_corr = this->cross_correlate_ifreq(samples_ifreq + i, this->d_upchirp_ifreq, 0u, /*std::min(len, window - i - 1u)*/ len);
+                const float max_corr = this->cross_correlate_ifreq(samples_ifreq + i, this->d_upchirp_ifreq, 0u, std::min(len, window - i - 1u));
                 if (max_corr > max_correlation) {
                     *index = i;
                     max_correlation = max_corr;
@@ -409,7 +409,7 @@ namespace gr {
             gr_complex mult_hf[this->d_samples_per_symbol];
 
             gr_complex sample[this->d_samples_per_symbol];
-            memcpy(sample, samples, this->d_samples_per_symbol);
+            memcpy(sample, samples, this->d_samples_per_symbol*sizeof(gr_complex));
             #ifdef CFO_CORRECT
                 this->determine_cfo(&samples[0]);
                 #ifndef NDEBUG
