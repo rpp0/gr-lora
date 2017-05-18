@@ -429,7 +429,7 @@ namespace gr {
                 *   \brief  The main method called by GNU Radio to perform tasks on the given input.
                 *
                 *   \param  noutput_items
-                *           The requested amoutn of output items.
+                *           The requested amount of output items.
                 *   \param  input_items
                 *           An array with samples to process.
                 *   \param  output_items

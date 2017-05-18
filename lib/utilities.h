@@ -166,6 +166,7 @@ namespace gr {
 
         /**
          *  \brief  Check whether the parity of the given uint64_t is even.
+         *          <BR>See https://graphics.stanford.edu/~seander/bithacks.html for more.
          *
          *  \param  word
          *          The uint64_t to check.

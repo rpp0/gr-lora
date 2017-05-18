@@ -166,8 +166,10 @@ class ExamplifyLive:
 if __name__ == '__main__':
     random.seed(None)
 
-    gains = [32, 38, 38]  #  [10, 20, 20], for usrp: [32, 38, 38]
-
+	# Default: [10, 20, 20]
+	# For an usrp it might me necessary to increase the gain and lower the detection threshold.
+	# e.g. [32, 38, 38] and t = 0.001, but be careful.
+    gains = [10, 20, 20]
 
     ############################################################################
     # SF / CR test with TimesPerSetting packets of len(2,16) on each setting
