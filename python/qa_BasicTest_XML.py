@@ -4,7 +4,8 @@ import collections, datetime
 import os.path
 import xmltodict
 
-from gnuradio import gr, gr_unittest, blocks
+from gnuradio import gr, gr_unittest, blocks, filter
+from gnuradio.filter import firdes
 
 TestResultData    = collections.namedtuple('TestResultData', ['id', 'fromfile', 'passing', 'total', 'rate'])
 TestSerieSettings = collections.namedtuple('TestSerieSettings', ['data', 'times'])
@@ -81,6 +82,10 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
         self.offset          = -(self.capture_freq - self.target_freq)
         #self.bitrate         = self.sf * (1 / (2**self.sf / self.bw ))
         self.hasHDR          = True
+
+        # For FFT, determine Center Frequency Offset first, then set here.
+        # For RN2483, usually -14.1e3
+        self.center_offset   = 0
 
         self.inputFile       = "./"
 
@@ -215,9 +220,11 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 self.lora_lora_receiver_0         = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate)
                 self.blocks_throttle_0            = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
                 self.blocks_message_socket_sink_0 = lora.message_socket_sink()
+                self.freq_xlating_fir_filter_0    = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, self.samp_rate, 500000, 100000, firdes.WIN_HAMMING, 6.67)), self.center_offset, self.samp_rate)
 
                 self.tb.connect(     (self.file_source, 0),                 (self.blocks_throttle_0, 0))
-                self.tb.connect(     (self.blocks_throttle_0, 0),           (self.lora_lora_receiver_0, 0))
+                self.tb.connect(     (self.blocks_throttle_0, 0),           (self.freq_xlating_fir_filter_0, 0))
+                self.tb.connect(     (self.freq_xlating_fir_filter_0, 0),   (self.lora_lora_receiver_0, 0))
                 self.tb.msg_connect( (self.lora_lora_receiver_0, 'frames'), (self.blocks_message_socket_sink_0, 'in'))
 
                 self.tb.run ()

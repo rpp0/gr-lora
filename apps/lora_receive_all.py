@@ -13,7 +13,7 @@ import lora
 LoRaReceiver = collections.namedtuple('LoRaReceiver', ['name', 'available'])
 
 class LoRaReceiveAll:
-    def __init__(self, receiver, spreadingFactor = 7, samp_rate = 1e6, capture_freq = 868.0e6, target_freq = 868.1e6, threshold = 0.01):
+    def __init__(self, receiver, spreadingFactor = 7, samp_rate = 1e6, capture_freq = 868.0e6, target_freq = 868.1e6, center_offset = 0, threshold = 0.01):
         ##################################################
         # Variables                                      #
         ##################################################
@@ -30,17 +30,23 @@ class LoRaReceiveAll:
         # self.codingRate      = codingRate      # 4/5 4/6 4/7
         self.threshold       = threshold
 
+        # For FFT, determine Center Frequency Offset first, then set here.
+        # For RN2483, usually -14.1e3
+        self.center_offset   = center_offset
+
         ##################################################
         # Blocks                                         #
         ##################################################
         self.tb = gr.top_block ()
 
-        self.source               = receiver
-        self.lora_lora_receiver_0 = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate, self.threshold)
-        self.blocks_throttle_0    = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
+        self.source                    = receiver
+        self.lora_lora_receiver_0      = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate, self.threshold)
+        self.blocks_throttle_0         = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
+        self.freq_xlating_fir_filter_0 = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, self.samp_rate, 200000, 50000)), self.center_offset, self.samp_rate)
 
-        self.tb.connect( (self.source, 0),            (self.blocks_throttle_0, 0))
-        self.tb.connect( (self.blocks_throttle_0, 0), (self.lora_lora_receiver_0, 0))
+        self.tb.connect( (self.source, 0),                    (self.blocks_throttle_0, 0))
+        self.tb.connect( (self.blocks_throttle_0, 0),         (self.freq_xlating_fir_filter_0, 0))
+        self.tb.connect( (self.freq_xlating_fir_filter_0, 0), (self.lora_lora_receiver_0, 0))
 
     def start(self):
         # self.tb.Start(True)
@@ -60,9 +66,10 @@ if __name__ == '__main__':
         if sf in range(6, 13):
             break
 
-    target_freq  = 868.1e6
-    samp_rate    = 1e6
-    capture_freq = 868.0e6
+    target_freq   = 868.1e6
+    samp_rate     = 1e6
+    capture_freq  = 868.0e6
+    center_offset = 0
 
     print("Available sources:")
     for i, r in enumerate(receivers):
@@ -121,5 +128,5 @@ if __name__ == '__main__':
         print("Warning: No receiver set!")
         exit()
 
-    sdr = LoRaReceiveAll(receiver, sf, samp_rate, capture_freq, target_freq)
+    sdr = LoRaReceiveAll(receiver, sf, samp_rate, capture_freq, target_freq, center_offset)
     sdr.start()

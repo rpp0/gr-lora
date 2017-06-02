@@ -73,7 +73,8 @@ namespace gr {
                 std::vector<float>      d_upchirp_ifreq;    ///< The instantaneous frequency of the ideal upchirp.
 
                 std::vector<gr_complex> d_fft;              ///< Vector containing the FFT resuls.
-                std::vector<gr_complex> d_mult;             ///< Vector containing the FFT decimation.
+                std::vector<gr_complex> d_mult_hf;          ///< Vector containing the FFT decimation.
+                std::vector<gr_complex> d_tmp;              ///< Vector containing the FFT decimation.
 
                 uint8_t        d_sf;                        ///< The Spreading Factor.
                 uint32_t       d_bw;                        ///< The receiver bandwidth (fixed to `125kHz`).
@@ -102,8 +103,8 @@ namespace gr {
                 std::ofstream d_debug;                      ///< Outputstream for the debug log.
 
                 fftplan d_q;                                ///< The LiquidDSP::FFT_Plan.
+                fftplan d_qr;                               ///< The LiquidDSP::FFT_Plan in reverse.
 
-                float         d_decim_h[DECIMATOR_FILTER_SIZE]; ///< The reversed decimation filter for LiquidDSP.
                 uint32_t      d_corr_decim_factor;          ///< The decimation factor used in finding the preamble start.
                 uint32_t      d_decim_factor;               ///< The amount of samples (data points) in each bin.
                 firdecim_crcf d_decim = nullptr;            ///< The LiquidDSP FIR decimation filter used to decimate the FFT imput.
@@ -140,6 +141,20 @@ namespace gr {
                  *          `sizeof` the data in the array.
                  */
                 void samples_to_file(const std::string path, const gr_complex *v, const uint32_t length, const uint32_t elem_size);
+
+                /**
+                  *  \brief  Debug method to dump the given values array to a file in textual format.
+                  *
+                  *  \param  path
+                  *          The path to the file to dump to.
+                  *  \param  v
+                  *          The values array to dump.
+                  *  \param  length
+                  *          Length of said array.
+                  *  \param  ppm
+                  *          PPM value of the data.
+                  */
+                void values_to_file(const std::string path, const unsigned char *v, const uint32_t length, const uint32_t ppm);
 
                 /**
                  *  \brief  Write the given complex array to the debug outputstream.
@@ -207,12 +222,10 @@ namespace gr {
                  *          The instantaneous frequency of the symbol to correlate with.
                  *  \param  ideal_chirp
                  *          The vector containing the ideal chirp to correlate with.
-                 *  \param  from_idx
-                 *          Correlation start index.
                  *  \param  to_idx
                  *          Correlation end index.
                  */
-                float cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx);
+                float cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t to_idx);
 
                 /**
                  *  \brief  Returns the index to shift the given symbol so that it overlaps the ideal upchirp.
@@ -271,8 +284,10 @@ namespace gr {
                  *
                  *  \param  samples
                  *          The complex symbol to analyse.
+                 *  \param  is_header
+                 *          Whether the given symbol is part of a HDR.
                  */
-                uint32_t max_frequency_gradient_idx(const gr_complex *samples);
+                uint32_t max_frequency_gradient_idx(const gr_complex *samples, const bool is_header = false);
 
                 /**
                  *  \brief  Demodulate the given symbol and return true if all expected symbols have been parsed.
@@ -399,7 +414,7 @@ namespace gr {
                  *  \param  num_samples
                  *          Size of said complex array.
                  */
-                void    msg_raw_chirp_debug(const gr_complex *raw_samples, const uint32_t num_samples);
+                void msg_raw_chirp_debug(const gr_complex *raw_samples, const uint32_t num_samples);
 
                 /**
                  *  \brief  Unimplemented
@@ -407,7 +422,7 @@ namespace gr {
                  *  \param  frame_bytes
                  *  \param  frame_len
                  */
-                void    msg_lora_frame(const uint8_t *frame_bytes, const uint32_t frame_len);
+                void msg_lora_frame(const uint8_t *frame_bytes, const uint32_t frame_len);
 
             public:
                 /**
@@ -429,7 +444,7 @@ namespace gr {
                 *   \brief  The main method called by GNU Radio to perform tasks on the given input.
                 *
                 *   \param  noutput_items
-                *           The requested amount of output items.
+                *           The requested amoutn of output items.
                 *   \param  input_items
                 *           An array with samples to process.
                 *   \param  output_items

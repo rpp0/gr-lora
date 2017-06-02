@@ -297,7 +297,6 @@ namespace gr {
 //                          i5 = pack_nibble(1, 0, 1, 1),
 //                          i6 = pack_nibble(0, 0, 1, 0),
 //                          i7 = pack_nibble(0, 0, 0, 1);
-
 //            H[i0] = 0;
 //            H[i1] = 1;
 //            H[i2] = 2;
