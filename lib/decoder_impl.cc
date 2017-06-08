@@ -32,7 +32,7 @@
 #include "utilities.h"
 
 //#define NO_TMP_WRITES 1   /// Debug output file write
-#define CFO_CORRECT   1   /// Correct shift fft estimation
+//#define CFO_CORRECT   1   /// Correct shift fft estimation
 
 //#undef NDEBUG            /// Debug printing
 //#define NDEBUG        /// No debug printing
@@ -116,18 +116,24 @@ namespace gr {
             this->build_ideal_chirps();
 
             this->set_output_multiple(2 * this->d_samples_per_symbol);
-            this->d_fft.resize(this->d_number_of_bins);
-            this->d_mult.resize(this->d_number_of_bins);
-            this->d_q = fft_create_plan(this->d_number_of_bins, &this->d_mult[0], &this->d_fft[0], LIQUID_FFT_FORWARD, 0);
+            this->d_fft.resize(this->d_samples_per_symbol);
+            this->d_mult_hf.resize(this->d_samples_per_symbol);
+            this->d_tmp.resize(this->d_number_of_bins);
+            this->d_q  = fft_create_plan(this->d_samples_per_symbol, &this->d_mult_hf[0], &this->d_fft[0],     LIQUID_FFT_FORWARD, 0);
+            this->d_qr = fft_create_plan(this->d_number_of_bins,     &this->d_tmp[0],     &this->d_mult_hf[0], LIQUID_FFT_BACKWARD, 0);
+
 
             // Decimation filter
-            float g[DECIMATOR_FILTER_SIZE];
-            liquid_firdes_rrcos(8, 1, 0.5f, 0.3f, g); // Filter for interpolating
+            const int delay             = 2;
+            const int decim_filter_size = (2 * this->d_decim_factor * delay + 1);
+            float g[decim_filter_size];
+            float d_decim_h[decim_filter_size]; ///< The reversed decimation filter for LiquidDSP.
+            liquid_firdes_rrcos(this->d_decim_factor, delay, 0.5f, 0.3f, g); // Filter for interpolating
 
-            for (uint32_t i = 0u; i < DECIMATOR_FILTER_SIZE; i++) // Reverse it to get decimation filter
-                this->d_decim_h[i] = g[DECIMATOR_FILTER_SIZE - i - 1];
+            for (uint32_t i = 0u; i < decim_filter_size; i++) // Reverse it to get decimation filter
+                d_decim_h[i] = g[decim_filter_size - i - 1u];
 
-            this->d_decim = firdecim_crcf_create(this->d_decim_factor, this->d_decim_h, DECIMATOR_FILTER_SIZE);
+            this->d_decim = firdecim_crcf_create(this->d_decim_factor, d_decim_h, decim_filter_size);
 
             // Register gnuradio ports
             this->message_port_register_out(pmt::mp("frames"));
@@ -151,6 +157,7 @@ namespace gr {
             #endif
 
             fft_destroy_plan(this->d_q);
+            fft_destroy_plan(this->d_qr);
             firdecim_crcf_destroy(this->d_decim);
         }
 
@@ -180,6 +187,19 @@ namespace gr {
 
             samples_to_file("/tmp/downchirp", &this->d_downchirp[0], this->d_downchirp.size(), sizeof(gr_complex));
             samples_to_file("/tmp/upchirp",   &this->d_upchirp[0],   this->d_upchirp.size(),   sizeof(gr_complex));
+        }
+
+        void decoder_impl::values_to_file(const std::string path, const unsigned char *v, const uint32_t length, const uint32_t ppm) {
+            std::ofstream out_file;
+            out_file.open(path.c_str(), std::ios::out | std::ios::app);
+
+            for (uint32_t i = 0u; i < length; i++) {
+                std::string tmp = gr::lora::to_bin(v[i], ppm);
+                out_file.write(tmp.c_str(), tmp.length());
+            }
+            out_file.write("\n", 1);
+
+            out_file.close();
         }
 
         void decoder_impl::samples_to_file(const std::string path, const gr_complex *v, const uint32_t length, const uint32_t elem_size) {
@@ -292,28 +312,28 @@ namespace gr {
          *  Calculate normalized cross correlation of real values.
          *  See https://en.wikipedia.org/wiki/Cross-correlation#Normalized_cross-correlation.
          */
-        float decoder_impl::cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t from_idx, const uint32_t to_idx) {
+        float decoder_impl::cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t to_idx) {
             float result = 0.0f;
 
-            const float average   = std::accumulate(samples_ifreq + from_idx, samples_ifreq + to_idx, 0.0f) / (float)(to_idx - from_idx);
-            const float chirp_avg = std::accumulate(&ideal_chirp[from_idx]  , &ideal_chirp[to_idx]  , 0.0f) / (float)(to_idx - from_idx);
-            const float sd        =   this->stddev(samples_ifreq + from_idx , (to_idx - from_idx) , average)
-                                    * this->stddev(&ideal_chirp[from_idx]   , (to_idx - from_idx) , chirp_avg);
+            const float average   = std::accumulate(samples_ifreq  , samples_ifreq + to_idx, 0.0f) / (float)(to_idx);
+            const float chirp_avg = std::accumulate(&ideal_chirp[0], &ideal_chirp[to_idx]  , 0.0f) / (float)(to_idx);
+            const float sd        =   this->stddev(samples_ifreq   , to_idx, average)
+                                    * this->stddev(&ideal_chirp[0] , to_idx, chirp_avg);
 
-            for (uint32_t i = from_idx; i < to_idx; i++) {
+            for (uint32_t i = 0u; i < to_idx; i++) {
                 result += (samples_ifreq[i] - average) * (ideal_chirp[i] - chirp_avg) / sd;
             }
 
-            result /= (float)(to_idx - from_idx - 1u);
+            result /= (float)(to_idx - 1u);
 
             return result;
         }
 
         float decoder_impl::detect_downchirp(const gr_complex *samples, const uint32_t window) {
             float samples_ifreq[window];
-
             this->instantaneous_frequency(samples, samples_ifreq, window);
-            return this->cross_correlate_ifreq(samples_ifreq, this->d_downchirp_ifreq, 0u, window - 1u);
+
+            return this->cross_correlate_ifreq(samples_ifreq, this->d_downchirp_ifreq, window - 1u);
         }
 
         /**
@@ -340,6 +360,7 @@ namespace gr {
             }
 
             if (!found_change) {
+                //printf("No falling edge?\n");
                 return 0.0f;
             }
 
@@ -350,13 +371,17 @@ namespace gr {
                                              samples_ifreq + gr::lora::clamp(local_max_idx +        3u * coeff, 0u,      window)) - samples_ifreq;
 
             // Cross correlate between start and end of falling edge instead of entire window
-            for (uint32_t i = local_max_idx; i < local_min_idx; i++) {
-                const float max_corr = this->cross_correlate_ifreq(samples_ifreq + i, this->d_upchirp_ifreq, 0u, /*std::min(len, window - i - 1u)*/ len);
+            for (uint32_t i = local_max_idx; i < local_min_idx && (i + len) < window; i++) {
+                const float max_corr = this->cross_correlate_ifreq(samples_ifreq + i, this->d_upchirp_ifreq, len);
+
                 if (max_corr > max_correlation) {
                     *index = i;
                     max_correlation = max_corr;
                 }
             }
+
+            // Signal from local_max_idx vs shifted with *index
+            //DBGR_WRITE_SIGNAL(this->d_upchirp_ifreq, (samples_ifreq + local_max_idx), len, (*index - local_max_idx), 0u, window, false, true, Printed graphs in sliding_norm_cross_correlate_upchirp);
 
             return max_correlation;
         }
@@ -402,14 +427,14 @@ namespace gr {
         }
 
         /**
-         *  Currently unused.
+         *  Currently unstable due to center frequency offset.
          */
         uint32_t decoder_impl::get_shift_fft(const gr_complex *samples) {
             float      fft_mag[this->d_number_of_bins];
-            gr_complex mult_hf[this->d_samples_per_symbol];
-
             gr_complex sample[this->d_samples_per_symbol];
-            memcpy(sample, samples, this->d_samples_per_symbol);
+
+            memcpy(sample, samples, this->d_samples_per_symbol * sizeof(gr_complex));
+
             #ifdef CFO_CORRECT
                 this->determine_cfo(&samples[0]);
                 #ifndef NDEBUG
@@ -423,50 +448,102 @@ namespace gr {
 
             // Multiply with ideal downchirp
             for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
-                mult_hf[i] = std::conj(sample[i] * this->d_downchirp[i]);
+                this->d_mult_hf[i] = std::conj(sample[i] * this->d_downchirp[i]);
             }
 
-            samples_to_file("/tmp/mult", &mult_hf[0], this->d_samples_per_symbol, sizeof(gr_complex));
+            samples_to_file("/tmp/mult", &this->d_mult_hf[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
             // Perform decimation
-            for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
-                firdecim_crcf_execute(this->d_decim, &mult_hf[this->d_decim_factor * i], &this->d_mult[i]);
-            }
+            //for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
+            //    firdecim_crcf_execute(this->d_decim, &mult_hf[this->d_decim_factor * i], &this->d_mult[i]);
+            //}
 
-            samples_to_file("/tmp/resampled", &this->d_mult[0], this->d_number_of_bins, sizeof(gr_complex));
+            //samples_to_file("/tmp/resampled", &this->d_mult[0], this->d_number_of_bins, sizeof(gr_complex));
 
             // Perform FFT
             fft_execute(this->d_q);
 
+            // Decimate. Note: assumes fft size is multiple of decimation factor and number of bins is even
+            const uint32_t N = this->d_number_of_bins;
+            memcpy(&this->d_tmp[0],               &this->d_fft[0],                                     (N + 1u) / 2u * sizeof(gr_complex));
+            memcpy(&this->d_tmp[ (N + 1u) / 2u ], &this->d_fft[this->d_samples_per_symbol - (N / 2u)],        N / 2u * sizeof(gr_complex));
+            this->d_tmp[N / 2u] += this->d_fft[N / 2u];
+            // Note that you have to kill the grc before checking the plots!
+
             // Get magnitude
             for (uint32_t i = 0u; i < this->d_number_of_bins; i++) {
-                fft_mag[i] = std::abs(this->d_fft[i]);
+                fft_mag[i] = std::abs(this->d_tmp[i]);
             }
 
-            samples_to_file("/tmp/fft", &this->d_fft[0], this->d_number_of_bins, sizeof(gr_complex));
+            samples_to_file("/tmp/fft", &this->d_tmp[0], this->d_number_of_bins, sizeof(gr_complex));
+
+            fft_execute(this->d_qr); // debug
+            samples_to_file("/tmp/resampled", &this->d_mult_hf[0], this->d_number_of_bins, sizeof(gr_complex));
 
             // Return argmax here
             return (std::max_element(fft_mag, fft_mag + this->d_number_of_bins) - fft_mag);
         }
 
-        uint32_t decoder_impl::max_frequency_gradient_idx(const gr_complex *samples) {
+        uint32_t decoder_impl::max_frequency_gradient_idx(const gr_complex *samples, const bool is_header) {
             float samples_ifreq[this->d_samples_per_symbol];
 
             samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
             this->instantaneous_frequency(samples, samples_ifreq, this->d_samples_per_symbol);
 
-            for (uint32_t i = 0u; i < this->d_number_of_bins - 1u; i++) {
+            /*** Visualize bins in plot ******************************************/
+            //#define PLOT_BINS   // Uncomment for use
+
+            #ifdef PLOT_BINS
+                uint32_t gradbins  = this->d_number_of_bins;
+                uint32_t graddecim = this->d_decim_factor;
+                if (is_header) {
+                    gradbins  /= 4u;
+                    graddecim *= 4u;
+                }
+
+                printf("Bins: %d, len: %d\n", gradbins, graddecim);
+                float samples_bins[this->d_samples_per_symbol];
+                for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
+                    samples_bins[i] = i % (graddecim * 2u) == 0u ? 0.5f : i % graddecim == 0u ? -0.5f : 0.0f;
+                }
+
+                DBGR_WRITE_SIGNAL(samples_bins, samples_ifreq, this->d_samples_per_symbol, 0, 0, this->d_samples_per_symbol, false, false, Printed bins in freq_grad_idx);
+
+            #endif
+            /*********************************************************************/
+
+            for (uint32_t i = 1u; i < this->d_number_of_bins - 2u; i++) {
                 if (samples_ifreq[this->d_decim_factor * i] - samples_ifreq[this->d_decim_factor * (i + 1u)] > 0.2f) {
-                    return i + 1u;
+                    #ifdef PLOT_BINS
+                        printf("[Freq_Grad] Down on idx: %4d in bin %4d (in [%4d, %4d])\n",
+                               this->d_decim_factor * i,
+                               is_header ? (i + !is_header) / 4u : (i + !is_header),
+                               graddecim * (is_header ? i / 4u : i),
+                               graddecim * ((is_header ? i / 4u : i) + 1u));
+                        DBGR_PAUSE();
+                    #endif
+                    return i + !is_header;
                 }
             }
 
-            const float zero_bin = samples_ifreq[0u] - samples_ifreq[this->d_decim_factor];
-            const float high_bin = samples_ifreq[(this->d_number_of_bins - 2u) * this->d_decim_factor] - samples_ifreq[(this->d_number_of_bins - 1u) * this->d_decim_factor];
+            const float zero_bin = samples_ifreq[0u] - samples_ifreq[this->d_decim_factor * 2u];
+            const float high_bin = samples_ifreq[(this->d_number_of_bins - 2u) * this->d_decim_factor] - samples_ifreq[this->d_number_of_bins * this->d_decim_factor - 1u];
 
-            return zero_bin > high_bin
-                    ? 0u : this->d_number_of_bins;
+            #ifdef PLOT_BINS
+                if (zero_bin > 0.2f || zero_bin > high_bin)
+                    printf("[Freq_Grad] Down on idx: %4d in bin %4d (at %4d)\n", 0, 0, 1);
+                else
+                    printf("[Freq_Grad] Down on idx: %4d in bin %4d (at %4d)\n",
+                           this->d_decim_factor * (this->d_number_of_bins - 1u),
+                           this->d_number_of_bins,
+                           this->d_decim_factor * this->d_number_of_bins);
+                DBGR_PAUSE();
+            #endif
+
+            // Prefer first bin over last. (First bin == 0 or 1?)
+            return zero_bin > 0.2f || zero_bin > high_bin
+                    ? 1u : this->d_number_of_bins;
         }
 
         bool decoder_impl::demodulate(const gr_complex *samples, const bool is_header) {
@@ -474,7 +551,7 @@ namespace gr {
 
 //            DBGR_START_TIME_MEASUREMENT(false, "only");
 
-            uint32_t bin_idx = this->max_frequency_gradient_idx(samples);
+            uint32_t bin_idx = this->max_frequency_gradient_idx(samples, is_header);
             //uint32_t bin_idx = this->get_shift_fft(samples);
 
 //            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
@@ -509,7 +586,7 @@ namespace gr {
          */
         void decoder_impl::deinterleave(const uint32_t ppm) {
             const uint32_t bits_per_word = this->d_words.size();
-            const uint32_t offset_start = ppm - 1u;
+            const uint32_t offset_start  = ppm - 1u;
 
             std::vector<uint8_t> words_deinterleaved(ppm, 0u);
 
@@ -541,6 +618,10 @@ namespace gr {
             static const uint8_t shuffle_pattern[] = {7, 6, 3, 4, 2, 1, 0, 5};
 
             this->deshuffle(shuffle_pattern, is_header);
+
+            if (!is_header)
+                this->values_to_file("/tmp/after_deshuffle", &this->d_words_deshuffled[0], this->d_words_deshuffled.size(), 8);
+
             this->dewhiten(is_header ? gr::lora::prng_header : this->d_whitening_sequence);
             this->hamming_decode(out_data);
 
@@ -567,16 +648,13 @@ namespace gr {
         void decoder_impl::deshuffle(const uint8_t *shuffle_pattern, const bool is_header) {
             const uint32_t to_decode = is_header ? 5u : this->d_demodulated.size();
             const uint32_t len       = sizeof(shuffle_pattern) / sizeof(uint8_t);
-            uint8_t original, result;
+            uint8_t result;
 
             for (uint32_t i = 0u; i < to_decode; i++) {
-                original = this->d_demodulated[i];
-                result   = 0u;
+                result = 0u;
 
                 for (uint32_t j = 0u; j < len; j++) {
-                    if (original & (1u << shuffle_pattern[j])) {
-                        result |= 1u << j;
-                    }
+                    result |= !!(this->d_demodulated[i] & (1u << shuffle_pattern[j])) << j;
                 }
 
                 this->d_words_deshuffled.push_back(result);
@@ -602,7 +680,6 @@ namespace gr {
             // Whitening out
 //            if (prng != gr::lora::prng_header)
 //                DBGR_QUICK_TO_FILE("/tmp/whitening_out", true, this->d_words_deshuffled, len, "0x%02X,");
-
 
             for (uint32_t i = 0u; i < len; i++) {
                 uint8_t xor_b = this->d_words_deshuffled[i] ^ prng[i];
@@ -800,7 +877,7 @@ namespace gr {
                         this->d_debug << "Cd: " << c << std::endl;
                     #endif
 
-                    if (c > 0.98f) {
+                    if (c > 0.99f) {
                         #ifndef NDEBUG
                             this->d_debug << "SYNC: " << c << std::endl;
                         #endif
@@ -889,6 +966,21 @@ namespace gr {
 
                             DBGR_STOP_TIME_MEASUREMENT(true);
 //                            DBGR_PAUSE();
+
+                            //---- Whitening rejecter ----
+//                            bool all_zero = true;
+//                            for (uint32_t i = 0u; i < this->d_payload_length; i++) {
+//                                if (decoded[i]) {
+//                                    all_zero = false;
+//                                    break;
+//                                }
+//                            }
+
+//                            // Remove last line in whitening output file if decoded values were not all zero
+//                            if (!all_zero) {
+//                                system("sed -i '$ d' /tmp/whitening_out");
+//                            }
+                            //----------------------------
                         }
                     }
 

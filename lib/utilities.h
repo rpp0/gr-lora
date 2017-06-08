@@ -166,6 +166,7 @@ namespace gr {
 
         /**
          *  \brief  Check whether the parity of the given uint64_t is even.
+         *          <BR>See https://graphics.stanford.edu/~seander/bithacks.html for more.
          *
          *  \param  word
          *          The uint64_t to check.
@@ -296,7 +297,6 @@ namespace gr {
 //                          i5 = pack_nibble(1, 0, 1, 1),
 //                          i6 = pack_nibble(0, 0, 1, 0),
 //                          i7 = pack_nibble(0, 0, 0, 1);
-
 //            H[i0] = 0;
 //            H[i1] = 1;
 //            H[i2] = 2;
