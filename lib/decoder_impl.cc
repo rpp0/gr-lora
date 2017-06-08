@@ -794,7 +794,7 @@ namespace gr {
 
 //            DBGR_TIME_MEASUREMENT_TO_FILE("SF7_fft_idx");
 
-            DBGR_START_TIME_MEASUREMENT(false, gr::lora::DecoderStateToString(this->d_state));
+//            DBGR_START_TIME_MEASUREMENT(false, gr::lora::DecoderStateToString(this->d_state));
 
             switch (this->d_state) {
                 case gr::lora::DecoderState::DETECT: {
@@ -924,23 +924,8 @@ namespace gr {
                             this->d_state = gr::lora::DecoderState::DETECT;
                             this->d_data.clear();
 
-                            DBGR_STOP_TIME_MEASUREMENT(true);
+//                            DBGR_STOP_TIME_MEASUREMENT(true);
 //                            DBGR_PAUSE();
-
-                            //---- Whitening rejecter ----
-//                            bool all_zero = true;
-//                            for (uint32_t i = 0u; i < this->d_payload_length; i++) {
-//                                if (decoded[i]) {
-//                                    all_zero = false;
-//                                    break;
-//                                }
-//                            }
-
-//                            // Remove last line in whitening output file if decoded values were not all zero
-//                            if (!all_zero) {
-//                                system("sed -i '$ d' /tmp/whitening_out");
-//                            }
-                            //----------------------------
                         }
                     }
 
@@ -962,7 +947,7 @@ namespace gr {
                 }
             }
 
-            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
+//            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
             // Tell runtime system how many output items we produced.
             return 0;
