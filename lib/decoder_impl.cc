@@ -491,55 +491,14 @@ namespace gr {
 
             this->instantaneous_frequency(samples, samples_ifreq, this->d_samples_per_symbol);
 
-            /*** Visualize bins in plot ******************************************/
-            //#define PLOT_BINS   // Uncomment for use
-
-            #ifdef PLOT_BINS
-                uint32_t gradbins  = this->d_number_of_bins;
-                uint32_t graddecim = this->d_decim_factor;
-                if (is_header) {
-                    gradbins  /= 4u;
-                    graddecim *= 4u;
-                }
-
-                printf("Bins: %d, len: %d\n", gradbins, graddecim);
-                float samples_bins[this->d_samples_per_symbol];
-                for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
-                    samples_bins[i] = i % (graddecim * 2u) == 0u ? 0.5f : i % graddecim == 0u ? -0.5f : 0.0f;
-                }
-
-                DBGR_WRITE_SIGNAL(samples_bins, samples_ifreq, this->d_samples_per_symbol, 0, 0, this->d_samples_per_symbol, false, false, Printed bins in freq_grad_idx);
-
-            #endif
-            /*********************************************************************/
-
             for (uint32_t i = 1u; i < this->d_number_of_bins - 2u; i++) {
                 if (samples_ifreq[this->d_decim_factor * i] - samples_ifreq[this->d_decim_factor * (i + 1u)] > 0.2f) {
-                    #ifdef PLOT_BINS
-                        printf("[Freq_Grad] Down on idx: %4d in bin %4d (in [%4d, %4d])\n",
-                               this->d_decim_factor * i,
-                               is_header ? (i + !is_header) / 4u : (i + !is_header),
-                               graddecim * (is_header ? i / 4u : i),
-                               graddecim * ((is_header ? i / 4u : i) + 1u));
-                        DBGR_PAUSE();
-                    #endif
                     return i + !is_header;
                 }
             }
 
             const float zero_bin = samples_ifreq[0u] - samples_ifreq[this->d_decim_factor * 2u];
             const float high_bin = samples_ifreq[(this->d_number_of_bins - 2u) * this->d_decim_factor] - samples_ifreq[this->d_number_of_bins * this->d_decim_factor - 1u];
-
-            #ifdef PLOT_BINS
-                if (zero_bin > 0.2f || zero_bin > high_bin)
-                    printf("[Freq_Grad] Down on idx: %4d in bin %4d (at %4d)\n", 0, 0, 1);
-                else
-                    printf("[Freq_Grad] Down on idx: %4d in bin %4d (at %4d)\n",
-                           this->d_decim_factor * (this->d_number_of_bins - 1u),
-                           this->d_number_of_bins,
-                           this->d_decim_factor * this->d_number_of_bins);
-                DBGR_PAUSE();
-            #endif
 
             // Prefer first bin over last. (First bin == 0 or 1?)
             return zero_bin > 0.2f || zero_bin > high_bin
@@ -619,8 +578,9 @@ namespace gr {
 
             this->deshuffle(shuffle_pattern, is_header);
 
-            if (!is_header)
-                this->values_to_file("/tmp/after_deshuffle", &this->d_words_deshuffled[0], this->d_words_deshuffled.size(), 8);
+            // For determining whitening sequence
+            //if (!is_header)
+            //    this->values_to_file("/tmp/after_deshuffle", &this->d_words_deshuffled[0], this->d_words_deshuffled.size(), 8);
 
             this->dewhiten(is_header ? gr::lora::prng_header : this->d_whitening_sequence);
             this->hamming_decode(out_data);
