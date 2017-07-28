@@ -29,6 +29,12 @@ This feature set is enough for basic, experimental usage with SDRs.
 Installation
 ------------
 
+The following dependencies are required:
+- numpy
+- scipy
+- [liquid-dsp](https://github.com/jgaeddert/liquid-dsp)
+
+
 The installation procedure is the same as for any GNURadio OOT module:
 
 ```
@@ -37,12 +43,6 @@ cd build
 cmake ../  # Note to Arch Linux users: add "-DCMAKE_INSTALL_PREFIX=/usr"
 make && sudo make install
 ```
-
-The following dependencies are required:
-- numpy
-- scipy
-- [liquid-dsp](https://github.com/jgaeddert/liquid-dsp)
-
 
 Testing
 -------
