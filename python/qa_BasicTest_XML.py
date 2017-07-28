@@ -2,6 +2,7 @@
 import lora, socket, pmt, time
 import collections, datetime
 import os.path
+import os
 import xmltodict
 
 from gnuradio import gr, gr_unittest, blocks, filter
@@ -24,7 +25,8 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 data = self.server.recv(4096)
                 if data:
                     total_data.append(data)
-            except:
+            except Exception as e:
+                print(e)
                 pass
 
         return total_data
@@ -63,7 +65,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 .format(results.passing, results.total, results.rate))
 
     #
-    #   Set up flowgraph before Unit Test. (Gets threrefore called before EVERY test)
+    #   Set up flowgraph before Unit Test. (Gets therefore called before EVERY test)
     #
     #    1. Set variables for various blocks (spreading factor from test_series settings)
     #    2. Make UDP socket server to listen for outputted messages
@@ -77,10 +79,9 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
         self.sf              = 7
         self.samp_rate       = 1e6
         self.capture_freq    = 868.0e6
+        self.threshold       = 0.002
         #self.bw              = 125e3
         #self.symbols_per_sec = self.bw  / (2**self.sf)
-        self.offset          = -(self.capture_freq - self.target_freq)
-        #self.bitrate         = self.sf * (1 / (2**self.sf / self.bw ))
         self.hasHDR          = True
 
         # For FFT, determine Center Frequency Offset first, then set here.
@@ -119,7 +120,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
             raise Exception("[BasicTest_XML] '" + self.xmlFile + "' does not exist!")
 
     #
-    #   Clean-up flowgraph after Unit Test. (Gets threrefore called after EVERY test)
+    #   Clean-up flowgraph after Unit Test. (Gets therefore called after EVERY test)
     #
     #   Because tests are completed, report results.
     #
@@ -217,7 +218,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 self.tb = gr.top_block ()
 
                 self.file_source                  = blocks.file_source(gr.sizeof_gr_complex*1, self.inputFile, False) # Repeat input: True/False
-                self.lora_lora_receiver_0         = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate)
+                self.lora_lora_receiver_0         = lora.lora_receiver(self.samp_rate, self.capture_freq, [868100000], self.sf, self.samp_rate, self.threshold)
                 self.blocks_throttle_0            = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
                 self.blocks_message_socket_sink_0 = lora.message_socket_sink()
                 self.freq_xlating_fir_filter_0    = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, self.samp_rate, 500000, 100000, firdes.WIN_HAMMING, 6.67)), self.center_offset, self.samp_rate)
@@ -227,7 +228,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 self.tb.connect(     (self.freq_xlating_fir_filter_0, 0),   (self.lora_lora_receiver_0, 0))
                 self.tb.msg_connect( (self.lora_lora_receiver_0, 'frames'), (self.blocks_message_socket_sink_0, 'in'))
 
-                self.tb.run ()
+                self.tb.run()
 
                 total_data = self.gatherFromSocket(test_series[len(test_series) - 1].times)
                 self.compareDataSets(total_data,

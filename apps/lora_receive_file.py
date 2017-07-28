@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive File
-# Generated: Thu Mar 30 15:01:18 2017
+# Generated: Fri Jul 28 10:52:21 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -69,7 +69,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         	peak_hold=False,
         )
         self.Add(self.wxgui_fftsink2_1.win)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, offset, 7, 1000000, 0.01)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, 868e6, ([868.1e6]), 7, 1000000, 0.01)
         _finetune_sizer = wx.BoxSizer(wx.VERTICAL)
         self._finetune_text_box = forms.text_box(
         	parent=self.GetWin(),
@@ -99,9 +99,9 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))    
-        self.connect((self.blocks_throttle_0, 0), (self.lora_lora_receiver_0, 0))    
-        self.connect((self.blocks_throttle_0, 0), (self.wxgui_fftsink2_1, 0))    
+        self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))
+        self.connect((self.blocks_throttle_0, 0), (self.lora_lora_receiver_0, 0))
+        self.connect((self.blocks_throttle_0, 0), (self.wxgui_fftsink2_1, 0))
 
     def get_target_freq(self):
         return self.target_freq
@@ -132,8 +132,8 @@ class lora_receive_file(grc_wxgui.top_block_gui):
 
     def set_capture_freq(self, capture_freq):
         self.capture_freq = capture_freq
-        self.set_offset(-(self.capture_freq - self.target_freq))
         self.wxgui_fftsink2_1.set_baseband_freq(self.capture_freq)
+        self.set_offset(-(self.capture_freq - self.target_freq))
 
     def get_bw(self):
         return self.bw
@@ -155,7 +155,6 @@ class lora_receive_file(grc_wxgui.top_block_gui):
 
     def set_offset(self, offset):
         self.offset = offset
-        self.lora_lora_receiver_0.set_offset(self.offset)
 
     def get_firdes_tap(self):
         return self.firdes_tap

@@ -40,7 +40,7 @@ class LoRaReceiveAll:
         self.tb = gr.top_block ()
 
         self.source                    = receiver
-        self.lora_lora_receiver_0      = lora.lora_receiver(self.samp_rate, self.capture_freq, self.offset, self.sf, self.samp_rate, self.threshold)
+        self.lora_lora_receiver_0      = lora.lora_receiver(self.samp_rate, self.capture_freq, ([868.1e6]), self.sf, self.samp_rate, self.threshold)
         self.blocks_throttle_0         = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
         self.freq_xlating_fir_filter_0 = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, self.samp_rate, 200000, 50000)), self.center_offset, self.samp_rate)
 
