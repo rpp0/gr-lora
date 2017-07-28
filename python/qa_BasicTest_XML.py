@@ -129,7 +129,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
         self.xmlTests = None
         self.server.close()
 
-        flog       = open(self.logFile, 'a')
+        flog       = open(self.logFile, 'w')
         passed_t_a = 0
         passed_t   = 0
         total_t_a  = 0
@@ -167,7 +167,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
         flog.write(stro + '\n\n')
         flog.close()
 
-        print ("Log appended to: " + self.logFile)
+        print ("Log written to: " + self.logFile)
 
     ###############################################################################################
     #   Unit tests series from qa_BasicTest_Data.xml                                              #
