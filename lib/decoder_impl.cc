@@ -137,7 +137,7 @@ namespace gr {
 
             // Register gnuradio ports
             this->message_port_register_out(pmt::mp("frames"));
-            this->message_port_register_out(pmt::mp("debug"));
+            this->message_port_register_out(pmt::mp("control"));
 
 
             // Whitening empty file
@@ -775,7 +775,7 @@ namespace gr {
 
         void decoder_impl::msg_raw_chirp_debug(const gr_complex *raw_samples, const uint32_t num_samples) {
             pmt::pmt_t chirp_blob = pmt::make_blob(raw_samples, sizeof(gr_complex) * num_samples);
-            message_port_pub(pmt::mp("debug"), chirp_blob);
+            //message_port_pub(pmt::mp("debug"), chirp_blob);
         }
 
         void decoder_impl::msg_lora_frame(const uint8_t *frame_bytes, const uint32_t frame_len) {

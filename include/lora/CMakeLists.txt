@@ -24,5 +24,7 @@ install(FILES
     api.h
     decoder.h
     message_file_sink.h
-    message_socket_sink.h DESTINATION include/lora
+    message_socket_sink.h
+    channelizer.h
+    controller.h DESTINATION include/lora
 )
