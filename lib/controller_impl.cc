@@ -51,8 +51,8 @@ namespace gr {
 
     void controller_impl::handle_control(pmt::pmt_t msg){
         if(pmt::symbol_to_string(pmt::car(msg)).compare("cfo") == 0) {
-            //std::cout << "Setting CFO " << pmt::to_float(pmt::cdr(msg)) << std::endl;
-            ((channelizer_impl*)d_parent)->apply_cfo(pmt::to_float(pmt::cdr(msg))); // TODO: Pretty hacky cast, can we do this in a cleaner way?
+            //std::cout << "Setting CFO " << pmt::to_double(pmt::cdr(msg)) << std::endl;
+            ((channelizer_impl*)d_parent)->apply_cfo(pmt::to_double(pmt::cdr(msg))); // TODO: Pretty hacky cast, can we do this in a cleaner way?
         }
     }
 

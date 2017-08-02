@@ -9,18 +9,16 @@ compiler: g++
 
 sudo: required
 
+dist: trusty
+
 before_install:
   - cd ../
   - sudo mv gr-lora ../
   - cd ../
-
-  # Add repos for more up-to-date versions of g++ and libboost
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo add-apt-repository -y ppa:boost-latest/ppa
-  - sudo apt-get update -qq
+  - sudo apt-get update
 
 install:
-  - sudo apt-get install -qq g++-4.8
+  - sudo apt-get install g++-4.8
   - export CXX="g++-4.8"
   - export CC="gcc-4.8"
   # Report correct versions are installed
@@ -34,32 +32,11 @@ install:
   - sudo apt-get install fftw3 fftw-dev libfftw3-dev
 
   - sudo apt-get install libboost1.55-all-dev
+  - sudo apt-get install gnuradio
+  - sudo apt-get install gnuradio-dev
+  - sudo apt-get install liblog4cpp5
+  - sudo apt-get install liblog4cpp5-dev
   - sudo ldconfig
-  # This installs and old version, and is therefore deprecated
-  # - sudo apt-get install gnuradio
-  # - sudo ldconfig
-
-  # Manual VOLK install
-  # - git clone https://github.com/gnuradio/volk.git
-  # - cd volk/
-  # - git checkout v1.3
-  # - mkdir build && cd build
-  # - cmake ../
-  # - make && sudo make install
-  # - sudo ldconfig
-  # - cd ../../
-
-  # Manual GNURadio install
-  - git clone https://github.com/gnuradio/gnuradio.git
-  - cd gnuradio
-  - git pull --recurse-submodules=on
-  - git submodule foreach git pull origin master
-  - git submodule update --init --recursive
-  - mkdir build && cd build
-  - cmake -DENABLE_INTERNAL_VOLK=ON -DENABLE_GR_FFT=ON -DENABLE_GR_FILTER=ON ../
-  - make && sudo make install
-  - sudo ldconfig
-  - cd ../../
 
   # Manual liquidDSP install
   - git clone https://github.com/jgaeddert/liquid-dsp.git
@@ -78,7 +55,6 @@ before_script:
 script:
   - make
   - sudo make install
-  # - make test  # Will fail
 
 notifications:
   email: false

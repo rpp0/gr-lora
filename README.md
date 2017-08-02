@@ -32,6 +32,7 @@ Installation
 The following dependencies are required:
 - numpy
 - scipy
+- log4cpp
 - [liquid-dsp](https://github.com/jgaeddert/liquid-dsp)
 
 
