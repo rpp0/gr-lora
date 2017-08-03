@@ -87,6 +87,7 @@ namespace gr {
                 double         d_symbols_per_second;        ///< Indicator of how many symbols (read: chirps) are transferred each second.
                 uint32_t       d_bits_per_symbol;           ///< The amount of bits each of the symbols contain.
                 uint32_t       d_samples_per_symbol;        ///< The amount of samples in one symbol.
+                double         d_period;                    ///< Period of the symbol.
                 uint32_t       d_number_of_bins;            ///< Indicates in how many parts or bins a symbol is decimated, i.e. the max value to decode out of one payload symbol.
                 uint32_t       d_number_of_bins_hdr;        ///< Indicates in how many parts or bins a HDR symbol is decimated, i.e. the max value to decode out of one HDR symbol.
                  int32_t       d_payload_symbols;           ///< The amount of symbols needed to decode the payload. Calculated from an indicator in the HDR.

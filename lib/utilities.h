@@ -23,6 +23,8 @@
 
 #include <cstdint>
 
+#define REV_BITS
+
 namespace gr {
     namespace lora {
 
@@ -348,6 +350,38 @@ namespace gr {
 
                 out_data[out_index++] = (d2 << 4u) | hamming_decode_soft_byte(words[i]);
             }
+        }
+
+        template <typename T>
+        inline void print_vector(std::ostream& out, const T* v, const std::string& prefix, const int size, const int element_len_bits) {
+            out << prefix << ": ";
+
+            for (int i = 0; i < size; i++)
+                out << to_bin(v[i], element_len_bits) << ", ";
+
+            out << std::endl << std::flush;
+        }
+
+        template <typename T>
+        inline void print_interleave_matrix(std::ostream& out, const std::vector<T>& v, const uint32_t sf) {
+            uint32_t cr = v.size();
+
+            for(uint32_t i = 0; i < cr; i++)
+                out << "-";
+            out << std::endl;
+
+            for(uint32_t i = 0; i < sf; i++) {
+                for(uint32_t j = 0; j < cr; j++) {
+                    out << to_bin(v[j], sf)[i];
+                }
+                out << std::endl;
+            }
+
+            for(uint32_t i = 0; i < cr; i++)
+                out << "-";
+            out << std::endl;
+
+            out << std::flush;
         }
 
     }

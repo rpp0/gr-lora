@@ -65,16 +65,7 @@ namespace gr {
             }
 
             // Set whitening sequence
-            switch(sf) {
-                case  6: this->d_whitening_sequence = gr::lora::prng_payload_sf12; break; // Using _sf6 results in worse accuracy...
-                case  7: this->d_whitening_sequence = gr::lora::prng_payload_sf7;  break;
-                case  8: this->d_whitening_sequence = gr::lora::prng_payload_sf8;  break;
-                case  9: this->d_whitening_sequence = gr::lora::prng_payload_sf9;  break;
-                case 10: this->d_whitening_sequence = gr::lora::prng_payload_sf10; break;
-                case 11: this->d_whitening_sequence = gr::lora::prng_payload_sf11; break;
-                case 12: this->d_whitening_sequence = gr::lora::prng_payload_sf12; break;
-                default: this->d_whitening_sequence = gr::lora::prng_payload_sf7;  break;
-            }
+            this->d_whitening_sequence = gr::lora::prng_payload;
 
             if (sf == 6) {
                 std::cerr << "[LoRa Decoder] WARNING : Spreading factor wrapped around to 12 due to incompatibility in hardware!" << std::endl;
@@ -89,7 +80,7 @@ namespace gr {
             this->d_bw                 = 125000u;
             this->d_cr                 = 4;
             this->d_samples_per_second = samp_rate;
-            this->d_corr_decim_factor  = 8u; // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
+            this->d_corr_decim_factor  = (uint32_t)(samp_rate / this->d_bw); // samples_per_symbol / corr_decim_factor = correlation window. Also serves as preamble decimation factor
             this->d_payload_symbols    = 0;
             this->d_cfo_estimation     = 0.0f;
             this->d_dt                 = 1.0f / this->d_samples_per_second;
@@ -97,6 +88,7 @@ namespace gr {
             this->d_sf                 = sf;  // Only affects PHY send
             this->d_bits_per_second    = (double)this->d_sf * (double)(1u + this->d_cr) / (1u << this->d_sf) * this->d_bw;
             this->d_symbols_per_second = (double)this->d_bw / (1u << this->d_sf);
+            this->d_period             = 1.0f / (double)this->d_symbols_per_second;
             this->d_bits_per_symbol    = (uint32_t)(this->d_bits_per_second    / this->d_symbols_per_second);
             this->d_samples_per_symbol = (uint32_t)(this->d_samples_per_second / this->d_symbols_per_second);
             this->d_delay_after_sync   = this->d_samples_per_symbol / 4u;
@@ -200,6 +192,7 @@ namespace gr {
             for (uint32_t i = 0u; i < length; i++) {
                 std::string tmp = gr::lora::to_bin(v[i], ppm);
                 out_file.write(tmp.c_str(), tmp.length());
+                out_file.write(" ", 1);
             }
             out_file.write("\n", 1);
 
@@ -434,25 +427,13 @@ namespace gr {
          *  Currently unstable due to center frequency offset.
          */
         uint32_t decoder_impl::get_shift_fft(const gr_complex *samples) {
-            float      fft_mag[this->d_number_of_bins];
-            gr_complex sample[this->d_samples_per_symbol];
+            float fft_mag[this->d_number_of_bins];
 
-            memcpy(sample, samples, this->d_samples_per_symbol * sizeof(gr_complex));
-
-            #ifdef CFO_CORRECT
-                this->determine_cfo(&samples[0]);
-                #ifndef NDEBUG
-                    this->d_debug << "CFO: " << this->d_cfo_estimation << std::endl;
-                #endif
-
-                this->correct_cfo(&sample[0], this->d_samples_per_symbol);
-            #endif
-
-            samples_to_file("/tmp/data", &sample[0], this->d_samples_per_symbol, sizeof(gr_complex));
+            samples_to_file("/tmp/data", &samples[0], this->d_samples_per_symbol, sizeof(gr_complex));
 
             // Multiply with ideal downchirp
             for (uint32_t i = 0u; i < this->d_samples_per_symbol; i++) {
-                this->d_mult_hf[i] = std::conj(sample[i] * this->d_downchirp[i]);
+                this->d_mult_hf[i] = std::conj(samples[i] * this->d_downchirp[i]);
             }
 
             samples_to_file("/tmp/mult", &this->d_mult_hf[0], this->d_samples_per_symbol, sizeof(gr_complex));
@@ -497,7 +478,7 @@ namespace gr {
 
             for (uint32_t i = 1u; i < this->d_number_of_bins - 2u; i++) {
                 if (samples_ifreq[this->d_decim_factor * i] - samples_ifreq[this->d_decim_factor * (i + 1u)] > 0.2f) {
-                    return i + !is_header;
+                    return (i + !is_header) ^ (uint32_t)pow(2, d_sf);
                 }
             }
 
@@ -506,7 +487,7 @@ namespace gr {
 
             // Prefer first bin over last. (First bin == 0 or 1?)
             return zero_bin > 0.2f || zero_bin > high_bin
-                    ? 1u : this->d_number_of_bins;
+                    ? this->d_number_of_bins : 1u;
         }
 
         bool decoder_impl::demodulate(const gr_complex *samples, const bool is_header) {
@@ -578,7 +559,7 @@ namespace gr {
         }
 
         void decoder_impl::decode(uint8_t *out_data, const bool is_header) {
-            static const uint8_t shuffle_pattern[] = {7, 6, 3, 4, 2, 1, 0, 5};
+            static const uint8_t shuffle_pattern[] = {5, 0, 1, 2, 4, 3, 6, 7};
 
             this->deshuffle(shuffle_pattern, is_header);
 
@@ -650,9 +631,9 @@ namespace gr {
 
                 // TODO: reverse bit order is performed here,
                 //       but is probably due to mistake in whitening or interleaving
-                xor_b = (xor_b & 0xF0) >> 4 | (xor_b & 0x0F) << 4;
+                /*xor_b = (xor_b & 0xF0) >> 4 | (xor_b & 0x0F) << 4;
                 xor_b = (xor_b & 0xCC) >> 2 | (xor_b & 0x33) << 2;
-                xor_b = (xor_b & 0xAA) >> 1 | (xor_b & 0x55) << 1;
+                xor_b = (xor_b & 0xAA) >> 1 | (xor_b & 0x55) << 1;*/
                 this->d_words_dewhitened.push_back(xor_b);
             }
 
@@ -769,10 +750,10 @@ namespace gr {
 
         uint8_t decoder_impl::lookup_cr(const uint8_t bytevalue) {
             switch (bytevalue & 0x0f) {
-                case 0x01:  return 4;
-                case 0x0f:  return 3;
-                case 0x0d:  return 2;
-                case 0x0b:  return 1;
+                case 0x09:  return 4;
+                case 0x07:  return 3;
+                case 0x05:  return 2;
+                case 0x03:  return 1;
                 default:    return 4;
             }
         }
