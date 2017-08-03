@@ -476,18 +476,21 @@ namespace gr {
 
             this->instantaneous_frequency(samples, samples_ifreq, this->d_samples_per_symbol);
 
-            for (uint32_t i = 1u; i < this->d_number_of_bins - 2u; i++) {
-                if (samples_ifreq[this->d_decim_factor * i] - samples_ifreq[this->d_decim_factor * (i + 1u)] > 0.2f) {
-                    return (i + !is_header) ^ (uint32_t)pow(2, d_sf);
+            float max_gradient = 0.2f;
+            float gradient = 0.0f;
+            uint32_t max_index = 0;
+            for (uint32_t i = 0u; i < this->d_number_of_bins - 2u; i++) {
+                gradient = samples_ifreq[this->d_decim_factor * i] - samples_ifreq[this->d_decim_factor * (i + 1u)];
+                if (gradient > max_gradient) {
+                    max_gradient = gradient;
+                    max_index = i+1;
                 }
             }
 
-            const float zero_bin = samples_ifreq[0u] - samples_ifreq[this->d_decim_factor * 2u];
-            const float high_bin = samples_ifreq[(this->d_number_of_bins - 2u) * this->d_decim_factor] - samples_ifreq[this->d_number_of_bins * this->d_decim_factor - 1u];
-
-            // Prefer first bin over last. (First bin == 0 or 1?)
-            return zero_bin > 0.2f || zero_bin > high_bin
-                    ? this->d_number_of_bins : 1u;
+            if(max_index == 0)
+                return max_index;
+            else
+                return this->d_number_of_bins - 1 - max_index;
         }
 
         bool decoder_impl::demodulate(const gr_complex *samples, const bool is_header) {
