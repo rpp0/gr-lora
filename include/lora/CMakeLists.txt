@@ -26,5 +26,6 @@ install(FILES
     message_file_sink.h
     message_socket_sink.h
     channelizer.h
+    debugger.h
     controller.h DESTINATION include/lora
 )

@@ -31,6 +31,7 @@ list(APPEND lora_sources
     message_socket_sink_impl.cc
     channelizer_impl.cc
     controller_impl.cc
+    debugger.cc
 )
 
 set(lora_sources "${lora_sources}" PARENT_SCOPE)

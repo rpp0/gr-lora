@@ -31,6 +31,7 @@
 #include "tables.h"
 #include "utilities.h"
 
+
 //#define NO_TMP_WRITES 1   /// Debug output file write
 //#define CFO_CORRECT   1   /// Correct shift fft estimation
 
@@ -142,6 +143,9 @@ namespace gr {
 
             // Whitening empty file
 //            DBGR_QUICK_TO_FILE("/tmp/whitening_out", false, g, -1, "");
+            #ifndef NDEBUG
+                d_dbg.attach();
+            #endif
         }
 
         /**

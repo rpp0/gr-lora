@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <lora/debugger.h>
 
 #define DECIMATOR_FILTER_SIZE (2*8*1 + 1) // 2*decim_factor*delay+1
 
@@ -64,6 +65,7 @@ namespace gr {
          */
         class decoder_impl : public decoder {
             private:
+                debugger                d_dbg;              ///< Debugger for plotting samples, printing output, etc.
                 DecoderState            d_state;            ///< Holds the current state of the decoder (state machine).
 
                 std::vector<gr_complex> d_downchirp;        ///< The complex ideal downchirp.
