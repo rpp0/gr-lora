@@ -30,7 +30,7 @@ namespace gr {
             strncpy(address.sun_path, path.c_str(), sizeof(address.sun_path)-1);
 
             if(connect(d_socket, (struct sockaddr*)&address, sizeof(address)) == -1) {
-                std::cerr << "Failed to connect to analyzer." << std::endl;
+                //std::cerr << "Failed to connect to analyzer." << std::endl;
             } else {
                 d_attached = true;
             }

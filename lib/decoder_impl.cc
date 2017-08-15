@@ -810,7 +810,7 @@ namespace gr {
                         int32_t index_correction = 0;
 
                         const float c = this->detect_upchirp(&input[i],
-                                                             this->d_samples_per_symbol * 2u,
+                                                             (this->d_samples_per_symbol * 2u) - i,
                                                              &index_correction);
 
                         if (c > 0.9f) {
