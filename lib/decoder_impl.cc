@@ -362,6 +362,27 @@ namespace gr {
             d_fine_sync = -lag;
         }
 
+        float decoder_impl::detect_preamble_autocorr(const gr_complex *samples, const uint32_t window) {
+            const gr_complex* chirp1 = samples;
+            const gr_complex* chirp2 = samples + d_samples_per_symbol;
+            float magsq_chirp1[window];
+            float magsq_chirp2[window];
+            float energy_chirp1 = 0;
+            float energy_chirp2 = 0;
+            float autocorr = 0;
+            gr_complex dot_product;
+
+            volk_32fc_x2_conjugate_dot_prod_32fc(&dot_product, chirp1, chirp2, window);
+            volk_32fc_magnitude_squared_32f(magsq_chirp1, chirp1, window);
+            volk_32fc_magnitude_squared_32f(magsq_chirp2, chirp2, window);
+            volk_32f_accumulator_s32f(&energy_chirp1, magsq_chirp1, window);
+            volk_32f_accumulator_s32f(&energy_chirp2, magsq_chirp2, window);
+
+            autocorr = abs(dot_product / gr_complex(sqrt(energy_chirp1 * energy_chirp2), 0));
+
+            return autocorr;
+        }
+
         float decoder_impl::detect_downchirp(const gr_complex *samples, const uint32_t window) {
             float samples_ifreq[window];
             this->instantaneous_frequency(samples, samples_ifreq, window);
@@ -369,55 +390,24 @@ namespace gr {
             return this->cross_correlate_ifreq(samples_ifreq, this->d_downchirp_ifreq, window - 1u);
         }
 
-        /**
-         *  1. Skip through the window and look for a falling edge
-         *  2. Get the upper and lower bound of the upchrip edge, or the local maximum and minimum
-         *  3. Look for the highest cross correlation index between these points and return
-         */
-        float decoder_impl::sliding_norm_cross_correlate_upchirp(const float *samples_ifreq, const uint32_t window, int32_t *index) {
-            bool found_change      = false;
-            uint32_t local_max_idx = 0u, local_min_idx;
+         float decoder_impl::sliding_norm_cross_correlate_upchirp(const float *samples_ifreq, const uint32_t window, int32_t *index) {
+             float max_correlation = 0;
 
-            const uint32_t coeff   = (this->d_sf + this->d_sf + this->d_sf / 2u);
-            const uint32_t len     = this->d_samples_per_symbol - 1u;
+             // Cross correlate
+             for (uint32_t i = 0; i < window; i++) {
+                 const float max_corr = this->cross_correlate_ifreq_fast(samples_ifreq + i, &this->d_upchirp_ifreq[0], window - 1u);
 
-            float max_correlation  = 0.0f;
+                 if (max_corr > max_correlation) {
+                     *index = i;
+                     max_correlation = max_corr;
+                 }
+             }
 
-            // Approximate local maximum
-            for (uint32_t i = 0u; i < window - coeff - 1u; i += coeff / 2u) {
-                if (samples_ifreq[i] - samples_ifreq[i + coeff]  > 0.2f) { // Goes down
-                    local_max_idx = i;
-                    found_change = true;
-                    break;
-                }
-            }
+             // Signal from local_max_idx vs shifted with *index
+             //DBGR_WRITE_SIGNAL(this->d_upchirp_ifreq, (samples_ifreq + local_max_idx), len, (*index - local_max_idx), 0u, window, false, true, Printed graphs in sliding_norm_cross_correlate_upchirp);
 
-            if (!found_change) {
-                //printf("No falling edge?\n");
-                return 0.0f;
-            }
-
-            // Find top and bottom of falling edge after first upchirp in window
-            local_max_idx = std::max_element(samples_ifreq + gr::lora::clamp((int)(local_max_idx - 2u * coeff),  0, (int)window),
-                                             samples_ifreq + gr::lora::clamp(local_max_idx +             coeff, 0u,      window)) - samples_ifreq;
-            local_min_idx = std::min_element(samples_ifreq + gr::lora::clamp(local_max_idx +                1u, 0u,      window),
-                                             samples_ifreq + gr::lora::clamp(local_max_idx +        3u * coeff, 0u,      window)) - samples_ifreq;
-
-            // Cross correlate between start and end of falling edge instead of entire window
-            for (uint32_t i = local_max_idx; i < local_min_idx && (i + len) < window; i++) {
-                const float max_corr = this->cross_correlate_ifreq(samples_ifreq + i, this->d_upchirp_ifreq, len);
-
-                if (max_corr > max_correlation) {
-                    *index = i;
-                    max_correlation = max_corr;
-                }
-            }
-
-            // Signal from local_max_idx vs shifted with *index
-            //DBGR_WRITE_SIGNAL(this->d_upchirp_ifreq, (samples_ifreq + local_max_idx), len, (*index - local_max_idx), 0u, window, false, true, Printed graphs in sliding_norm_cross_correlate_upchirp);
-
-            return max_correlation;
-        }
+             return max_correlation;
+         }
 
         /**
          *  Slide the given chirp perfectly on top of the ideal upchirp (phase shift).
@@ -453,8 +443,8 @@ namespace gr {
         }
 
         float decoder_impl::detect_upchirp(const gr_complex *samples, const uint32_t window, int32_t *index) {
-            float samples_ifreq[window];
-            this->instantaneous_frequency(samples, samples_ifreq, window);
+            float samples_ifreq[window*2];
+            this->instantaneous_frequency(samples, samples_ifreq, window*2);
 
             return this->sliding_norm_cross_correlate_upchirp(samples_ifreq, window, index);
         }
@@ -826,39 +816,34 @@ namespace gr {
 
             switch (this->d_state) {
                 case gr::lora::DecoderState::DETECT: {
-                    const int i = this->find_preamble_start_fast(input);
-                    //int i = this->find_preamble_start(&input[0]);
-                    //int i = this->calc_energy_threshold(&input[0], 2u * this->d_samples_per_symbol, this->d_energy_threshold);
+                    float correlation = detect_preamble_autocorr(input, d_samples_per_symbol);
 
-                    if (i != -1) {
-                        int32_t index_correction = 0;
-
-                        const float c = this->detect_upchirp(&input[i],
-                                                             this->d_samples_per_symbol * 2u,
-                                                             &index_correction);
-
-                        if (c > 0.9f) {
-                            #ifndef NDEBUG
-                                this->d_debug << "Cu: " << c << std::endl;
-                            #endif
-                            this->samples_to_file("/tmp/detectb", &input[i],                    this->d_samples_per_symbol, sizeof(gr_complex));
-                            this->samples_to_file("/tmp/detect",  &input[i + index_correction], this->d_samples_per_symbol, sizeof(gr_complex));
-                            this->d_corr_fails = 0u;
-                            this->d_state = gr::lora::DecoderState::SYNC;
-                            this->consume_each(i + index_correction);
-                            break;
-                        }
-
-                        // Consume just 1 symbol after preamble to have more chances to sync later
-                        this->consume_each(i + this->d_samples_per_symbol);
-                    } else {
-                        // Consume 2 symbols (usual) to skip noise faster before preamble has been found
-                        this->consume_each(2u * this->d_samples_per_symbol);
+                    if (correlation >= 0.95f) {
+                        this->samples_to_file("/tmp/detect",  &input[0], this->d_samples_per_symbol, sizeof(gr_complex));
+                        this->d_corr_fails = 0u;
+                        this->d_state = gr::lora::DecoderState::SYNC;
+                        break;
                     }
+
+                    this->consume_each(this->d_samples_per_symbol);
+
                     break;
                 }
 
                 case gr::lora::DecoderState::SYNC: {
+                    int i = 0;
+                    float correlation = detect_upchirp(input, d_samples_per_symbol, &i);
+
+                    #ifndef NDEBUG
+                        this->d_debug << "Cu: " << correlation << std::endl;
+                    #endif
+
+                    this->consume_each(i);
+                    this->d_state = gr::lora::DecoderState::FIND_SFD;
+                    break;
+                }
+
+                case gr::lora::DecoderState::FIND_SFD: {
                     const float c = this->detect_downchirp(input, this->d_samples_per_symbol);
 
                     #ifndef NDEBUG

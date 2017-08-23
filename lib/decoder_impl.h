@@ -40,6 +40,7 @@ namespace gr {
         enum class DecoderState {
             DETECT,
             SYNC,
+            FIND_SFD,
             PAUSE,
             DECODE_HEADER,
             DECODE_PAYLOAD,
@@ -120,6 +121,7 @@ namespace gr {
                 float cross_correlate_ifreq_fast(const float *samples_ifreq, const float *ideal_chirp, const uint32_t window);
                 void fine_sync(const gr_complex* in_samples, uint32_t bin_idx);
                 int32_t d_fine_sync;
+                float detect_preamble_autocorr(const gr_complex *samples, uint32_t window);
 
                 /**
                  *  \brief  Calculates the average energy from the given samples and returns whether its higher than the given threshold.

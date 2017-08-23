@@ -1,13 +1,13 @@
--------- Test Results on 2017-08-23 17:39:53 ---------
+-------- Test Results on 2017-08-23 17:51:40 ---------
 Test serie   0: [u'01 23 45 67 89 ab cd ef'] * 10
     Test   1 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
-    Test   2 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   9 out of  10 ( 90.00%)
+    Test   2 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   8 out of  10 ( 80.00%)
     Test   3 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of  10 (  0.00%)
     Test   4 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
-    Test   5 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
+    Test   5 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   9 out of  10 ( 90.00%)
     Test   6 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
-    Test   7 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
-  => Total passed: 39 out of 70  (55.71%)
+    Test   7 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   8 out of  10 ( 80.00%)
+  => Total passed: 35 out of 70  (50.00%)
 
 Test serie   1: [u'11 11 11'] * 1
     Test   8 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   1 out of   1 (100.00%)
@@ -23,21 +23,21 @@ Test serie   2: [u'11 11 11'] * 5
     Test  15 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   5 out of   5 (100.00%)
     Test  16 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   5 out of   5 (100.00%)
     Test  17 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   1 out of   5 ( 20.00%)
-    Test  18 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   3 out of   5 ( 60.00%)
+    Test  18 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   4 out of   5 ( 80.00%)
     Test  19 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   5 out of   5 (100.00%)
-    Test  20 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   1 out of   5 ( 20.00%)
+    Test  20 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   2 out of   5 ( 40.00%)
     Test  21 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   5 out of   5 (100.00%)
-  => Total passed: 25 out of 35  (71.43%)
+  => Total passed: 27 out of 35  (77.14%)
 
 Test serie   3: [u'aa aa aa aa'] * 3
     Test  22 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   3 out of   3 (100.00%)
     Test  23 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   3 out of   3 (100.00%)
     Test  24 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   3 (  0.00%)
-    Test  25 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   2 out of   3 ( 66.67%)
+    Test  25 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   1 out of   3 ( 33.33%)
     Test  26 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   3 out of   3 (100.00%)
     Test  27 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
     Test  28 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   3 out of   3 (100.00%)
-  => Total passed: 14 out of 21  (66.67%)
+  => Total passed: 13 out of 21  (61.90%)
 
 Test serie   4: [u'ff ff ff ff'] * 1
     Test  29 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   1 out of   1 (100.00%)
@@ -64,10 +64,10 @@ Test serie   6: [u'55 55 55 55'] * 3
     Test  44 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   3 out of   3 (100.00%)
     Test  45 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   3 (  0.00%)
     Test  46 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
-    Test  47 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   3 out of   3 (100.00%)
+    Test  47 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   2 out of   3 ( 66.67%)
     Test  48 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   3 (  0.00%)
     Test  49 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   3 out of   3 (100.00%)
-  => Total passed: 12 out of 21  (57.14%)
+  => Total passed: 11 out of 21  (52.38%)
 
 Test serie   7: [u'55 55 55 55'] * 10
     Test  50 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
@@ -90,25 +90,25 @@ Test serie   8: [u'88 88 88 88'] * 1
   => Total passed: 4 out of 7  (57.14%)
 
 Test serie   9: [u'88 88 88 88'] * 5
-    Test  64 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   5 out of   5 (100.00%)
-    Test  65 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   5 out of   5 (100.00%)
+    Test  64 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed   4 out of   5 ( 80.00%)
+    Test  65 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed   4 out of   5 ( 80.00%)
     Test  66 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of   5 (  0.00%)
-    Test  67 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test  67 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   2 out of   5 ( 40.00%)
     Test  68 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   5 out of   5 (100.00%)
-    Test  69 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of   5 (  0.00%)
+    Test  69 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   1 out of   5 ( 20.00%)
     Test  70 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed   5 out of   5 (100.00%)
-  => Total passed: 20 out of 35  (57.14%)
+  => Total passed: 21 out of 35  (60.00%)
 
 Test serie  10: [u'88 88 88 88'] * 10
     Test  71 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
     Test  72 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed  10 out of  10 (100.00%)
     Test  73 :: cr4-5 bw125 sf12 crc1 pwr1 :: passed   0 out of  10 (  0.00%)
-    Test  74 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
-    Test  75 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
+    Test  74 :: cr4-7 bw125 sf6  crc1 pwr1 :: passed   5 out of  10 ( 50.00%)
+    Test  75 :: cr4-7 bw125 sf7  crc1 pwr1 :: passed   9 out of  10 ( 90.00%)
     Test  76 :: cr4-6 bw125 sf6  crc1 pwr1 :: passed   0 out of  10 (  0.00%)
     Test  77 :: cr4-6 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
-  => Total passed: 40 out of 70  (57.14%)
+  => Total passed: 44 out of 70  (62.86%)
 
 
- ====== Total passed: 239 out of 413  (57.87%) ======
+ ====== Total passed: 240 out of 413  (58.11%) ======
 
