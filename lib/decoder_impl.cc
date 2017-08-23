@@ -536,7 +536,7 @@ namespace gr {
 
             uint32_t bin_idx = this->max_frequency_gradient_idx(samples, is_header);
             fine_sync(samples, bin_idx);
-            if(d_fine_sync >= d_decim_factor)
+            if(abs(d_fine_sync) >= d_decim_factor-1)
                 d_fine_sync = 0;
             //uint32_t bin_idx = this->get_shift_fft(samples);
 

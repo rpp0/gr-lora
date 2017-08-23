@@ -119,7 +119,7 @@ namespace gr {
 
                 float cross_correlate_ifreq_fast(const float *samples_ifreq, const float *ideal_chirp, const uint32_t window);
                 void fine_sync(const gr_complex* in_samples, uint32_t bin_idx);
-                uint32_t d_fine_sync;
+                int32_t d_fine_sync;
 
                 /**
                  *  \brief  Calculates the average energy from the given samples and returns whether its higher than the given threshold.
