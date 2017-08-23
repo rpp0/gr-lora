@@ -27,6 +27,7 @@
 #include <vector>
 #include <fstream>
 #include <lora/debugger.h>
+#include <volk/volk.h>
 
 #define DECIMATOR_FILTER_SIZE (2*8*1 + 1) // 2*decim_factor*delay+1
 
@@ -74,6 +75,8 @@ namespace gr {
                 std::vector<gr_complex> d_upchirp;          ///< The complex ideal upchirp.
                 std::vector<float>      d_upchirp_ifreq;    ///< The instantaneous frequency of the ideal upchirp.
 
+                std::vector<float>      d_upchirp_ifreq_v;  ///< The instantaneous frequency of the ideal upchirp.
+
                 std::vector<gr_complex> d_fft;              ///< Vector containing the FFT resuls.
                 std::vector<gr_complex> d_mult_hf;          ///< Vector containing the FFT decimation.
                 std::vector<gr_complex> d_tmp;              ///< Vector containing the FFT decimation.
@@ -113,6 +116,10 @@ namespace gr {
                 firdecim_crcf d_decim = nullptr;            ///< The LiquidDSP FIR decimation filter used to decimate the FFT imput.
                 float         d_cfo_estimation;             ///< An estimation for the current Center Frequency Offset.
                 double        d_dt;                         ///< Indicates how fast the frequency changes in a symbol (chirp).
+
+                float cross_correlate_ifreq_fast(const float *samples_ifreq, const float *ideal_chirp, const uint32_t window);
+                void fine_sync(const gr_complex* in_samples, uint32_t bin_idx);
+                uint32_t d_fine_sync;
 
                 /**
                  *  \brief  Calculates the average energy from the given samples and returns whether its higher than the given threshold.
