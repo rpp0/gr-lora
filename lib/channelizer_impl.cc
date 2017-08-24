@@ -43,7 +43,7 @@ namespace gr {
               gr::io_signature::make(channel_list.size(), channel_list.size(), sizeof(gr_complex))),
         d_cfo(0.0)
     {
-        d_lpf = gr::filter::firdes::low_pass(1.0, out_samp_rate, 86000, 20000, gr::filter::firdes::WIN_HAMMING, 6.67);
+        d_lpf = gr::filter::firdes::low_pass(1.0, out_samp_rate, 125000, 10000, gr::filter::firdes::WIN_HAMMING, 6.67);
         d_freq_offset = channel_list[0] - center_freq;
         d_xlating_fir_filter = gr::filter::freq_xlating_fir_filter_ccf::make(1, d_lpf, d_freq_offset, out_samp_rate);
         d_controller = gr::lora::controller::make((void*)this);

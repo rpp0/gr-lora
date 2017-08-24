@@ -341,7 +341,8 @@ namespace gr {
         }
 
         void decoder_impl::fine_sync(const gr_complex* in_samples, uint32_t bin_idx) {
-            int32_t shift_ref = bin_idx * this->d_decim_factor + d_decim_factor;
+            int32_t shift_ref = bin_idx * this->d_decim_factor;
+            //shift_ref = std::max(shift_ref + (int32_t)(this->d_decim_factor / 2), 0);
             int32_t search_space = this->d_decim_factor; // At most d_decim_factor samples offset
             float samples_ifreq[d_samples_per_symbol];
             float max_correlation = 0.0f;
@@ -349,7 +350,7 @@ namespace gr {
 
             this->instantaneous_frequency(in_samples, samples_ifreq, d_samples_per_symbol);
 
-            for(int32_t i = -search_space; i < search_space; i++) {
+            for(int32_t i = -search_space+1; i < search_space; i++) {
                 float c = cross_correlate_ifreq_fast(samples_ifreq, &d_upchirp_ifreq_v[shift_ref+i+d_samples_per_symbol], d_samples_per_symbol-1);
                 if(c > max_correlation) {
                      max_correlation = c;
@@ -505,18 +506,17 @@ namespace gr {
             float max_gradient = 0.2f;
             float gradient = 0.0f;
             uint32_t max_index = 0;
-            for (uint32_t i = 0u; i < this->d_number_of_bins - 2u; i++) {
-                gradient = samples_ifreq[this->d_decim_factor * i] - samples_ifreq[this->d_decim_factor * (i + 1u)];
+            for (uint32_t i = 1u; i < this->d_number_of_bins; i++) {
+                int32_t index_1 = (this->d_decim_factor * i) - this->d_decim_factor / 2;
+                int32_t index_2 = (this->d_decim_factor * (i + 1u)) - this->d_decim_factor / 2;
+                gradient = samples_ifreq[index_1] - samples_ifreq[index_2];
                 if (gradient > max_gradient) {
                     max_gradient = gradient;
-                    max_index = i+1;
+                    max_index = i;
                 }
             }
 
-            if(max_index == 0)
-                return max_index;
-            else
-                return this->d_number_of_bins - 1 - max_index;
+            return this->d_number_of_bins - max_index;
         }
 
         bool decoder_impl::demodulate(const gr_complex *samples, const bool is_header) {
@@ -525,10 +525,10 @@ namespace gr {
 //            DBGR_START_TIME_MEASUREMENT(false, "only");
 
             uint32_t bin_idx = this->max_frequency_gradient_idx(samples, is_header);
-            fine_sync(samples, bin_idx);
-            if(abs(d_fine_sync) >= d_decim_factor-1)
-                d_fine_sync = 0;
             //uint32_t bin_idx = this->get_shift_fft(samples);
+            fine_sync(samples, bin_idx);
+            if(abs(d_fine_sync) >= d_decim_factor / 2)
+                d_fine_sync = 0;
 
 //            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
@@ -818,7 +818,7 @@ namespace gr {
                 case gr::lora::DecoderState::DETECT: {
                     float correlation = detect_preamble_autocorr(input, d_samples_per_symbol);
 
-                    if (correlation >= 0.95f) {
+                    if (correlation >= 0.80f) {
                         this->samples_to_file("/tmp/detect",  &input[0], this->d_samples_per_symbol, sizeof(gr_complex));
                         this->d_corr_fails = 0u;
                         this->d_state = gr::lora::DecoderState::SYNC;
@@ -861,9 +861,13 @@ namespace gr {
 
                         this->d_state = gr::lora::DecoderState::PAUSE;
                     } else {
-                        this->d_corr_fails++;
+                        if(c < -0.95) {
+                            fine_sync(input, 0);
+                        } else {
+                            this->d_corr_fails++;
+                        }
 
-                        if (this->d_corr_fails > 32u) {
+                        if (this->d_corr_fails > 8u) {
                             this->d_state = gr::lora::DecoderState::DETECT;
                             #ifndef NDEBUG
                                 this->d_debug << "Lost sync" << std::endl;
@@ -871,7 +875,7 @@ namespace gr {
                         }
                     }
 
-                    this->consume_each(this->d_samples_per_symbol);
+                    this->consume_each(this->d_samples_per_symbol+d_fine_sync);
                     break;
                 }
 
