@@ -760,6 +760,16 @@ namespace gr {
             /*d_cfo_estimation = (*std::max_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1) + *std::min_element(instantaneous_freq, instantaneous_freq+d_samples_per_symbol-1)) / 2;*/
         }
 
+        float decoder_impl::experimental_determine_cfo(const gr_complex *samples, uint32_t window) {
+            gr_complex mult[window];
+            float mult_ifreq[window];
+
+            volk_32fc_x2_multiply_32fc(mult, samples, &d_downchirp[0], window);
+            instantaneous_frequency(mult, mult_ifreq, window);
+
+            return mult_ifreq[256] / (2.0 * M_PI) * d_samples_per_second;
+        }
+
         /**
          *  Currently unused.
          */
@@ -859,6 +869,10 @@ namespace gr {
                     #ifndef NDEBUG
                         this->d_debug << "Cu: " << correlation << std::endl;
                     #endif
+
+                    float cfo = experimental_determine_cfo(&input[i], d_samples_per_symbol);
+                    pmt::pmt_t kv = pmt::cons(pmt::intern(std::string("cfo")), pmt::from_double(cfo));
+                    this->message_port_pub(pmt::mp("control"), kv);
 
                     this->samples_to_file("/tmp/detect",  &input[i], this->d_samples_per_symbol, sizeof(gr_complex));
                     memcpy(&d_upchirp_stored[0], input+i, sizeof(gr_complex) * this->d_samples_per_symbol);

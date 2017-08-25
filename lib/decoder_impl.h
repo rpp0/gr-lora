@@ -125,6 +125,7 @@ namespace gr {
                 void fine_sync(const gr_complex* in_samples, uint32_t bin_idx, int32_t search_space);
                 int32_t d_fine_sync;
                 float detect_preamble_autocorr(const gr_complex *samples, uint32_t window);
+                float experimental_determine_cfo(const gr_complex *samples, uint32_t window);
 
                 /**
                  *  \brief  Calculates the average energy from the given samples and returns whether its higher than the given threshold.
