@@ -77,6 +77,8 @@ namespace gr {
                 std::vector<float>      d_upchirp_ifreq;    ///< The instantaneous frequency of the ideal upchirp.
 
                 std::vector<float>      d_upchirp_ifreq_v;  ///< The instantaneous frequency of the ideal upchirp.
+                std::vector<gr_complex> d_upchirp_stored;    ///< The complex stored upchirp.
+                std::vector<gr_complex> d_downchirp_stored;    ///< The complex stored upchirp.
 
                 std::vector<gr_complex> d_fft;              ///< Vector containing the FFT resuls.
                 std::vector<gr_complex> d_mult_hf;          ///< Vector containing the FFT decimation.
@@ -119,7 +121,8 @@ namespace gr {
                 double        d_dt;                         ///< Indicates how fast the frequency changes in a symbol (chirp).
 
                 float cross_correlate_ifreq_fast(const float *samples_ifreq, const float *ideal_chirp, const uint32_t window);
-                void fine_sync(const gr_complex* in_samples, uint32_t bin_idx);
+                float cross_correlate_fast(const gr_complex* samples, const gr_complex* ideal_chirp, const uint32_t window);
+                void fine_sync(const gr_complex* in_samples, uint32_t bin_idx, int32_t search_space);
                 int32_t d_fine_sync;
                 float detect_preamble_autocorr(const gr_complex *samples, uint32_t window);
 
