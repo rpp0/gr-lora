@@ -65,13 +65,7 @@ namespace gr {
             }
 
             // Set whitening sequence
-            if(sf == 11) {
-                this->d_whitening_sequence = gr::lora::prng_payload_sf11;
-            } else if(sf == 12) {
-                this->d_whitening_sequence = gr::lora::prng_payload_sf12;
-            } else {
-                this->d_whitening_sequence = gr::lora::prng_payload;
-            }
+            this->d_whitening_sequence = gr::lora::prng_payload;
 
             if (sf == 6) {
                 std::cerr << "[LoRa Decoder] WARNING : Spreading factor wrapped around to 12 due to incompatibility in hardware!" << std::endl;
@@ -553,7 +547,7 @@ namespace gr {
 
             uint32_t bin_idx = this->max_frequency_gradient_idx(samples, is_header);
             //uint32_t bin_idx = this->get_shift_fft(samples);
-            fine_sync(samples, bin_idx, 4);
+            fine_sync(samples, bin_idx, 2);
 
 //            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
