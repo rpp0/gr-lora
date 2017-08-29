@@ -369,7 +369,9 @@ namespace gr {
                  }
             }
 
-            d_debug << "FINE: " << -lag << std::endl;
+            #ifndef NDEBUG
+                d_debug << "FINE: " << -lag << std::endl;
+            #endif
 
             d_fine_sync = -lag;
 
@@ -395,6 +397,9 @@ namespace gr {
             volk_32f_accumulator_s32f(&energy_chirp2, magsq_chirp2, window);
 
             autocorr = abs(dot_product / gr_complex(sqrt(energy_chirp1 * energy_chirp2), 0));
+
+            if(energy_chirp1 < 0.05f)
+                autocorr = 0; // TODO: fixme
 
             return autocorr;
         }
@@ -524,7 +529,7 @@ namespace gr {
                 samples_ifreq_avg[i] /= d_decim_factor;
             }
 
-            float max_gradient = 0.2f;
+            float max_gradient = 0.1f;
             float gradient = 0.0f;
             uint32_t max_index = 0;
             for (uint32_t i = 1u; i < this->d_number_of_bins; i++) {
@@ -547,12 +552,12 @@ namespace gr {
 
             uint32_t bin_idx = this->max_frequency_gradient_idx(samples, is_header);
             //uint32_t bin_idx = this->get_shift_fft(samples);
-            fine_sync(samples, bin_idx, 2);
+            fine_sync(samples, bin_idx, std::max(d_decim_factor / 4u, 2u));
 
 //            DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
             // Header has additional redundancy
-            if (is_header) {
+            if (is_header || d_sf > 10) {
                 bin_idx /= 4u;
                 //bin_idx = std::max(bin_idx - 2u, 0u) / 4u;
             }
@@ -568,7 +573,7 @@ namespace gr {
             // Look for 4+cr symbols and stop
             if (this->d_words.size() == (4u + this->d_cr)) {
                 // Deinterleave
-                this->deinterleave(is_header ? this->d_sf - 2u : this->d_sf);
+                this->deinterleave((is_header || d_sf > 10) ? this->d_sf - 2u : this->d_sf);
 
                 return true; // Signal that a block is ready for decoding
             }
@@ -601,6 +606,7 @@ namespace gr {
 
             #ifndef NDEBUG
                 print_vector(this->d_debug, words_deinterleaved, "D", sizeof(uint8_t) * 8u);
+                //print_interleave_matrix(this->d_debug, this->d_words, ppm);
             #endif
 
             // Add to demodulated data
@@ -840,6 +846,7 @@ namespace gr {
 
             const gr_complex *input     = (gr_complex *) input_items[0];
             const gr_complex *raw_input = (gr_complex *) input_items[1];
+            d_fine_sync = 0;
 //            float *out = (float *)output_items[0];
 
 //            DBGR_TIME_MEASUREMENT_TO_FILE("SF7_fft_idx");
@@ -850,8 +857,10 @@ namespace gr {
                 case gr::lora::DecoderState::DETECT: {
                     float correlation = detect_preamble_autocorr(input, d_samples_per_symbol);
 
-                    if (correlation >= 0.80f) {
-                        //this->samples_to_file("/tmp/detect",  &input[0], this->d_samples_per_symbol, sizeof(gr_complex));
+                    if (correlation >= 0.90f) {
+                        #ifndef NDEBUG
+                            this->d_debug << "Ca: " << correlation << std::endl;
+                        #endif
                         this->d_corr_fails = 0u;
                         this->d_state = gr::lora::DecoderState::SYNC;
                         break;
@@ -866,13 +875,9 @@ namespace gr {
                     int i = 0;
                     float correlation = detect_upchirp(input, d_samples_per_symbol, &i);
 
-                    #ifndef NDEBUG
-                        this->d_debug << "Cu: " << correlation << std::endl;
-                    #endif
-
-                    float cfo = experimental_determine_cfo(&input[i], d_samples_per_symbol);
-                    pmt::pmt_t kv = pmt::cons(pmt::intern(std::string("cfo")), pmt::from_double(cfo));
-                    this->message_port_pub(pmt::mp("control"), kv);
+                    //float cfo = experimental_determine_cfo(&input[i], d_samples_per_symbol);
+                    //pmt::pmt_t kv = pmt::cons(pmt::intern(std::string("cfo")), pmt::from_double(cfo));
+                    //this->message_port_pub(pmt::mp("control"), kv);
 
                     this->samples_to_file("/tmp/detect",  &input[i], this->d_samples_per_symbol, sizeof(gr_complex));
                     memcpy(&d_upchirp_stored[0], input+i, sizeof(gr_complex) * this->d_samples_per_symbol);
@@ -891,8 +896,7 @@ namespace gr {
                         this->d_debug << "Cd: " << c << std::endl;
                     #endif
 
-                    if (c > 0.99f) {
-                        d_dbg.store_samples(input, this->d_samples_per_symbol);
+                    if (c > 0.96f) {
                         memcpy(&d_downchirp_stored[0], input, sizeof(gr_complex) * this->d_samples_per_symbol);
                         #ifndef NDEBUG
                             this->d_debug << "SYNC: " << c << std::endl;
@@ -905,13 +909,13 @@ namespace gr {
 
                         this->d_state = gr::lora::DecoderState::PAUSE;
                     } else {
-                        if(c < -0.98) {
-                            fine_sync(input, d_number_of_bins-1, 64);
+                        if(c < -0.97) {
+                            fine_sync(input, d_number_of_bins-1, d_decim_factor * 4);
                         } else {
                             this->d_corr_fails++;
                         }
 
-                        if (this->d_corr_fails > 8u) {
+                        if (this->d_corr_fails > 4u) {
                             this->d_state = gr::lora::DecoderState::DETECT;
                             #ifndef NDEBUG
                                 this->d_debug << "Lost sync" << std::endl;
@@ -944,9 +948,11 @@ namespace gr {
                         this->d_payload_length = decoded[0];
                         this->d_cr             = this->lookup_cr(decoded[1]);
 
+                        uint8_t redundancy = (d_sf > 10 ? 2 : 0);
+
                         const int symbols_per_block = this->d_cr + 4u;
                         const float bits_needed     = float(this->d_payload_length) * 8.0f + 16.0f;
-                        const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(this->d_sf);
+                        const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(this->d_sf - redundancy);
                         const int blocks_needed     = (int)std::ceil(symbols_needed / symbols_per_block);
                         this->d_payload_symbols     = blocks_needed * symbols_per_block;
 
