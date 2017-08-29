@@ -86,7 +86,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
 
         # For FFT, determine Center Frequency Offset first, then set here.
         # For RN2483, usually -14.1e3
-        self.center_offset   = 40000
+        self.center_offset   = 0
 
         self.inputFile       = "./"
 
@@ -221,7 +221,7 @@ class qa_BasicTest_XML (gr_unittest.TestCase):
                 self.lora_lora_receiver_0         = lora.lora_receiver(self.samp_rate, self.capture_freq, [868100000], self.sf, self.samp_rate, self.threshold)
                 self.blocks_throttle_0            = blocks.throttle(gr.sizeof_gr_complex*1, self.samp_rate, True)
                 self.blocks_message_socket_sink_0 = lora.message_socket_sink()
-                self.freq_xlating_fir_filter_0    = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, self.samp_rate, 100000, 100000, firdes.WIN_HAMMING, 6.67)), self.center_offset, self.samp_rate)
+                self.freq_xlating_fir_filter_0    = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, self.samp_rate, 200000, 100000, firdes.WIN_HAMMING, 6.67)), self.center_offset, self.samp_rate)
 
                 self.tb.connect(     (self.file_source, 0),                 (self.blocks_throttle_0, 0))
                 self.tb.connect(     (self.blocks_throttle_0, 0),           (self.freq_xlating_fir_filter_0, 0))

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<?grc format='1' created='3.7.10'?>
+<?grc format='1' created='3.7.11'?>
 <flow_graph>
   <timestamp>Tue Apr 12 11:23:34 2016</timestamp>
   <block>
@@ -390,6 +390,14 @@
       <value></value>
     </param>
     <param>
+      <key>center_freq</key>
+      <value>capture_freq</value>
+    </param>
+    <param>
+      <key>channel_list</key>
+      <value>[target_freq]</value>
+    </param>
+    <param>
       <key>comment</key>
       <value></value>
     </param>
@@ -398,12 +406,12 @@
       <value></value>
     </param>
     <param>
-      <key>_enabled</key>
-      <value>1</value>
+      <key>threshold</key>
+      <value>0.01</value>
     </param>
     <param>
-      <key>freq</key>
-      <value>capture_freq</value>
+      <key>_enabled</key>
+      <value>1</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -418,12 +426,16 @@
       <value>lora_lora_receiver_0</value>
     </param>
     <param>
-      <key>offset</key>
-      <value>offset</value>
+      <key>maxoutbuf</key>
+      <value>0</value>
     </param>
     <param>
-      <key>realtime</key>
-      <value>True</value>
+      <key>minoutbuf</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>out_samp_rate</key>
+      <value>500000</value>
     </param>
     <param>
       <key>in_samp_rate</key>
@@ -431,7 +443,7 @@
     </param>
     <param>
       <key>sf</key>
-      <value>7</value>
+      <value>sf</value>
     </param>
   </block>
   <block>
