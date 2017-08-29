@@ -370,7 +370,7 @@ namespace gr {
             }
 
             #ifndef NDEBUG
-                d_debug << "FINE: " << -lag << std::endl;
+                //d_debug << "FINE: " << -lag << std::endl;
             #endif
 
             d_fine_sync = -lag;
