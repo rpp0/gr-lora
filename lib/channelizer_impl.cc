@@ -68,7 +68,6 @@ namespace gr {
 
     void channelizer_impl::apply_cfo(float cfo) {
         d_cfo += cfo;
-        //std::cout << d_freq_offset + d_cfo << std::endl;
         d_xlating_fir_filter->set_center_freq(d_freq_offset + d_cfo);
     }
 

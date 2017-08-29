@@ -29,12 +29,9 @@
 
 #define CLAMP_VAL   0.7e6f  //1000000.0f  //0.7f
 
-#undef NDEBUG            /// Debug printing
-//#define NDEBUG           /// No debug printing
-
 //#define DBGR_CHRONO      /// Measure execution time
 
-#ifdef NDEBUG
+#ifndef DEBUG
     #define DBGR_PAUSE(MSG)
     #define DBGR_QUICK_TO_FILE(FILEPATH, APPEND, DATA, SIZE, FORMAT)
     #define DBGR_WRITE_SIGNAL(IDEAL_SIG_FP, SAMPLE_SIG_FP, WINDOW, OFFSET, MIN, MAX, FULL, PAUSE, MSG)

@@ -29,8 +29,6 @@
 #include <lora/debugger.h>
 #include <volk/volk.h>
 
-#define DECIMATOR_FILTER_SIZE (2*8*1 + 1) // 2*decim_factor*delay+1
-
 namespace gr {
     namespace lora {
 
@@ -53,16 +51,16 @@ namespace gr {
          *  \param  s
          *          The state to return to string.
          */
-        static std::string DecoderStateToString(DecoderState s) {
-            static std::string DecoderStateLUT[] = { "DETECT", "SYNC", "PAUSE", "DECODE_HEADER", "DECODE_PAYLOAD", "STOP" };
+        /*static std::string state_to_string(DecoderState s) {
+            static std::string DecoderStateLUT[] = { "DETECT", "SYNC", "FIND_SFD", "PAUSE", "DECODE_HEADER", "DECODE_PAYLOAD", "STOP" };
             return DecoderStateLUT[ (size_t)s ];
-        }
+        }*/
 
         /**
          *  \brief  **LoRa Decoder**
-         *          <BR>The main class for the LoRa decoder.
+         *          <br/>The main class for the LoRa decoder.
          *          Contains all variables and methods necessary for succesfully decoding LoRa PHY.
-         *          <BR>Only the sample rate and spreading factor are needed.
+         *          <br/>Only the sample rate and spreading factor are needed.
          *          The other settings, like packet length and coding rate, are extracted from the (explicit) HDR.
          */
         class decoder_impl : public decoder {
@@ -75,10 +73,7 @@ namespace gr {
 
                 std::vector<gr_complex> d_upchirp;          ///< The complex ideal upchirp.
                 std::vector<float>      d_upchirp_ifreq;    ///< The instantaneous frequency of the ideal upchirp.
-
                 std::vector<float>      d_upchirp_ifreq_v;  ///< The instantaneous frequency of the ideal upchirp.
-                std::vector<gr_complex> d_upchirp_stored;    ///< The complex stored upchirp.
-                std::vector<gr_complex> d_downchirp_stored;    ///< The complex stored upchirp.
 
                 std::vector<gr_complex> d_fft;              ///< Vector containing the FFT resuls.
                 std::vector<gr_complex> d_mult_hf;          ///< Vector containing the FFT decimation.
@@ -114,30 +109,35 @@ namespace gr {
                 fftplan d_q;                                ///< The LiquidDSP::FFT_Plan.
                 fftplan d_qr;                               ///< The LiquidDSP::FFT_Plan in reverse.
 
-                uint32_t      d_corr_decim_factor;          ///< The decimation factor used in finding the preamble start.
-                uint32_t      d_decim_factor;               ///< The amount of samples (data points) in each bin.
-                firdecim_crcf d_decim = nullptr;            ///< The LiquidDSP FIR decimation filter used to decimate the FFT imput.
+                uint32_t      d_decim_factor;               ///< The number of samples (data points) in each bin.
                 float         d_cfo_estimation;             ///< An estimation for the current Center Frequency Offset.
                 double        d_dt;                         ///< Indicates how fast the frequency changes in a symbol (chirp).
-
-                float cross_correlate_ifreq_fast(const float *samples_ifreq, const float *ideal_chirp, const uint32_t window);
-                float cross_correlate_fast(const gr_complex* samples, const gr_complex* ideal_chirp, const uint32_t window);
-                void fine_sync(const gr_complex* in_samples, uint32_t bin_idx, int32_t search_space);
                 int32_t d_fine_sync;
-                float detect_preamble_autocorr(const gr_complex *samples, uint32_t window);
-                float experimental_determine_cfo(const gr_complex *samples, uint32_t window);
 
                 /**
-                 *  \brief  Calculates the average energy from the given samples and returns whether its higher than the given threshold.
-                 *
-                 *  \param  samples
-                 *          The samples to calculate and compare the energy to.
-                 *  \param  window_size
-                 *          The length of the samples array.
-                 *  \param  threshold
-                 *          The threshold to compare to.
+                 *  \brief  TODO
                  */
-                bool calc_energy_threshold(const gr_complex *samples, const uint32_t window_size, const float threshold);
+                float cross_correlate_ifreq_fast(const float *samples_ifreq, const float *ideal_chirp, const uint32_t window);
+
+                /**
+                 *  \brief  TODO
+                 */
+                float cross_correlate_fast(const gr_complex* samples, const gr_complex* ideal_chirp, const uint32_t window);
+
+                /**
+                 *  \brief  TODO
+                 */
+                void fine_sync(const gr_complex* in_samples, uint32_t bin_idx, int32_t search_space);
+
+                /**
+                 * \brief Schmidl-Cox autocorrelation approach for approximately detecting the preamble.
+                 */
+                float detect_preamble_autocorr(const gr_complex *samples, uint32_t window);
+
+                /**
+                 *  \brief  TODO
+                 */
+                float experimental_determine_cfo(const gr_complex *samples, uint32_t window);
 
                 /**
                  *  \brief  Generate the ideal up- and downchirps.
@@ -207,7 +207,7 @@ namespace gr {
 
                 /**
                  *  \brief  Base method to start upchirp detection by calling `sliding_norm_cross_correlate_upchirp`.
-                 *          <BR>Sets up the instantaneous frequency of the given complex symbol.
+                 *          <br/>Sets up the instantaneous frequency of the given complex symbol.
                  *
                  *  \param  samples
                  *          The complex array of samples to detect an upchirp in.
@@ -232,7 +232,8 @@ namespace gr {
                 float cross_correlate(const gr_complex *samples_1, const gr_complex *samples_2, const uint32_t window);
 
                 /**
-                 *  \brief  Returns the correlation coefficient when correlating the given symbols in the given range.
+                 *  \brief  Returns the correlation coefficient of a real signal.
+                 *          See https://en.wikipedia.org/wiki/Cross-correlation#Normalized_cross-correlation.
                  *
                  *  \param  samples_ifreq
                  *          The instantaneous frequency of the symbol to correlate with.
@@ -242,16 +243,6 @@ namespace gr {
                  *          Correlation end index.
                  */
                 float cross_correlate_ifreq(const float *samples_ifreq, const std::vector<float>& ideal_chirp, const uint32_t to_idx);
-
-                /**
-                 *  \brief  Returns the index to shift the given symbol so that it overlaps the ideal upchirp.
-                 *
-                 *  \param  samples_ifreq
-                 *          The instantaneous frequency of the symbol to analyse.
-                 *  \param  window
-                 *          Length of said symbol.
-                 */
-                int32_t slide_phase_shift_upchirp_perfect(const float* samples_ifreq, const uint32_t window);
 
                 /**
                  *  \brief  Returns the index of the bin containing the frequency change by using FFT.
@@ -270,40 +261,12 @@ namespace gr {
                 void determine_cfo(const gr_complex *samples);
 
                 /**
-                 *  \brief  Correct the center frequency offset in the given symbol.
-                 *
-                 *  \param  samples
-                 *          The complex symbol to analyse.
-                 *  \param  num_samples
-                 *          Length of said symbol.
-                 */
-                void correct_cfo(gr_complex *samples, const uint32_t num_samples);
-
-                /**
-                 *  \brief  Find a valid signal that identifies the start of the preamble.
-                 *
-                 *  \param  samples
-                 *          The complex symbol to analyse.
-                 */
-                int find_preamble_start(const gr_complex *samples);
-
-                /**
-                 *  \brief  Skip through the given symbol to find a signal.
-                 *
-                 *  \param  samples
-                 *          The complex symbol to analyse.
-                 */
-                int find_preamble_start_fast(const gr_complex *samples);
-
-                /**
                  *  \brief  Returns the index of the bin containing the frequency change.
                  *
                  *  \param  samples
-                 *          The complex symbol to analyse.
-                 *  \param  is_header
-                 *          Whether the given symbol is part of a HDR.
+                 *          The complex symbol to analyze.
                  */
-                uint32_t max_frequency_gradient_idx(const gr_complex *samples, const bool is_header = false);
+                uint32_t max_frequency_gradient_idx(const gr_complex *samples);
 
                 /**
                  *  \brief  Demodulate the given symbol and return true if all expected symbols have been parsed.
@@ -325,11 +288,11 @@ namespace gr {
 
                 /**
                  *  \brief  The process of decoding the demodulated words to get the actual payload.
-                 *          <BR>1. Deshuffle the words
-                 *          <BR>2. Dewhiten the words
-                 *          <BR>3. Hamming decoding
-                 *          <BR><BR>The result is printed to the standard outputstream
-                 *          <BR>and passed as a `blob` to the `frames` output in GRC, for further use.
+                 *          <br/>1. Deshuffle the words
+                 *          <br/>2. Dewhiten the words
+                 *          <br/>3. Hamming decoding
+                 *          <br/><br/>The result is printed to the standard outputstream
+                 *          <br/>and passed as a `blob` to the `frames` output in GRC, for further use.
                  *
                  *  \param  out_data
                  *          An array to store the decoded payload words.
@@ -358,8 +321,8 @@ namespace gr {
 
                 /**
                  *  \brief  Use Hamming to decode the dewhitened words.
-                 *          <BR>- CR 4 or 3: Hamming(8,4) or Hamming(7,4) with parity correction
-                 *          <BR>- CR 2 or 1: Extract data only (can only find parity errors, not correct them)
+                 *          <br/>- CR 4 or 3: Hamming(8,4) or Hamming(7,4) with parity correction
+                 *          <br/>- CR 2 or 1: Extract data only (can only find parity errors, not correct them)
                  *
                  *  \param  out_data
                  *          The result after decoding the words.
@@ -368,7 +331,7 @@ namespace gr {
 
                 /**
                  *  \brief  Reverse the nibbles for each byte in the given array.
-                 *          <BR>`MSB LSB` nibbles --> `LSB MSB`
+                 *          <br/>`MSB LSB` nibbles --> `LSB MSB`
                  *
                  *  \param  out_data
                  *          The array of bytes to reverse the nibbles in.
@@ -379,7 +342,7 @@ namespace gr {
 
                 /**
                  *  \brief  Return the standard deviation for the given array.
-                 *          <BR>Used for cross correlating.
+                 *          <br/>Used for cross correlating.
                  *
                  *  \param  values
                  *          The array to calculate the standard deviation for.
@@ -421,28 +384,9 @@ namespace gr {
                  *          The LSB nibble to decode.
                  */
                 uint8_t lookup_cr(const uint8_t bytevalue);
-
-                /**
-                 *  \brief  Output a complex array to the GRC `"debug"` port.
-                 *
-                 *  \param  raw_samples
-                 *          The complex array to output.
-                 *  \param  num_samples
-                 *          Size of said complex array.
-                 */
-                void msg_raw_chirp_debug(const gr_complex *raw_samples, const uint32_t num_samples);
-
-                /**
-                 *  \brief  Unimplemented
-                 *
-                 *  \param  frame_bytes
-                 *  \param  frame_len
-                 */
-                void msg_lora_frame(const uint8_t *frame_bytes, const uint32_t frame_len);
-
             public:
                 /**
-                 *  \brief  Default ctor.
+                 *  \brief  Default constructor.
                  *
                  *  \param  samp_rate
                  *          The sample rate of the input signal given to `work` later.
@@ -452,7 +396,7 @@ namespace gr {
                 decoder_impl(float samp_rate, uint8_t sf);
 
                 /**
-                 *  Default dtor.
+                 *  Default destructor.
                  */
                 ~decoder_impl();
 
@@ -473,7 +417,7 @@ namespace gr {
 
                 /**
                  *  \brief  Set th current spreading factor.
-                 *          <BR>**Currently not supported, restart GNU Radio with different settings instead.**
+                 *          <br/>**Currently not supported, restart GNU Radio with different settings instead.**
                  *  \param  sf
                  *          The new spreading factor.
                  */
@@ -481,7 +425,7 @@ namespace gr {
 
                 /**
                  *  \brief  Set the current sample rate.
-                 *          <BR>**Currently not supported, restart GNU Radio with different settings instead.**
+                 *          <br/>**Currently not supported, restart GNU Radio with different settings instead.**
                  *
                  *  \param  samp_rate
                  *          The new sample rate.
@@ -490,8 +434,8 @@ namespace gr {
 
                 /**
                  *  \brief  Set the absolute threshold to distinguish signal from noise.
-                 *          <BR>Should be around 0.01f (default) for normal environments,
-                 *          <BR>or as low as 0.001f for the very noise-resistant USRP.
+                 *          <br/>Should be around 0.01f (default) for normal environments,
+                 *          <br/>or as low as 0.001f for the very noise-resistant USRP.
                  *
                  *  \param  threshold
                  *          The new threshold value.

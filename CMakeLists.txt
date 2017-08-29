@@ -18,6 +18,17 @@
 # Boston, MA 02110-1301, USA.
 
 ########################################################################
+# gr-lora specific options
+########################################################################
+option(HAS_MONGODB "Support for storing data to MongoDB" OFF)
+option(DEBUG "Print debug output" OFF)
+
+if(DEBUG)
+    message("-- Enabling debug mode")
+    add_definitions(-DDEBUG)
+endif(DEBUG)
+
+########################################################################
 # Project setup
 ########################################################################
 cmake_minimum_required(VERSION 2.6)
@@ -41,6 +52,8 @@ if(CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
     #http://gcc.gnu.org/wiki/Visibility
     add_definitions(-fvisibility=hidden)
     add_definitions(-std=c++11)
+    add_definitions(-Wall)
+    add_definitions(-Wextra)
 endif()
 
 ########################################################################
@@ -183,8 +196,3 @@ endif(NOT CMAKE_MODULES_DIR)
 install(FILES cmake/Modules/loraConfig.cmake
     DESTINATION ${CMAKE_MODULES_DIR}/lora
 )
-
-########################################################################
-# gr-lora specific options
-########################################################################
-option(HAS_MONGODB "Support for storing data to MongoDB" OFF)
