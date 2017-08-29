@@ -1,4 +1,4 @@
-gr-lora [![Build status](https://api.travis-ci.org/rpp0/gr-lora.svg)](https://travis-ci.org/rpp0/gr-lora)
+gr-lora [![Build status](https://api.travis-ci.org/rpp0/gr-lora.svg)](https://travis-ci.org/rpp0/gr-lora) [![DOI](https://zenodo.org/badge/61641535.svg)](https://zenodo.org/badge/latestdoi/61641535)
 =======
 
 The gr-lora project aims to provide a collection of GNU Radio blocks for receiving LoRa modulated radio messages using Software Defined Radio (SDR). More information about LoRa itself can be found on [the website of the LoRa Alliance](https://www.lora-alliance.org/).
@@ -17,7 +17,9 @@ Usage
 
 See the LICENSE file and top of the source files for the license of this project. If you are working on a research topic or project that involves the usage of ```gr-lora``` or its algorithms, we would appreciate it if you could acknowledge us. We are currently working on a full writeup of the decoder, but in the meantime, you can cite this repository as follows:
 
-Pieter Robyns, Peter Quax, Wim Lamotte, William Thenaers. (2017). gr-lora: An efficient LoRa decoder for GNU Radio. Github. https://github.com/rpp0/gr-lora
+```
+Pieter Robyns, Peter Quax, Wim Lamotte, William Thenaers. (2017). gr-lora: An efficient LoRa decoder for GNU Radio. Zenodo. 10.5281/zenodo.853201
+```
 
 
 Features
