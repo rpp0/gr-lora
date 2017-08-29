@@ -22,6 +22,27 @@ def fetch(l, num):
     del l[0:num]
     return fet
 
+def iphase(cpx):
+    return np.unwrap(np.angle(cpx))
+
+def ifreq(cpx):
+    global fs
+
+    iphase_signal = iphase(cpx)
+    return np.diff(iphase_signal)
+
+def add_plot_complex(fig, pos, value, title='', grid=False, grid_spacing=8192):
+    ax = fig.add_subplot(pos)
+    ax.set_title(title)
+    ax.plot(np.arange(len(value)), np.real(value), "b", np.arange(len(value)), np.imag(value), "g")
+    if grid:
+        ax.grid(color='r', linestyle='-', linewidth=2, markevery=grid_spacing, axis='x', which='minor', alpha=0.5)
+        minor_ticks = np.arange(0, len(value), grid_spacing)
+        ax.set_xticks(minor_ticks, minor=True)
+    ax.set_xlim([0, len(value)])
+    ax.set_xlabel("samples")
+    return ax
+
 class State:
     READ_HEADER = 0
     READ_DATA = 1
@@ -68,6 +89,7 @@ class Plotter(Thread):
                     data = bytearray()
                     data_len = 0
                     draw_over = False
+                    fig = plt.figure()
 
                     while True:
                         plt.pause(0.0001)
@@ -86,7 +108,9 @@ class Plotter(Thread):
                                 plot_data = np.frombuffer(fetch(data, data_len), dtype=np.complex64)
                                 if not draw_over:
                                     plt.gcf().clear()
-                                plt.plot(np.arange(len(plot_data)), np.real(plot_data), "b", np.arange(len(plot_data)), np.imag(plot_data), "g")
+                                add_plot_complex(fig, 211, plot_data, grid=True)
+                                add_plot_complex(fig, 212, ifreq(plot_data), grid=True)
+                                #plt.plot(np.arange(len(plot_data)), np.real(plot_data), "b", np.arange(len(plot_data)), np.imag(plot_data), "g")
                                 self.state = State.READ_HEADER
                         except ConnectionResetError:
                             print("[gr-lora analyzer]: connection reset")

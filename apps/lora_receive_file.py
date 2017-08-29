@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive File
-# Generated: Fri Jul 28 10:52:21 2017
+# Generated: Tue Aug 29 13:32:47 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -24,7 +24,6 @@ from gnuradio.eng_option import eng_option
 from gnuradio.fft import window
 from gnuradio.filter import firdes
 from gnuradio.wxgui import fftsink2
-from gnuradio.wxgui import forms
 from grc_gnuradio import wxgui as grc_wxgui
 from optparse import OptionParser
 import lora
@@ -39,15 +38,13 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         ##################################################
         # Variables
         ##################################################
-        self.target_freq = target_freq = 868.1e6
         self.sf = sf = 7
         self.samp_rate = samp_rate = 10e6
-        self.capture_freq = capture_freq = 866.0e6
         self.bw = bw = 125e3
+        self.target_freq = target_freq = 868.1e6
         self.symbols_per_sec = symbols_per_sec = bw / (2**sf)
-        self.offset = offset = -(capture_freq - target_freq)
         self.firdes_tap = firdes_tap = firdes.low_pass(1, samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)
-        self.finetune = finetune = -95
+        self.capture_freq = capture_freq = 866.0e6
         self.bitrate = bitrate = sf * (1 / (2**sf / bw))
 
         ##################################################
@@ -69,30 +66,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         	peak_hold=False,
         )
         self.Add(self.wxgui_fftsink2_1.win)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, 868e6, ([868.1e6]), 7, 1000000, 0.01)
-        _finetune_sizer = wx.BoxSizer(wx.VERTICAL)
-        self._finetune_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	sizer=_finetune_sizer,
-        	value=self.finetune,
-        	callback=self.set_finetune,
-        	label='finetune',
-        	converter=forms.int_converter(),
-        	proportion=0,
-        )
-        self._finetune_slider = forms.slider(
-        	parent=self.GetWin(),
-        	sizer=_finetune_sizer,
-        	value=self.finetune,
-        	callback=self.set_finetune,
-        	minimum=-150,
-        	maximum=150,
-        	num_steps=300,
-        	style=wx.SL_HORIZONTAL,
-        	cast=int,
-        	proportion=1,
-        )
-        self.Add(_finetune_sizer)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), 7, 1000000, 0.01)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, 'counting_cr4_sf7.cfile', True)
 
@@ -102,13 +76,6 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.lora_lora_receiver_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.wxgui_fftsink2_1, 0))
-
-    def get_target_freq(self):
-        return self.target_freq
-
-    def set_target_freq(self, target_freq):
-        self.target_freq = target_freq
-        self.set_offset(-(self.capture_freq - self.target_freq))
 
     def get_sf(self):
         return self.sf
@@ -127,14 +94,6 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         self.set_firdes_tap(firdes.low_pass(1, self.samp_rate, self.bw, 10000, firdes.WIN_HAMMING, 6.67))
         self.blocks_throttle_0.set_sample_rate(self.samp_rate)
 
-    def get_capture_freq(self):
-        return self.capture_freq
-
-    def set_capture_freq(self, capture_freq):
-        self.capture_freq = capture_freq
-        self.wxgui_fftsink2_1.set_baseband_freq(self.capture_freq)
-        self.set_offset(-(self.capture_freq - self.target_freq))
-
     def get_bw(self):
         return self.bw
 
@@ -144,17 +103,17 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         self.set_firdes_tap(firdes.low_pass(1, self.samp_rate, self.bw, 10000, firdes.WIN_HAMMING, 6.67))
         self.set_bitrate(self.sf * (1 / (2**self.sf / self.bw)))
 
+    def get_target_freq(self):
+        return self.target_freq
+
+    def set_target_freq(self, target_freq):
+        self.target_freq = target_freq
+
     def get_symbols_per_sec(self):
         return self.symbols_per_sec
 
     def set_symbols_per_sec(self, symbols_per_sec):
         self.symbols_per_sec = symbols_per_sec
-
-    def get_offset(self):
-        return self.offset
-
-    def set_offset(self, offset):
-        self.offset = offset
 
     def get_firdes_tap(self):
         return self.firdes_tap
@@ -162,13 +121,12 @@ class lora_receive_file(grc_wxgui.top_block_gui):
     def set_firdes_tap(self, firdes_tap):
         self.firdes_tap = firdes_tap
 
-    def get_finetune(self):
-        return self.finetune
+    def get_capture_freq(self):
+        return self.capture_freq
 
-    def set_finetune(self, finetune):
-        self.finetune = finetune
-        self._finetune_slider.set_value(self.finetune)
-        self._finetune_text_box.set_value(self.finetune)
+    def set_capture_freq(self, capture_freq):
+        self.capture_freq = capture_freq
+        self.wxgui_fftsink2_1.set_baseband_freq(self.capture_freq)
 
     def get_bitrate(self):
         return self.bitrate

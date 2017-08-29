@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<?grc format='1' created='3.7.10'?>
+<?grc format='1' created='3.7.11'?>
 <flow_graph>
   <timestamp>Tue Apr 12 11:23:34 2016</timestamp>
   <block>
@@ -163,65 +163,6 @@
     </param>
   </block>
   <block>
-    <key>variable_slider</key>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>converver</key>
-      <value>int_converter</value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>-95</value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(976, 16)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>grid_pos</key>
-      <value></value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>finetune</value>
-    </param>
-    <param>
-      <key>label</key>
-      <value></value>
-    </param>
-    <param>
-      <key>max</key>
-      <value>150</value>
-    </param>
-    <param>
-      <key>min</key>
-      <value>-150</value>
-    </param>
-    <param>
-      <key>notebook</key>
-      <value></value>
-    </param>
-    <param>
-      <key>num_steps</key>
-      <value>300</value>
-    </param>
-    <param>
-      <key>style</key>
-      <value>wx.SL_HORIZONTAL</value>
-    </param>
-  </block>
-  <block>
     <key>variable</key>
     <param>
       <key>comment</key>
@@ -246,33 +187,6 @@
     <param>
       <key>value</key>
       <value>firdes.low_pass(1, samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)</value>
-    </param>
-  </block>
-  <block>
-    <key>variable</key>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(376, 77)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>offset</value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>-(capture_freq - target_freq)</value>
     </param>
   </block>
   <block>
@@ -500,6 +414,14 @@
       <value></value>
     </param>
     <param>
+      <key>center_freq</key>
+      <value>capture_freq</value>
+    </param>
+    <param>
+      <key>channel_list</key>
+      <value>[target_freq]</value>
+    </param>
+    <param>
       <key>comment</key>
       <value></value>
     </param>
@@ -514,10 +436,6 @@
     <param>
       <key>_enabled</key>
       <value>1</value>
-    </param>
-    <param>
-      <key>freq</key>
-      <value>capture_freq</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -538,10 +456,6 @@
     <param>
       <key>minoutbuf</key>
       <value>0</value>
-    </param>
-    <param>
-      <key>offset</key>
-      <value>offset</value>
     </param>
     <param>
       <key>out_samp_rate</key>
