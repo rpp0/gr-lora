@@ -1,4 +1,4 @@
--------- Test Results on 2017-08-29 20:03:58 ---------
+-------- Test Results on 2017-08-31 14:36:31 ---------
 Test serie   0: [u'01 23 45 67 89 ab cd ef'] * 10
     Test   1 :: cr4-5 bw125 sf7  crc1 pwr1 :: passed  10 out of  10 (100.00%)
     Test   2 :: cr4-5 bw125 sf8  crc1 pwr1 :: passed  10 out of  10 (100.00%)

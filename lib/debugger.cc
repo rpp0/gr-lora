@@ -51,7 +51,7 @@ namespace gr {
         void debugger::analyze_samples(bool clear, bool draw_over) {
             if(d_attached) {
                 uint32_t num_payload_bytes = d_samples.size() * sizeof(gr_complex);
-                uint32_t num_bytes_sent;
+                int32_t num_bytes_sent;
 
                 debugger::header hdr;
                 hdr.length = htonl(num_payload_bytes);

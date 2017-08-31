@@ -31,12 +31,12 @@ namespace gr {
 
         class message_socket_sink_impl : public message_socket_sink {
             private:
-                const std::string host = "127.0.0.1";
-                const int port         = 40868;
+                const std::string d_host = "127.0.0.1";
+                const int d_port         = 40868;
 
                 // socket
-                struct sockaddr_in *_sock_addr;
-                int _socket;
+                struct sockaddr_in *d_sock_addr;
+                int d_socket;
 
                 void handle(pmt::pmt_t msg);
 

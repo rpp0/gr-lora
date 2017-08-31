@@ -44,37 +44,37 @@ namespace gr {
             message_port_register_in(pmt::mp("in"));
             set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, _1));
 
-            this->_socket = socket(AF_INET, SOCK_DGRAM, 0);
+            d_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-            if (this->_socket < 0) {
+            if (d_socket < 0) {
                 perror("[message_socket_sink] Failed to create socket!");
                 exit(EXIT_FAILURE);
             }
 
-            this->_sock_addr                   = new struct sockaddr_in;
-            this->_sock_addr->sin_family       = AF_INET;
-            this->_sock_addr->sin_addr.s_addr  = htonl(INADDR_ANY);
-            this->_sock_addr->sin_port         = htons(0);    // Source port: 0 is any
+            d_sock_addr                   = new struct sockaddr_in;
+            d_sock_addr->sin_family       = AF_INET;
+            d_sock_addr->sin_addr.s_addr  = htonl(INADDR_ANY);
+            d_sock_addr->sin_port         = htons(0);    // Source port: 0 is any
 
-            if (bind(this->_socket,
-                     (const struct sockaddr*) this->_sock_addr,
-                     sizeof(*this->_sock_addr))
+            if (bind(d_socket,
+                     (const struct sockaddr*) d_sock_addr,
+                     sizeof(*d_sock_addr))
                 < 0) {
                 perror("[message_socket_sink] Socket bind failed!");
                 exit(EXIT_FAILURE);
             }
 
-            this->_sock_addr->sin_port         = htons(this->port);
+            d_sock_addr->sin_port         = htons(this->d_port);
             // == "127.0.0.1" to int translation
-            inet_pton(AF_INET, this->host.c_str(), &this->_sock_addr->sin_addr.s_addr);
+            inet_pton(AF_INET, this->d_host.c_str(), &d_sock_addr->sin_addr.s_addr);
         }
 
         /**
          *  \brief  Our virtual destructor.
          */
         message_socket_sink_impl::~message_socket_sink_impl() {
-            delete this->_sock_addr;
-            shutdown(this->_socket, 1);      // close transmissions
+            delete d_sock_addr;
+            shutdown(d_socket, 1);      // close transmissions
         }
 
         /**
@@ -93,9 +93,9 @@ namespace gr {
                 putchar('\n');
             #endif
 
-            if (sendto(this->_socket, data, size, 0,
-                       (const struct sockaddr*) this->_sock_addr,
-                       sizeof(*this->_sock_addr))
+            if (sendto(d_socket, data, size, 0,
+                       (const struct sockaddr*) d_sock_addr,
+                       sizeof(*d_sock_addr))
                 != (ssize_t)size) {
                 perror("[message_socket_sink] Mismatch in number of bytes sent");
                 exit(EXIT_FAILURE);
