@@ -75,7 +75,7 @@ namespace gr {
             d_cfo_estimation     = 0.0f;
             d_dt                 = 1.0f / d_samples_per_second;
             d_sf                 = sf;
-            d_bits_per_second    = (double)d_sf * (double)(1u + d_cr) / (1u << d_sf) * d_bw;
+            d_bits_per_second    = (double)d_sf * (double)(4.0 / (4.0 + d_cr)) / (1u << d_sf) * d_bw;
             d_symbols_per_second = (double)d_bw / (1u << d_sf);
             d_period             = 1.0f / (double)d_symbols_per_second;
             d_bits_per_symbol    = (uint32_t)(d_bits_per_second    / d_symbols_per_second);
@@ -88,7 +88,7 @@ namespace gr {
             d_fine_sync = 0;
             set_output_multiple(2 * d_samples_per_symbol);
 
-            std::cout << "Bits per symbol: \t"      << d_bits_per_symbol    << std::endl;
+            std::cout << "Bits (nominal) per symbol: \t"      << d_bits_per_symbol    << std::endl;
             std::cout << "Bins per symbol: \t"      << d_number_of_bins     << std::endl;
             std::cout << "Samples per symbol: \t"   << d_samples_per_symbol << std::endl;
             std::cout << "Decimation: \t\t"         << d_decim_factor       << std::endl;

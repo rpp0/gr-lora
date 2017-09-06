@@ -84,6 +84,7 @@ namespace gr {
             uint8_t *data = (uint8_t*) pmt::blob_data(msg);
             size_t size = pmt::blob_length(msg);
 
+            /*
             #ifdef DEBUG
                 printf("Received message:\n\t");
 
@@ -92,11 +93,9 @@ namespace gr {
 
                 putchar('\n');
             #endif
+            */
 
-            if (sendto(d_socket, data, size, 0,
-                       (const struct sockaddr*) d_sock_addr,
-                       sizeof(*d_sock_addr))
-                != (ssize_t)size) {
+            if (sendto(d_socket, data, size, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != (ssize_t)size) {
                 perror("[message_socket_sink] Mismatch in number of bytes sent");
                 exit(EXIT_FAILURE);
             }

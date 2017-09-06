@@ -6,3 +6,4 @@ build/
 *.cfile
 dev/
 examples/lora-samples
+apps/test-suites
