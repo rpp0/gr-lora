@@ -29,7 +29,7 @@ class TestSuite():
         self.name += "_" + self.hw
         self.path = os.path.join(args.data_out, self.name)
         self.pre_delay = 0.150
-        self.post_delay = 0.150
+        self.post_delay = 1.0
         self.intra_delay = 0.1
         self.lc = RN2483Controller("/dev/lora")
         self.test_count = 0
@@ -196,4 +196,4 @@ if __name__ == '__main__':
                       Test(payload="88", times=1),
                       Test(payload="ffff", times=10),
                      ]
-    TestSuite(name='short', args=args, config_set=short_config_set, test_set=short_test_set).run()
+    #TestSuite(name='short', args=args, config_set=short_config_set, test_set=short_test_set).run()

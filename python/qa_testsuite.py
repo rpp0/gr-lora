@@ -39,7 +39,7 @@ class TestSummary():
         self.suite = suite
         self._summary = []
         self._summary_text = "-------- Test suite '{:s}' results on {:s} ---------\n".format(suite, str(datetime.datetime.utcnow()))
-        self._summary_markdown = ""
+        self._summary_markdown = "# Test suite: '{:s}'\n\n*Results on {:s}*\n".format(suite, str(datetime.datetime.utcnow()))
         self._num_total_correct_payloads = 0
         self._num_total_payloads = 0
         self._num_tests = 0
@@ -52,7 +52,7 @@ class TestSummary():
         else:
             raise Exception("Test result must be of type TestResult")
 
-    def export_summary(self, print_output=True):
+    def export_summary(self, path, print_output=True):
         self._summary_text += "\nRan a total of {:n} tests, together containing {:n} payloads.\n".format(
             self._num_tests,
             self._num_total_payloads
@@ -63,8 +63,20 @@ class TestSummary():
             float(self._num_total_correct_payloads) / self._num_total_payloads
         )
 
+        self._summary_markdown += "\n### Summary for suite '{:s}'\n\n".format(self.suite)
+        self._summary_markdown += "Total payloads passed: {:n} out of {:n} ({:.2%})\n\n".format(
+            self._num_total_correct_payloads,
+            self._num_total_payloads,
+            float(self._num_total_correct_payloads) / self._num_total_payloads
+        )
+
         if print_output:
             print(self._summary_text)
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+        with open(os.path.join(path, self.suite + '.md'), 'w') as f:
+            f.write(self._summary_markdown)
 
     def _evaluate_result(self, test_result, print_intermediate):
         """
@@ -82,7 +94,8 @@ class TestSummary():
 
         # Don't reprint configuration if it is the same as before
         if(self._last_config != vars(lora_config)):
-            evaluation_text += "Configuration {:s}:\n".format(lora_config.string_repr())
+            evaluation_text += "{:s}:\n".format(lora_config.string_repr())
+            evaluation_markdown += "\n### {:s}\n\nTransmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:\n--- | --- | --- | ---\n".format(lora_config.string_repr())
             self._last_config = vars(lora_config)
 
         # Determine number of correct payloads
@@ -106,8 +119,24 @@ class TestSummary():
                 self._num_total_correct_payloads += 1
 
         # Append to text report
-        evaluation_text += "\tTest {:>3n}: {:<30s} * {:<3n} :: passed {:>3n} out of {:<3n} ({:.2%})\n".format(self._num_tests, trunc(test.payload), test.times, num_correct_payloads, num_payloads, float(num_correct_payloads)/num_payloads)
+        evaluation_text += "\tTest {:>3n}: {:<30s} * {:<3n} :: passed {:>3n} out of {:<3n} ({:.2%})\n".format(
+            self._num_tests,
+            trunc(test.payload),
+            test.times,
+            num_correct_payloads,
+            num_payloads,
+            float(num_correct_payloads)/num_payloads
+        )
         self._summary_text += evaluation_text
+
+        # Append to markdown report
+        evaluation_markdown += "`{:<30s}` | {:>3n} | {:>3n} | {:>.2%}\n".format(
+            trunc(test.payload),
+            num_correct_payloads,
+            num_payloads,
+            float(num_correct_payloads)/num_payloads
+        )
+        self._summary_markdown += evaluation_markdown
 
         if(print_intermediate):
             print(evaluation_text)
@@ -127,11 +156,12 @@ class qa_testsuite():
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
-        self.server.settimeout(10)
+        self.server.settimeout(3)
 
         # Determine test suites directory
         current_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
         self.test_suites_directory = os.path.abspath(current_dir + '../apps/test-suites')
+        self.reports_directory = os.path.abspath(current_dir + '../docs/test-results')
 
         # List test suites
         self.test_suites = []
@@ -225,7 +255,7 @@ class qa_testsuite():
                 decoded_data = self.get_payloads(times)  # Output from the flowgraph
                 summary.add(TestResult(decoded_data=decoded_data, lora_config=lora_config, test=test), print_intermediate=True)
             # Finally, export the result for the suite
-            summary.export_summary()
+            summary.export_summary(path=self.reports_directory)
 
 if __name__ == '__main__':
     """
