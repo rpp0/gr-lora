@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive Realtime
-# Generated: Tue Aug 29 13:37:16 2017
+# Generated: Thu Sep  7 15:47:58 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -18,17 +18,15 @@ if __name__ == '__main__':
 
 from gnuradio import eng_notation
 from gnuradio import gr
-from gnuradio import uhd
 from gnuradio import wxgui
 from gnuradio.eng_option import eng_option
 from gnuradio.fft import window
 from gnuradio.filter import firdes
 from gnuradio.wxgui import fftsink2
-from gnuradio.wxgui import forms
 from grc_gnuradio import wxgui as grc_wxgui
 from optparse import OptionParser
 import lora
-import time
+import osmosdr
 import wx
 
 
@@ -40,15 +38,14 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         ##################################################
         # Variables
         ##################################################
-        self.target_freq = target_freq = 868.1e6
-        self.sf = sf = 12
-        self.samp_rate = samp_rate = 2e6
-        self.capture_freq = capture_freq = 867.8e6
+        self.sf = sf = 11
+        self.samp_rate = samp_rate = 1e6
         self.bw = bw = 125e3
+        self.target_freq = target_freq = 868.1e6
         self.symbols_per_sec = symbols_per_sec = bw / (2**sf)
-        self.offset = offset = -(capture_freq - target_freq)
+        self.internal_sampling_rate = internal_sampling_rate = 5e5
         self.firdes_tap = firdes_tap = firdes.low_pass(1, samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)
-        self.finetune = finetune = -95
+        self.capture_freq = capture_freq = 868e6
         self.bitrate = bitrate = sf * (1 / (2**sf / bw))
 
         ##################################################
@@ -70,54 +67,28 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         	peak_hold=False,
         )
         self.Add(self.wxgui_fftsink2_1.win)
-        self.uhd_usrp_source_0 = uhd.usrp_source(
-        	",".join(("", "")),
-        	uhd.stream_args(
-        		cpu_format="fc32",
-        		channels=range(1),
-        	),
-        )
-        self.uhd_usrp_source_0.set_samp_rate(samp_rate)
-        self.uhd_usrp_source_0.set_center_freq(capture_freq, 0)
-        self.uhd_usrp_source_0.set_gain(15, 0)
-        self.uhd_usrp_source_0.set_antenna('RX2', 0)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), sf, 500000, 0.01)
-        _finetune_sizer = wx.BoxSizer(wx.VERTICAL)
-        self._finetune_text_box = forms.text_box(
-        	parent=self.GetWin(),
-        	sizer=_finetune_sizer,
-        	value=self.finetune,
-        	callback=self.set_finetune,
-        	label='finetune',
-        	converter=forms.int_converter(),
-        	proportion=0,
-        )
-        self._finetune_slider = forms.slider(
-        	parent=self.GetWin(),
-        	sizer=_finetune_sizer,
-        	value=self.finetune,
-        	callback=self.set_finetune,
-        	minimum=-150,
-        	maximum=150,
-        	num_steps=300,
-        	style=wx.SL_HORIZONTAL,
-        	cast=int,
-        	proportion=1,
-        )
-        self.Add(_finetune_sizer)
+        self.osmosdr_source_0 = osmosdr.source( args="numchan=" + str(1) + " " + '' )
+        self.osmosdr_source_0.set_sample_rate(samp_rate)
+        self.osmosdr_source_0.set_center_freq(capture_freq, 0)
+        self.osmosdr_source_0.set_freq_corr(0, 0)
+        self.osmosdr_source_0.set_dc_offset_mode(0, 0)
+        self.osmosdr_source_0.set_iq_balance_mode(0, 0)
+        self.osmosdr_source_0.set_gain_mode(False, 0)
+        self.osmosdr_source_0.set_gain(10, 0)
+        self.osmosdr_source_0.set_if_gain(20, 0)
+        self.osmosdr_source_0.set_bb_gain(20, 0)
+        self.osmosdr_source_0.set_antenna('', 0)
+        self.osmosdr_source_0.set_bandwidth(0, 0)
+
+        self.lora_message_socket_sink_0 = lora.message_socket_sink()
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), sf, internal_sampling_rate, 0.002)
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.uhd_usrp_source_0, 0), (self.lora_lora_receiver_0, 0))
-        self.connect((self.uhd_usrp_source_0, 0), (self.wxgui_fftsink2_1, 0))
-
-    def get_target_freq(self):
-        return self.target_freq
-
-    def set_target_freq(self, target_freq):
-        self.target_freq = target_freq
-        self.set_offset(-(self.capture_freq - self.target_freq))
+        self.msg_connect((self.lora_lora_receiver_0, 'frames'), (self.lora_message_socket_sink_0, 'in'))
+        self.connect((self.osmosdr_source_0, 0), (self.lora_lora_receiver_0, 0))
+        self.connect((self.osmosdr_source_0, 0), (self.wxgui_fftsink2_1, 0))
 
     def get_sf(self):
         return self.sf
@@ -134,17 +105,8 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
         self.wxgui_fftsink2_1.set_sample_rate(self.samp_rate)
-        self.uhd_usrp_source_0.set_samp_rate(self.samp_rate)
+        self.osmosdr_source_0.set_sample_rate(self.samp_rate)
         self.set_firdes_tap(firdes.low_pass(1, self.samp_rate, self.bw, 10000, firdes.WIN_HAMMING, 6.67))
-
-    def get_capture_freq(self):
-        return self.capture_freq
-
-    def set_capture_freq(self, capture_freq):
-        self.capture_freq = capture_freq
-        self.wxgui_fftsink2_1.set_baseband_freq(self.capture_freq)
-        self.uhd_usrp_source_0.set_center_freq(self.capture_freq, 0)
-        self.set_offset(-(self.capture_freq - self.target_freq))
 
     def get_bw(self):
         return self.bw
@@ -155,17 +117,24 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         self.set_firdes_tap(firdes.low_pass(1, self.samp_rate, self.bw, 10000, firdes.WIN_HAMMING, 6.67))
         self.set_bitrate(self.sf * (1 / (2**self.sf / self.bw)))
 
+    def get_target_freq(self):
+        return self.target_freq
+
+    def set_target_freq(self, target_freq):
+        self.target_freq = target_freq
+
     def get_symbols_per_sec(self):
         return self.symbols_per_sec
 
     def set_symbols_per_sec(self, symbols_per_sec):
         self.symbols_per_sec = symbols_per_sec
 
-    def get_offset(self):
-        return self.offset
+    def get_internal_sampling_rate(self):
+        return self.internal_sampling_rate
 
-    def set_offset(self, offset):
-        self.offset = offset
+    def set_internal_sampling_rate(self, internal_sampling_rate):
+        self.internal_sampling_rate = internal_sampling_rate
+        self.lora_lora_receiver_0.set_out_samp_rate(self.internal_sampling_rate)
 
     def get_firdes_tap(self):
         return self.firdes_tap
@@ -173,13 +142,13 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
     def set_firdes_tap(self, firdes_tap):
         self.firdes_tap = firdes_tap
 
-    def get_finetune(self):
-        return self.finetune
+    def get_capture_freq(self):
+        return self.capture_freq
 
-    def set_finetune(self, finetune):
-        self.finetune = finetune
-        self._finetune_slider.set_value(self.finetune)
-        self._finetune_text_box.set_value(self.finetune)
+    def set_capture_freq(self, capture_freq):
+        self.capture_freq = capture_freq
+        self.wxgui_fftsink2_1.set_baseband_freq(self.capture_freq)
+        self.osmosdr_source_0.set_center_freq(self.capture_freq, 0)
 
     def get_bitrate(self):
         return self.bitrate

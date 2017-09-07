@@ -30,7 +30,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(8, 8)</value>
+      <value>(8, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -93,7 +93,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(552, 13)</value>
+      <value>(544, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -120,7 +120,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(456, 13)</value>
+      <value>(456, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -159,66 +159,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>867.8e6</value>
-    </param>
-  </block>
-  <block>
-    <key>variable_slider</key>
-    <param>
-      <key>comment</key>
-      <value></value>
-    </param>
-    <param>
-      <key>converver</key>
-      <value>int_converter</value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>-95</value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(968, 16)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>grid_pos</key>
-      <value></value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>finetune</value>
-    </param>
-    <param>
-      <key>label</key>
-      <value></value>
-    </param>
-    <param>
-      <key>max</key>
-      <value>150</value>
-    </param>
-    <param>
-      <key>min</key>
-      <value>-150</value>
-    </param>
-    <param>
-      <key>notebook</key>
-      <value></value>
-    </param>
-    <param>
-      <key>num_steps</key>
-      <value>300</value>
-    </param>
-    <param>
-      <key>style</key>
-      <value>wx.SL_HORIZONTAL</value>
+      <value>868e6</value>
     </param>
   </block>
   <block>
@@ -233,7 +174,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(800, 13)</value>
+      <value>(768, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -252,7 +193,10 @@
     <key>variable</key>
     <param>
       <key>comment</key>
-      <value></value>
+      <value>The internal sampling rate determines the
+oversampling rate. 1e6 is 8 times oversampling,
+5e5 is 4 times oversampling, and so on. Set higher
+for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -260,7 +204,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(376, 77)</value>
+      <value>(640, 76)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -268,11 +212,11 @@
     </param>
     <param>
       <key>id</key>
-      <value>offset</value>
+      <value>internal_sampling_rate</value>
     </param>
     <param>
       <key>value</key>
-      <value>-(capture_freq - target_freq)</value>
+      <value>5e5</value>
     </param>
   </block>
   <block>
@@ -299,7 +243,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>2e6</value>
+      <value>1e6</value>
     </param>
   </block>
   <block>
@@ -314,7 +258,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(376, 13)</value>
+      <value>(384, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -326,7 +270,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>12</value>
+      <value>11</value>
     </param>
   </block>
   <block>
@@ -341,7 +285,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(664, 13)</value>
+      <value>(640, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -407,7 +351,7 @@
     </param>
     <param>
       <key>threshold</key>
-      <value>0.01</value>
+      <value>0.002</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -415,7 +359,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(384, 168)</value>
+      <value>(392, 172)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -435,7 +379,7 @@
     </param>
     <param>
       <key>out_samp_rate</key>
-      <value>500000</value>
+      <value>internal_sampling_rate</value>
     </param>
     <param>
       <key>in_samp_rate</key>
@@ -444,6 +388,37 @@
     <param>
       <key>sf</key>
       <value>sf</value>
+    </param>
+  </block>
+  <block>
+    <key>lora_message_socket_sink</key>
+    <param>
+      <key>alias</key>
+      <value></value>
+    </param>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>affinity</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(640, 208)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>lora_message_socket_sink_0</value>
     </param>
   </block>
   <block>
@@ -666,11 +641,11 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>0</value>
+      <value>1</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(16, 148)</value>
+      <value>(24, 140)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1881,11 +1856,11 @@
     </param>
     <param>
       <key>_enabled</key>
-      <value>1</value>
+      <value>0</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(8, 336)</value>
+      <value>(16, 340)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2080,7 +2055,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(384, 292)</value>
+      <value>(392, 292)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2143,6 +2118,12 @@
       <value>10</value>
     </param>
   </block>
+  <connection>
+    <source_block_id>lora_lora_receiver_0</source_block_id>
+    <sink_block_id>lora_message_socket_sink_0</sink_block_id>
+    <source_key>frames</source_key>
+    <sink_key>in</sink_key>
+  </connection>
   <connection>
     <source_block_id>osmosdr_source_0</source_block_id>
     <sink_block_id>lora_lora_receiver_0</sink_block_id>
