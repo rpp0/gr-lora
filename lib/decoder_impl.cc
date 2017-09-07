@@ -57,11 +57,6 @@ namespace gr {
                 exit(1);
             }
 
-            if (sf == 6) {
-                std::cerr << "[LoRa Decoder] WARNING : Spreading factor wrapped around to 12 due to incompatibility in hardware!" << std::endl;
-                sf = 12;
-            }
-
             #ifdef DEBUG
                 d_debug_samples.open("/tmp/grlora_debug", std::ios::out | std::ios::binary);
                 d_debug.open("/tmp/grlora_debug_txt", std::ios::out);
