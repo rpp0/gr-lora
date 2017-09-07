@@ -35,7 +35,8 @@ def trunc(target, max_len=30):
     return result
 
 class TestSummary():
-    def __init__(self, suite):
+    def __init__(self, suite, pause=False):
+        self.pause = pause
         self.suite = suite
         self._summary = []
         self._summary_text = "-------- Test suite '{:s}' results on {:s} ---------\n".format(suite, str(datetime.datetime.utcnow()))
@@ -117,6 +118,9 @@ class TestSummary():
             if decoded == expected:
                 num_correct_payloads += 1
                 self._num_total_correct_payloads += 1
+            else:
+                if self.pause:
+                    dummy = input("Expected %s but got %s for %s. Press enter to continue..." % (expected, decoded, lora_config.string_repr()))
 
         # Append to text report
         evaluation_text += "\tTest {:>3n}: {:<30s} * {:<3n} :: passed {:>3n} out of {:<3n} ({:.2%})\n".format(
@@ -191,14 +195,14 @@ class qa_testsuite():
 
         return total_data
 
-    def run(self, suites_to_run):
+    def run(self, suites_to_run, pause=False):
         for test_suite in self.test_suites:
             # Skip test suites that we don't want to run
             if suites_to_run != [] and (not test_suite in suites_to_run):
                 continue
 
             print("[+] Testing suite: '%s'" % test_suite)
-            summary = TestSummary(suite=test_suite)
+            summary = TestSummary(suite=test_suite, pause=pause)
 
             # Get all metadata files associated with the suite
             get_mtime = lambda f: os.stat(os.path.join(self.test_suites_directory, test_suite, f)).st_mtime
@@ -264,10 +268,11 @@ if __name__ == '__main__':
     # Parse args
     parser = argparse.ArgumentParser(description="Tool to evaluate decoding test suites for gr-lora.")
     parser.add_argument('suites', type=str, nargs="*", help='Names of the test suites to execute.')
+    parser.add_argument('--pause', action="store_true", default=False, help='Pause upon encountering an error.')
     args = parser.parse_args()
 
     # Make sure CTRL+C exits the whole test suite instead of only the current GNU Radio top block
     signal.signal(signal.SIGINT, signal_handler)
 
     suite = qa_testsuite()
-    suite.run(args.suites)
+    suite.run(args.suites, args.pause)

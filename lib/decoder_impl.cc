@@ -77,6 +77,7 @@ namespace gr {
             d_samples_per_symbol = (uint32_t)(d_samples_per_second / d_symbols_per_second);
             d_delay_after_sync   = d_samples_per_symbol / 4u;
             d_number_of_bins     = (uint32_t)(1u << d_sf);
+            d_number_of_bins_hdr = (uint32_t)(1u << (d_sf-2));
             d_decim_factor       = d_samples_per_symbol / d_number_of_bins;
             d_energy_threshold   = 0.01f;
             d_whitening_sequence = gr::lora::prng_payload;
@@ -431,11 +432,9 @@ namespace gr {
                 gradient = samples_ifreq_avg[i - 1] - samples_ifreq_avg[i];
                 if (gradient > max_gradient) {
                     max_gradient = gradient;
-                    max_index = i;
+                    max_index = i+1;
                 }
             }
-
-            max_index += 1;
 
             return (d_number_of_bins - max_index) % d_number_of_bins;
         }
@@ -453,7 +452,7 @@ namespace gr {
 
             // Header has additional redundancy
             if (is_header || d_sf > 10) {
-                bin_idx /= 4u;
+                bin_idx = std::lround(bin_idx / 4.0f) % d_number_of_bins_hdr;
             }
 
             // Decode (actually gray encode) the bin to get the symbol value

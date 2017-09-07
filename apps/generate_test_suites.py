@@ -196,4 +196,4 @@ if __name__ == '__main__':
                       Test(payload="88", times=1),
                       Test(payload="ffff", times=10),
                      ]
-    #TestSuite(name='short', args=args, config_set=short_config_set, test_set=short_test_set).run()
+    TestSuite(name='short', args=args, config_set=short_config_set, test_set=short_test_set).run()
