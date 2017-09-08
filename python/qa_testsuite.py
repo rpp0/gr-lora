@@ -120,7 +120,7 @@ class TestSummary():
                 self._num_total_correct_payloads += 1
             else:
                 if self.pause:
-                    dummy = input("Expected %s but got %s for %s. Press enter to continue..." % (expected, decoded, lora_config.string_repr()))
+                    _ = raw_input("Expected %s but got %s for %s. Press enter to continue..." % (expected, decoded, lora_config.string_repr()))
 
         # Append to text report
         evaluation_text += "\tTest {:>3n}: {:<30s} * {:<3n} :: passed {:>3n} out of {:<3n} ({:.2%})\n".format(
@@ -152,7 +152,6 @@ class qa_testsuite():
         Determine installed test suites and setup socket server for receiving payloads decoded by gr-lora.
         """
         # Variables
-        self.center_offset = 0
         self.host = "127.0.0.1"
         self.port = 40868
 
@@ -226,6 +225,10 @@ class qa_testsuite():
 
                 # Get LoRa configuration
                 capture_freq = capture_meta["core:frequency"]
+                if "lora:frequency_offset" in capture_meta:
+                    frequency_offset = capture_meta["lora:frequency_offset"]
+                else:
+                    frequency_offset = 0
                 transmit_freq = capture_meta["lora:frequency"]
                 sf = capture_meta["lora:sf"]
                 cr = capture_meta["lora:cr"]
@@ -246,7 +249,7 @@ class qa_testsuite():
                 lora_receiver = lora.lora_receiver(sample_rate, capture_freq, [868100000], sf, 1000000, 0.002)
                 throttle = blocks.throttle(gr.sizeof_gr_complex, sample_rate, True)
                 message_socket_sink = lora.message_socket_sink()
-                freq_xlating_fir_filter = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, sample_rate, 200000, 100000, firdes.WIN_HAMMING, 6.67)), self.center_offset, sample_rate)
+                freq_xlating_fir_filter = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, sample_rate, 200000, 100000, firdes.WIN_HAMMING, 6.67)), frequency_offset, sample_rate)
 
                 # Make connections
                 tb.connect((file_source, 0), (throttle, 0))

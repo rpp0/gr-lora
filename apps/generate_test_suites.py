@@ -24,6 +24,7 @@ class TestSuite():
         self.config_set = config_set
         self.test_set = test_set
         self.capture_freq = args.frequency
+        self.frequency_offset = args.frequency_offset
         self.sample_rate = args.sample_rate
         self.hw = args.hw
         self.name += "_" + self.hw
@@ -69,6 +70,7 @@ class TestSuite():
             "core:frequency": self.capture_freq,
             "core:datetime": str(datetime.utcnow()),
             "lora:frequency": config.freq,
+            "lora:frequency_offset": self.frequency_offset,
             "lora:sf": config.sf,
             "lora:cr": config.cr,
             "lora:bw": config.bw,
@@ -144,6 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('-O', '--data-out', type=str, default='./test-suites/', help='Output directory for the test suites.')
     parser.add_argument('-s', '--sample-rate', type=int, default=1000000, help='Sample rate of the SDR.')
     parser.add_argument('-f', '--frequency', type=int, default=868e6, help='Center frequency.')
+    parser.add_argument('-F', '--frequency-offset', type=int, default=0, help='Frequency offset.')
     args = parser.parse_args()
 
     # ------------------------------------------------------------------------

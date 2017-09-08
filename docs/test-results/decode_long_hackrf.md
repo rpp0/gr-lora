@@ -1,6 +1,6 @@
-# Test suite: 'decode_long_usrp'
+# Test suite: 'decode_long_hackrf'
 
-*Results on 2017-09-08 08:55:05.243706*
+*Results on 2017-09-08 08:55:44.588268*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
@@ -38,7 +38,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
 `00010203040506..f8f9fafbfcfdfe` |   1 |   1 | 100.00%
 
-### Summary for suite 'decode_long_usrp'
+### Summary for suite 'decode_long_hackrf'
 
 Total payloads passed: 6 out of 6 (100.00%)
 

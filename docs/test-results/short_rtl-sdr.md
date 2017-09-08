@@ -1,6 +1,6 @@
-# Test suite: 'short_usrp'
+# Test suite: 'short_rtl-sdr'
 
-*Results on 2017-09-08 09:00:25.230843*
+*Results on 2017-09-08 08:56:21.904351*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
@@ -194,7 +194,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
-### Summary for suite 'short_usrp'
+### Summary for suite 'short_rtl-sdr'
 
 Total payloads passed: 384 out of 384 (100.00%)
 

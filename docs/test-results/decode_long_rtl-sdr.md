@@ -1,6 +1,6 @@
-# Test suite: 'decode_long_usrp'
+# Test suite: 'decode_long_rtl-sdr'
 
-*Results on 2017-09-08 08:55:05.243706*
+*Results on 2017-09-08 08:54:28.651745*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
@@ -36,9 +36,9 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`00010203040506..f8f9fafbfcfdfe` |   1 |   1 | 100.00%
+`00010203040506..f8f9fafbfcfdfe` |   0 |   1 | 0.00%
 
-### Summary for suite 'decode_long_usrp'
+### Summary for suite 'decode_long_rtl-sdr'
 
-Total payloads passed: 6 out of 6 (100.00%)
+Total payloads passed: 5 out of 6 (83.33%)
 
