@@ -657,13 +657,7 @@ namespace gr {
         }
 
         uint8_t decoder_impl::lookup_cr(const uint8_t bytevalue) {
-            switch (bytevalue & 0x0f) {
-                case 0x09:  return 4;
-                case 0x07:  return 3;
-                case 0x05:  return 2;
-                case 0x03:  return 1;
-                default:    return 4;
-            }
+            return (bytevalue & 0x0e) >> 1;
         }
 
         int decoder_impl::work(int noutput_items,
