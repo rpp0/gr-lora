@@ -187,7 +187,7 @@ class qa_testsuite():
             try:
                 data = self.server.recvfrom(65535)[0]
                 if data:
-                    total_data.append(binascii.hexlify(data[3:]))  # Discard header and convert to hex text
+                    total_data.append(binascii.hexlify(data))
             except Exception as e:
                 print(e)
                 pass
@@ -248,7 +248,7 @@ class qa_testsuite():
                 file_source = blocks.file_source(gr.sizeof_gr_complex, data_file, False)
                 lora_receiver = lora.lora_receiver(sample_rate, capture_freq, [868100000], sf, 1000000, 0.002)
                 throttle = blocks.throttle(gr.sizeof_gr_complex, sample_rate, True)
-                message_socket_sink = lora.message_socket_sink()
+                message_socket_sink = lora.message_socket_sink("127.0.0.1", 40868, False, False)
                 freq_xlating_fir_filter = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, sample_rate, 200000, 100000, firdes.WIN_HAMMING, 6.67)), frequency_offset, sample_rate)
 
                 # Make connections

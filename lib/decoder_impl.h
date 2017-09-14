@@ -82,6 +82,9 @@ namespace gr {
                 uint8_t        d_sf;                        ///< The Spreading Factor.
                 uint32_t       d_bw;                        ///< The receiver bandwidth (fixed to `125kHz`).
                 uint8_t        d_cr;                        ///< The Coding Rate.
+                uint8_t        d_phy_crc;                   ///< The PHY CRC.
+                uint16_t       d_mac_crc;                   ///< The MAC CRC.
+                uint8_t        d_has_mac_crc;               ///< Flag to indicate presence of MAC CRC.
                 double         d_bits_per_second;           ///< Indicator of how many bits are transferred each second.
                 uint32_t       d_delay_after_sync;          ///< The amount of samples to skip in `DecoderState::PAUSE`.
                 uint32_t       d_samples_per_second;        ///< The amount of samples taken per second by GNU Radio.
@@ -378,12 +381,10 @@ namespace gr {
                 inline void instantaneous_frequency(const gr_complex *in_samples, float *out_ifreq, const uint32_t window);
 
                 /**
-                 *  \brief  Return the coding rate from the given HDR byte from a LUT.
-                 *
-                 *  \param  bytevalue
-                 *          The LSB nibble to decode.
+                 *  \brief  TODO
                  */
-                uint8_t lookup_cr(const uint8_t bytevalue);
+                void msg_lora_frame(void);
+
             public:
                 /**
                  *  \brief  Default constructor.

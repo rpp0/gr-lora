@@ -27,5 +27,8 @@ install(FILES
     message_socket_sink.h
     channelizer.h
     debugger.h
+    loratap.h
+    loraphy.h
+    utilities.h
     controller.h DESTINATION include/lora
 )

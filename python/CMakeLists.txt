@@ -31,10 +31,8 @@ endif()
 GR_PYTHON_INSTALL(
     FILES
     __init__.py
-    lora_decoder.py
     lora_receiver.py
-    loraconfig.py
-    message_wireshark_sink.py DESTINATION ${GR_PYTHON_DIR}/lora
+    loraconfig.py DESTINATION ${GR_PYTHON_DIR}/lora
 )
 
 if(HAS_MONGODB)

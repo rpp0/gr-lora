@@ -25,7 +25,7 @@
 #include <string.h>
 #include <chrono>
 
-#include "utilities.h"
+#include <lora/utilities.h>
 
 #define CLAMP_VAL   0.7e6f  //1000000.0f  //0.7f
 

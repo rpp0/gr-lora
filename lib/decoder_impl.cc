@@ -27,9 +27,11 @@
 #include <liquid/liquid.h>
 #include <numeric>
 #include <algorithm>
+#include <lora/loratap.h>
+#include <lora/loraphy.h>
+#include <lora/utilities.h>
 #include "decoder_impl.h"
 #include "tables.h"
-#include "utilities.h"
 
 #include "dbugr.hpp"
 
@@ -524,6 +526,10 @@ namespace gr {
             //    values_to_file("/tmp/after_deshuffle", &d_words_deshuffled[0], d_words_deshuffled.size(), 8);
 
             dewhiten(is_header ? gr::lora::prng_header : d_whitening_sequence);
+
+            //if (!is_header)
+            //    values_to_file("/tmp/after_dewhiten", &d_words_dewhitened[0], d_words_dewhitened.size(), 8);
+
             hamming_decode(out_data);
 
             // Print result
@@ -537,13 +543,36 @@ namespace gr {
                 d_data.insert(d_data.end(), out_data, out_data + d_payload_length);
                 std::cout << result.str() << std::endl;
 
-                pmt::pmt_t payload_blob = pmt::make_blob(&d_data[0],
-                                                         sizeof(uint8_t) * (d_payload_length + 3u));
-                message_port_pub(pmt::mp("frames"), payload_blob);
+                msg_lora_frame();
             } else {
-                d_data.insert(d_data.end(), out_data, out_data + 3u);
+                d_data.insert(d_data.end(), out_data, out_data + PHY_HEADER_SIZE);
                 std::cout << result.str();
             }
+        }
+
+        void decoder_impl::msg_lora_frame(void) {
+            uint32_t len = sizeof(loratap_header_t) + sizeof(loraphy_header_t) + d_data.size();
+            uint32_t offset = 0;
+            uint8_t buffer[len];
+            loratap_header_t loratap_header;
+            loraphy_header_t loraphy_header;
+
+            memset(buffer, 0, sizeof(uint8_t) * len);
+            memset(&loratap_header, 0, sizeof(loratap_header));
+            memset(&loraphy_header, 0, sizeof(loraphy_header));
+
+            loraphy_header.has_mac_crc = d_has_mac_crc;
+
+            offset = gr::lora::build_packet(buffer, offset, &loratap_header, sizeof(loratap_header_t));
+            offset = gr::lora::build_packet(buffer, offset, &loraphy_header, sizeof(loraphy_header_t));
+            offset = gr::lora::build_packet(buffer, offset, &d_data[0], d_data.size());
+            if(offset != len) {
+                std::cerr << "decoder_impl::msg_lora_frame: invalid write" << std::endl;
+                exit(1);
+            }
+
+            pmt::pmt_t payload_blob = pmt::make_blob(buffer, sizeof(uint8_t)*len);
+            message_port_pub(pmt::mp("frames"), payload_blob);
         }
 
         void decoder_impl::deshuffle(const uint8_t *shuffle_pattern, const bool is_header) {
@@ -656,10 +685,6 @@ namespace gr {
             return mult_ifreq[256] / (2.0 * M_PI) * d_samples_per_second;
         }
 
-        uint8_t decoder_impl::lookup_cr(const uint8_t bytevalue) {
-            return (bytevalue & 0x0e) >> 1;
-        }
-
         int decoder_impl::work(int noutput_items,
                                gr_vector_const_void_star& input_items,
                                gr_vector_void_star&       output_items) {
@@ -751,20 +776,22 @@ namespace gr {
                     d_cr = 4u;
 
                     if (demodulate(input, true)) {
-                        uint8_t decoded[3];
+                        uint8_t decoded[PHY_HEADER_SIZE];
                         // TODO: A bit messy. I think it's better to make an internal decoded std::vector
-                        d_payload_length  = 3u;
+                        d_payload_length  = PHY_HEADER_SIZE;
 
                         decode(decoded, true);
 
-                        nibble_reverse(decoded, 1u); // TODO: Why? Endianness?
-                        d_payload_length = decoded[0];
-                        d_cr             = lookup_cr(decoded[1]);
+                        nibble_reverse(decoded, PHY_HEADER_SIZE);
+                        d_has_mac_crc = MS(decoded[1], 0x10, 4);
+                        d_payload_length = decoded[0] + MAC_CRC_SIZE * d_has_mac_crc;
+                        d_cr = MS(decoded[1], 0xe0, 5);
+                        d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
 
                         // Calculate number of payload symbols needed
                         uint8_t redundancy = (d_sf > 10 ? 2 : 0);
                         const int symbols_per_block = d_cr + 4u;
-                        const float bits_needed     = float(d_payload_length) * 8.0f + 16.0f;
+                        const float bits_needed     = float(d_payload_length) * 8.0f;
                         const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(d_sf - redundancy);
                         const int blocks_needed     = (int)std::ceil(symbols_needed / symbols_per_block);
                         d_payload_symbols     = blocks_needed * symbols_per_block;

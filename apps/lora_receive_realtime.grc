@@ -393,6 +393,14 @@ for better accuracy, but worse performance.</value>
   <block>
     <key>lora_message_socket_sink</key>
     <param>
+      <key>loraphy</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>loratap</key>
+      <value>False</value>
+    </param>
+    <param>
       <key>alias</key>
       <value></value>
     </param>
@@ -410,7 +418,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(640, 208)</value>
+      <value>(640, 220)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -419,6 +427,14 @@ for better accuracy, but worse performance.</value>
     <param>
       <key>id</key>
       <value>lora_message_socket_sink_0</value>
+    </param>
+    <param>
+      <key>ip</key>
+      <value>127.0.0.1</value>
+    </param>
+    <param>
+      <key>port</key>
+      <value>40868</value>
     </param>
   </block>
   <block>

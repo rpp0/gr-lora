@@ -701,7 +701,7 @@ namespace gr {
                 * class. lora::message_socket_sink::make is the public interface for
                 * creating new instances.
                 */
-                static sptr make();
+                static sptr make(std::string ip, int port, bool loratap, bool loraphy);
         };
 
     } // namespace lora

@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive Realtime
-# Generated: Thu Sep  7 15:47:58 2017
+# Generated: Thu Sep 14 16:24:32 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -80,7 +80,7 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_antenna('', 0)
         self.osmosdr_source_0.set_bandwidth(0, 0)
 
-        self.lora_message_socket_sink_0 = lora.message_socket_sink()
+        self.lora_message_socket_sink_0 = lora.message_socket_sink('127.0.0.1', 40868, False, True)
         self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), sf, internal_sampling_rate, 0.002)
 
         ##################################################

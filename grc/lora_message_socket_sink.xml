@@ -4,13 +4,36 @@
   <key>lora_message_socket_sink</key>
   <category>[LoRa]</category>
   <import>import lora</import>
-  <make>lora.message_socket_sink()</make>
+  <make>lora.message_socket_sink($ip, $port, $loratap, $loraphy)</make>
 
-  <!-- Make one 'sink' node per input. Sub-nodes:
-       * name (an identifier for the GUI)
-       * type
-       * vlen
-       * optional (set to 1 for optional inputs) -->
+  <param>
+    <name>IP</name>
+    <key>ip</key>
+    <value>127.0.0.1</value>
+    <type>string</type>
+  </param>
+
+  <param>
+    <name>Port</name>
+    <key>port</key>
+    <value>40868</value>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>Append LoRaTap</name>
+    <key>loratap</key>
+    <value>False</value>
+    <type>bool</type>
+  </param>
+
+  <param>
+    <name>Append LoRaPHY</name>
+    <key>loraphy</key>
+    <value>False</value>
+    <type>bool</type>
+  </param>
+
   <sink>
     <name>in</name>
     <type>message</type>

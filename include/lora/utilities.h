@@ -22,14 +22,19 @@
 #define UTILITIES_H
 
 #include <cstdint>
+#include <string.h>
 
 #define REV_BITS
+#define PHY_HEADER_SIZE 3u
+#define MAC_CRC_SIZE 2u
+#define SM(value, shift, mask) (((value) << (shift)) & (mask))
+#define MS(value, mask, shift) (((value) & (mask)) >> (shift))
 
 namespace gr {
     namespace lora {
 
         /**
-         *  \brief  Clamp gevin value in the given range.
+         *  \brief  Clamp given value in the given range.
          *
          *  \tparam T
          *          The type of variable to clamp.
@@ -59,7 +64,7 @@ namespace gr {
          *          <BR>e.g. 1 byte given       => size = 8
          *          <BR>e.g. only 6 bits in use => size = 6, and all bits higher than (1 << size-1) will be zeroed.
          */
-        static inline uint32_t rotl(uint32_t bits, uint32_t count = 1u, const uint32_t size = 8u) {
+        inline uint32_t rotl(uint32_t bits, uint32_t count = 1u, const uint32_t size = 8u) {
             const uint32_t len_mask = (1u << size) - 1u;
 
             count %= size;      // Limit bit rotate count to size
@@ -79,7 +84,7 @@ namespace gr {
          *          The length in bits of the given variable `v`.
          */
         template <typename T>
-        std::string to_bin(const T v, const uint32_t bitwidth) {
+        inline std::string to_bin(const T v, const uint32_t bitwidth) {
             #ifdef REV_BITS
                 const uint64_t maxpow = bitwidth ? (1ull << (bitwidth - 1)) : 0;
                 uint64_t mask;
@@ -155,7 +160,7 @@ namespace gr {
          *  \param  even
          *          Check for even (`true`) or uneven (`false`) parity.
          */
-        bool check_parity_string(const std::string& word, const bool even = true) {
+        inline bool check_parity_string(const std::string& word, const bool even = true) {
             size_t count = 0, i = 0;
 
             while(i < 7) {
@@ -175,7 +180,7 @@ namespace gr {
          *  \param  even
          *          Check for even (`true`) or uneven (`false`) parity.
          */
-        bool check_parity(uint64_t word, const bool even = true) {
+        inline bool check_parity(uint64_t word, const bool even = true) {
             word ^= word >> 1;
             word ^= word >> 2;
             word = (word & 0x1111111111111111UL) * 0x1111111111111111UL;
@@ -193,7 +198,7 @@ namespace gr {
          *  \param  n
          *          The amount of indices.
          */
-        uint32_t select_bits(const uint32_t data, const uint8_t *indices, const uint8_t n) {
+        inline uint32_t select_bits(const uint32_t data, const uint8_t *indices, const uint8_t n) {
             uint32_t r = 0u;
 
             for(uint8_t i = 0u; i < n; ++i)
@@ -216,7 +221,7 @@ namespace gr {
          *  \param  out_data
          *          The resulting data words.
          */
-        void fec_extract_data_only(const uint8_t *in_data, const uint32_t len, const uint8_t *indices, const uint8_t n, uint8_t *out_data) {
+        inline void fec_extract_data_only(const uint8_t *in_data, const uint32_t len, const uint8_t *indices, const uint8_t n, uint8_t *out_data) {
             for (uint32_t i = 0u, out_index = 0u; i < len; i += 2u) {
                 const uint8_t d2 = (i + 1u < len) ? select_bits(in_data[i + 1u], indices, n) & 0xFF
                                                   : 0u;
@@ -280,7 +285,7 @@ namespace gr {
          *          The byte to decode.
          *  \return Returs a nibble containing the corrected data.
          */
-        uint8_t hamming_decode_soft_byte(uint8_t v) {
+        static uint8_t hamming_decode_soft_byte(uint8_t v) {
             // Precalculation
             // Which bits are covered (including self)?
             // p1 10110100
@@ -343,7 +348,7 @@ namespace gr {
          *  \param  out_data
          *          The decoded result words.
          */
-        void hamming_decode_soft(const uint8_t *words, const uint32_t len, uint8_t *out_data) {
+        inline void hamming_decode_soft(const uint8_t *words, const uint32_t len, uint8_t *out_data) {
             for (uint32_t i = 0u, out_index = 0u; i < len; i += 2u) {
                 const uint8_t d2 = (i + 1u < len) ? hamming_decode_soft_byte(words[i + 1u])
                                                   : 0u;
@@ -382,6 +387,18 @@ namespace gr {
             out << std::endl;
 
             out << std::flush;
+        }
+
+        inline uint32_t dissect_packet(const void **header, uint32_t header_size, const uint8_t *buffer, uint32_t offset) {
+            (*header) = buffer + offset;
+            return offset + header_size;
+        }
+
+        inline uint32_t build_packet(uint8_t *buffer, uint32_t offset, const void* header, uint32_t header_size) {
+            memcpy(buffer + offset, header, header_size);
+            offset += header_size;
+
+            return offset;
         }
 
     }

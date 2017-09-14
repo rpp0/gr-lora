@@ -22,14 +22,17 @@
     #include "config.h"
 #endif
 
+#include <lora/loratap.h>
+#include <lora/loraphy.h>
 #include <gnuradio/io_signature.h>
+#include <lora/utilities.h>
 #include "message_socket_sink_impl.h"
 
 namespace gr {
     namespace lora {
 
-        message_socket_sink::sptr message_socket_sink::make() {
-            return gnuradio::get_initial_sptr(new message_socket_sink_impl());
+        message_socket_sink::sptr message_socket_sink::make(std::string ip, int port, bool loratap, bool loraphy) {
+            return gnuradio::get_initial_sptr(new message_socket_sink_impl(ip, port, loratap, loraphy));
         }
 
         /**
@@ -37,16 +40,19 @@ namespace gr {
          *
          *      Create a UDP socket connection to send the data through.
          */
-        message_socket_sink_impl::message_socket_sink_impl()
-            : gr::block("message_socket_sink",
-                        gr::io_signature::make(0, 0, 0),
-                        gr::io_signature::make(0, 0, 0)) {
+        message_socket_sink_impl::message_socket_sink_impl(std::string ip, int port, bool loratap, bool loraphy)
+            : gr::block("message_socket_sink", gr::io_signature::make(0, 0, 0), gr::io_signature::make(0, 0, 0)),
+            d_ip(ip),
+            d_port(port),
+            d_loratap(loratap),
+            d_loraphy(loraphy) {
+
             message_port_register_in(pmt::mp("in"));
             set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, _1));
 
             d_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-            if (d_socket < 0) {
+            if(d_socket < 0) {
                 perror("[message_socket_sink] Failed to create socket!");
                 exit(EXIT_FAILURE);
             }
@@ -56,17 +62,14 @@ namespace gr {
             d_sock_addr->sin_addr.s_addr  = htonl(INADDR_ANY);
             d_sock_addr->sin_port         = htons(0);    // Source port: 0 is any
 
-            if (bind(d_socket,
-                     (const struct sockaddr*) d_sock_addr,
-                     sizeof(*d_sock_addr))
-                < 0) {
+            if(bind(d_socket, (const struct sockaddr*) d_sock_addr, sizeof(*d_sock_addr)) < 0) {
                 perror("[message_socket_sink] Socket bind failed!");
                 exit(EXIT_FAILURE);
             }
 
-            d_sock_addr->sin_port         = htons(this->d_port);
-            // == "127.0.0.1" to int translation
-            inet_pton(AF_INET, this->d_host.c_str(), &d_sock_addr->sin_addr.s_addr);
+            d_sock_addr->sin_port = htons(d_port);
+            // IP string to int conversion
+            inet_pton(AF_INET, d_ip.c_str(), &d_sock_addr->sin_addr.s_addr);
         }
 
         /**
@@ -81,22 +84,46 @@ namespace gr {
          *  \brief  Handle a message and send its contents through an UDP packet to the loopback interface.
          */
         void message_socket_sink_impl::handle(pmt::pmt_t msg) {
-            uint8_t *data = (uint8_t*) pmt::blob_data(msg);
+            uint8_t* data = (uint8_t*)pmt::blob_data(msg);
+            uint32_t offset = 0;
             size_t size = pmt::blob_length(msg);
+            loratap_header_t *loratap_header;
+            loraphy_header_t *loraphy_header;
+            uint8_t *payload;
 
-            /*
-            #ifdef DEBUG
-                printf("Received message:\n\t");
+            offset = gr::lora::dissect_packet((const void **)&loratap_header, sizeof(loratap_header_t), data, offset);
+            offset = gr::lora::dissect_packet((const void **)&loraphy_header, sizeof(loraphy_header_t), data, offset);
+            uint32_t length = size - sizeof(loratap_header_t) - sizeof(loraphy_header_t);
+            offset = gr::lora::dissect_packet((const void **)&payload, sizeof(uint8_t)*length, data, offset);
+            if(offset != size) {
+                std::cerr << "message_socket_sink_impl::handle: invalid read: " << offset << " != " << size << std::endl;
+                exit(EXIT_FAILURE);
+            }
 
-                for (size_t i = 0; i < size; ++i)
-                    printf("%02x ", data[i]);
+            if(d_loratap == false) {
+                msg_send_udp(loraphy_header, payload, length); // Send message over UDP socket
+            } else {
+                //msg_send_loratap(); // Send message over raw LoRa socket
+                std::cerr << "message_socket_sink_impl::handle: LoRaTap is not supported yet." << std::endl;
+                return;
+            }
+        }
 
-                putchar('\n');
-            #endif
-            */
+        void message_socket_sink_impl::msg_send_udp(const loraphy_header_t* loraphy_header, const uint8_t* payload, const uint32_t length) {
+            bool error = false;
 
-            if (sendto(d_socket, data, size, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != (ssize_t)size) {
-                perror("[message_socket_sink] Mismatch in number of bytes sent");
+            if(d_loraphy) {
+                int32_t msg_len = length;
+                if (sendto(d_socket, payload, msg_len, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != msg_len)
+                    error = true;
+            } else {
+                int32_t msg_len = length-(PHY_HEADER_SIZE+(MAC_CRC_SIZE * loraphy_header->has_mac_crc)); // User did not request PHY header
+                if (sendto(d_socket, payload+PHY_HEADER_SIZE, msg_len, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != msg_len)
+                    error = true;
+            }
+
+            if(error) {
+                perror("message_socket_sink_impl::handle: mismatch in number of bytes sent");
                 exit(EXIT_FAILURE);
             }
         }
