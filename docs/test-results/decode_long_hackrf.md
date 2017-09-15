@@ -1,6 +1,6 @@
 # Test suite: 'decode_long_hackrf'
 
-*Results on 2017-09-14 14:36:37.348840*
+*Results on 2017-09-15 11:28:32.183183*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 

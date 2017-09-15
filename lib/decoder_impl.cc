@@ -326,9 +326,6 @@ namespace gr {
 
             autocorr = abs(dot_product / gr_complex(sqrt(energy_chirp1 * energy_chirp2), 0));
 
-            if(energy_chirp1 < 0.05f)
-                autocorr = 0; // TODO: fixme
-
             return autocorr;
         }
 
@@ -698,9 +695,6 @@ namespace gr {
             //const gr_complex *raw_input = (gr_complex *) input_items[1]; // Input bypassed by low pass filter
 
             d_fine_sync = 0; // Always reset fine sync
-
-            // DBGR_TIME_MEASUREMENT_TO_FILE("SF7_fft_idx");
-            // DBGR_START_TIME_MEASUREMENT(false, gr::lora::DecoderStateToString(d_state));
 
             switch (d_state) {
                 case gr::lora::DecoderState::DETECT: {
