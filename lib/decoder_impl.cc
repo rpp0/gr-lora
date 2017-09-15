@@ -28,7 +28,6 @@
 #include <numeric>
 #include <algorithm>
 #include <lora/loratap.h>
-#include <lora/loraphy.h>
 #include <lora/utilities.h>
 #include "decoder_impl.h"
 #include "tables.h"
@@ -66,16 +65,16 @@ namespace gr {
             #endif
 
             d_bw                 = 125000u;
-            d_cr                 = 4;
+            d_phdr.cr            = 4;
             d_samples_per_second = samp_rate;
             d_payload_symbols    = 0;
             d_cfo_estimation     = 0.0f;
             d_dt                 = 1.0f / d_samples_per_second;
             d_sf                 = sf;
-            d_bits_per_second    = (double)d_sf * (double)(4.0 / (4.0 + d_cr)) / (1u << d_sf) * d_bw;
+            d_bits_per_second    = (double)d_sf * (double)(4.0 / (4.0 + d_phdr.cr)) / (1u << d_sf) * d_bw;
             d_symbols_per_second = (double)d_bw / (1u << d_sf);
             d_period             = 1.0f / (double)d_symbols_per_second;
-            d_bits_per_symbol    = (uint32_t)(d_bits_per_second    / d_symbols_per_second);
+            d_bits_per_symbol    = (double)(d_bits_per_second    / d_symbols_per_second);
             d_samples_per_symbol = (uint32_t)(d_samples_per_second / d_symbols_per_second);
             d_delay_after_sync   = d_samples_per_symbol / 4u;
             d_number_of_bins     = (uint32_t)(1u << d_sf);
@@ -466,7 +465,7 @@ namespace gr {
             d_words.push_back(word);
 
             // Look for 4+cr symbols and stop
-            if (d_words.size() == (4u + d_cr)) {
+            if (d_words.size() == (4u + d_phdr.cr)) {
                 // Deinterleave
                 deinterleave((is_header || d_sf > 10) ? d_sf - 2u : d_sf);
 
@@ -540,32 +539,24 @@ namespace gr {
             }
 
             if (!is_header) {
-                d_data.insert(d_data.end(), out_data, out_data + d_payload_length);
                 std::cout << result.str() << std::endl;
-
-                msg_lora_frame();
             } else {
-                d_data.insert(d_data.end(), out_data, out_data + PHY_HEADER_SIZE);
                 std::cout << result.str();
             }
         }
 
         void decoder_impl::msg_lora_frame(void) {
-            uint32_t len = sizeof(loratap_header_t) + sizeof(loraphy_header_t) + d_data.size();
+            uint32_t len = sizeof(loratap_header_t) + sizeof(loraphy_header_t) + d_payload.size();
             uint32_t offset = 0;
             uint8_t buffer[len];
             loratap_header_t loratap_header;
-            loraphy_header_t loraphy_header;
 
             memset(buffer, 0, sizeof(uint8_t) * len);
             memset(&loratap_header, 0, sizeof(loratap_header));
-            memset(&loraphy_header, 0, sizeof(loraphy_header));
-
-            loraphy_header.has_mac_crc = d_has_mac_crc;
 
             offset = gr::lora::build_packet(buffer, offset, &loratap_header, sizeof(loratap_header_t));
-            offset = gr::lora::build_packet(buffer, offset, &loraphy_header, sizeof(loraphy_header_t));
-            offset = gr::lora::build_packet(buffer, offset, &d_data[0], d_data.size());
+            offset = gr::lora::build_packet(buffer, offset, &d_phdr, sizeof(loraphy_header_t));
+            offset = gr::lora::build_packet(buffer, offset, &d_payload[0], d_payload.size());
             if(offset != len) {
                 std::cerr << "decoder_impl::msg_lora_frame: invalid write" << std::endl;
                 exit(1);
@@ -622,7 +613,7 @@ namespace gr {
         void decoder_impl::hamming_decode(uint8_t *out_data) {
             static const uint8_t data_indices[4] = {1, 2, 3, 5};
 
-            switch(d_cr) {
+            switch(d_phdr.cr) {
                 case 4: case 3: // Hamming(8,4) or Hamming(7,4)
                     gr::lora::hamming_decode_soft(&d_words_dewhitened[0], d_words_dewhitened.size(), out_data);
                     break;
@@ -636,7 +627,7 @@ namespace gr {
 
             /*
             fec_scheme fs = LIQUID_FEC_HAMMING84;
-            unsigned int n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_cr));
+            unsigned int n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_phdr.cr));
 
             unsigned int k = fec_get_enc_msg_length(fs, n);
             fec hamming = fec_create(fs, NULL);
@@ -773,24 +764,22 @@ namespace gr {
                 }
 
                 case gr::lora::DecoderState::DECODE_HEADER: {
-                    d_cr = 4u;
+                    d_phdr.cr = 4u;
 
                     if (demodulate(input, true)) {
                         uint8_t decoded[PHY_HEADER_SIZE];
-                        // TODO: A bit messy. I think it's better to make an internal decoded std::vector
                         d_payload_length  = PHY_HEADER_SIZE;
 
                         decode(decoded, true);
 
                         nibble_reverse(decoded, PHY_HEADER_SIZE);
-                        d_has_mac_crc = MS(decoded[1], 0x10, 4);
-                        d_payload_length = decoded[0] + MAC_CRC_SIZE * d_has_mac_crc;
-                        d_cr = MS(decoded[1], 0xe0, 5);
-                        d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
+                        memcpy(&d_phdr, decoded, PHY_HEADER_SIZE);
+                        d_payload_length = d_phdr.length + MAC_CRC_SIZE * d_phdr.has_mac_crc;
+                        //d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
 
                         // Calculate number of payload symbols needed
                         uint8_t redundancy = (d_sf > 10 ? 2 : 0);
-                        const int symbols_per_block = d_cr + 4u;
+                        const int symbols_per_block = d_phdr.cr + 4u;
                         const float bits_needed     = float(d_payload_length) * 8.0f;
                         const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(d_sf - redundancy);
                         const int blocks_needed     = (int)std::ceil(symbols_needed / symbols_per_block);
@@ -818,7 +807,7 @@ namespace gr {
                     //**************************************************************************
 
                     if (demodulate(input, false)) {
-                        d_payload_symbols -= (4u + d_cr);
+                        d_payload_symbols -= (4u + d_phdr.cr);
 
                         if (d_payload_symbols <= 0) {
                             uint8_t decoded[d_payload_length];
@@ -826,8 +815,11 @@ namespace gr {
 
                             decode(decoded, false);
 
+                            d_payload.insert(d_payload.end(), decoded, decoded + d_payload_length);
+                            msg_lora_frame();
+
                             d_state = gr::lora::DecoderState::DETECT;
-                            d_data.clear();
+                            d_payload.clear();
 
                             // DBGR_STOP_TIME_MEASUREMENT(true);
                             // DBGR_PAUSE();

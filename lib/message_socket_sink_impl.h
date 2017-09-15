@@ -47,7 +47,7 @@ namespace gr {
                 ~message_socket_sink_impl();
 
             private:
-                void msg_send_udp(const loraphy_header_t* loraphy_header, const uint8_t* payload, const uint32_t length);
+                void msg_send_udp(const loraphy_header_t* loraphy_header, const uint8_t* payload, const uint32_t payload_length);
         };
 
     } // namespace lora

@@ -93,15 +93,15 @@ namespace gr {
 
             offset = gr::lora::dissect_packet((const void **)&loratap_header, sizeof(loratap_header_t), data, offset);
             offset = gr::lora::dissect_packet((const void **)&loraphy_header, sizeof(loraphy_header_t), data, offset);
-            uint32_t length = size - sizeof(loratap_header_t) - sizeof(loraphy_header_t);
-            offset = gr::lora::dissect_packet((const void **)&payload, sizeof(uint8_t)*length, data, offset);
+            uint32_t payload_length = loraphy_header->length + (MAC_CRC_SIZE * loraphy_header->has_mac_crc);
+            offset = gr::lora::dissect_packet((const void **)&payload, sizeof(uint8_t)*payload_length, data, offset);
             if(offset != size) {
                 std::cerr << "message_socket_sink_impl::handle: invalid read: " << offset << " != " << size << std::endl;
                 exit(EXIT_FAILURE);
             }
 
             if(d_loratap == false) {
-                msg_send_udp(loraphy_header, payload, length); // Send message over UDP socket
+                msg_send_udp(loraphy_header, payload, payload_length); // Send message over UDP socket
             } else {
                 //msg_send_loratap(); // Send message over raw LoRa socket
                 std::cerr << "message_socket_sink_impl::handle: LoRaTap is not supported yet." << std::endl;
@@ -109,16 +109,16 @@ namespace gr {
             }
         }
 
-        void message_socket_sink_impl::msg_send_udp(const loraphy_header_t* loraphy_header, const uint8_t* payload, const uint32_t length) {
+        void message_socket_sink_impl::msg_send_udp(const loraphy_header_t* loraphy_header, const uint8_t* payload, const uint32_t payload_length) {
             bool error = false;
 
             if(d_loraphy) {
-                int32_t msg_len = length;
-                if (sendto(d_socket, payload, msg_len, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != msg_len)
+                int32_t msg_len = sizeof(loraphy_header_t) + payload_length;
+                if (sendto(d_socket, loraphy_header, msg_len, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != msg_len)
                     error = true;
             } else {
-                int32_t msg_len = length-(PHY_HEADER_SIZE+(MAC_CRC_SIZE * loraphy_header->has_mac_crc)); // User did not request PHY header
-                if (sendto(d_socket, payload+PHY_HEADER_SIZE, msg_len, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != msg_len)
+                int32_t msg_len = payload_length-(MAC_CRC_SIZE * loraphy_header->has_mac_crc); // User did not request PHY header
+                if (sendto(d_socket, payload, msg_len, 0, (const struct sockaddr*)d_sock_addr, sizeof(*d_sock_addr)) != msg_len)
                     error = true;
             }
 

@@ -28,6 +28,7 @@
 #include <fstream>
 #include <lora/debugger.h>
 #include <volk/volk.h>
+#include <lora/loraphy.h>
 
 namespace gr {
     namespace lora {
@@ -79,32 +80,30 @@ namespace gr {
                 std::vector<gr_complex> d_mult_hf;          ///< Vector containing the FFT decimation.
                 std::vector<gr_complex> d_tmp;              ///< Vector containing the FFT decimation.
 
-                uint8_t        d_sf;                        ///< The Spreading Factor.
-                uint32_t       d_bw;                        ///< The receiver bandwidth (fixed to `125kHz`).
-                uint8_t        d_cr;                        ///< The Coding Rate.
-                uint8_t        d_phy_crc;                   ///< The PHY CRC.
-                uint16_t       d_mac_crc;                   ///< The MAC CRC.
-                uint8_t        d_has_mac_crc;               ///< Flag to indicate presence of MAC CRC.
-                double         d_bits_per_second;           ///< Indicator of how many bits are transferred each second.
-                uint32_t       d_delay_after_sync;          ///< The amount of samples to skip in `DecoderState::PAUSE`.
-                uint32_t       d_samples_per_second;        ///< The amount of samples taken per second by GNU Radio.
-                double         d_symbols_per_second;        ///< Indicator of how many symbols (read: chirps) are transferred each second.
-                uint32_t       d_bits_per_symbol;           ///< The amount of bits each of the symbols contain.
-                uint32_t       d_samples_per_symbol;        ///< The amount of samples in one symbol.
-                double         d_period;                    ///< Period of the symbol.
-                uint32_t       d_number_of_bins;            ///< Indicates in how many parts or bins a symbol is decimated, i.e. the max value to decode out of one payload symbol.
-                uint32_t       d_number_of_bins_hdr;        ///< Indicates in how many parts or bins a HDR symbol is decimated, i.e. the max value to decode out of one HDR symbol.
-                 int32_t       d_payload_symbols;           ///< The amount of symbols needed to decode the payload. Calculated from an indicator in the HDR.
-                uint32_t       d_payload_length;            ///< The amount of words after decoding the HDR or payload. Calculated from an indicator in the HDR.
-                uint32_t       d_corr_fails;                ///< Indicates how many times the correlation failed. After some tries, the state will revert to `DecoderState::DETECT`.
-                float          d_energy_threshold;          ///< The absolute threshold to distinguish signal from noise.
-                const uint8_t *d_whitening_sequence;        ///< A pointer to the whitening sequence to be used in decoding. Determined by the SF in the ctor.
+                uint8_t          d_sf;                      ///< The Spreading Factor.
+                uint32_t         d_bw;                      ///< The receiver bandwidth (fixed to `125kHz`).
+                loraphy_header_t d_phdr;                    ///< LoRa PHY header.
+                uint16_t         d_mac_crc;                 ///< The MAC CRC.
+                double           d_bits_per_second;         ///< Indicator of how many bits are transferred each second.
+                uint32_t         d_delay_after_sync;        ///< The number of samples to skip in `DecoderState::PAUSE`.
+                uint32_t         d_samples_per_second;      ///< The number of samples taken per second by GNU Radio.
+                double           d_symbols_per_second;      ///< Indicator of how many symbols (read: chirps) are transferred each second.
+                double           d_bits_per_symbol;         ///< The number of bits each of the symbols contain.
+                uint32_t         d_samples_per_symbol;      ///< The number of samples in one symbol.
+                double           d_period;                  ///< Period of the symbol.
+                uint32_t         d_number_of_bins;          ///< Indicates in how many parts or bins a symbol is decimated, i.e. the max value to decode out of one payload symbol.
+                uint32_t         d_number_of_bins_hdr;      ///< Indicates in how many parts or bins a HDR symbol is decimated, i.e. the max value to decode out of one HDR symbol.
+                 int32_t         d_payload_symbols;         ///< The number of symbols needed to decode the payload. Calculated from an indicator in the HDR.
+                uint32_t         d_payload_length;          ///< The number of words after decoding the HDR or payload. Calculated from an indicator in the HDR.
+                uint32_t         d_corr_fails;              ///< Indicates how many times the correlation failed. After some tries, the state will revert to `DecoderState::DETECT`.
+                float            d_energy_threshold;        ///< The absolute threshold to distinguish signal from noise.
+                const uint8_t*   d_whitening_sequence;      ///< A pointer to the whitening sequence to be used in decoding. Determined by the SF in the ctor.
 
                 std::vector<uint32_t> d_words;              ///< Vector containing the demodulated words.
                 std::vector<uint8_t>  d_demodulated;        ///< Vector containing the words after deinterleaving.
                 std::vector<uint8_t>  d_words_deshuffled;   ///< Vector containing the words after deshuffling.
                 std::vector<uint8_t>  d_words_dewhitened;   ///< Vector containing the words after dewhitening.
-                std::vector<uint8_t>  d_data;               ///< Vector containing the words after Hamming decode or the final decoded words.
+                std::vector<uint8_t>  d_payload;            ///< Vector containing the words after Hamming decode or the final decoded words.
 
                 std::ofstream d_debug_samples;              ///< Debug utputstream for complex values.
                 std::ofstream d_debug;                      ///< Outputstream for the debug log.
@@ -285,7 +284,7 @@ namespace gr {
                  *  \brief  Deinterleave the raw demodulated words by reversing the interleave pattern.
                  *
                  *  \param  ppm
-                 *          The amount of words that zere interleaved. Depends on `SF`.
+                 *          The number of words that zere interleaved. Depends on `SF`.
                  */
                 void deinterleave(const uint32_t ppm);
 
@@ -410,7 +409,7 @@ namespace gr {
                 *           An array with samples to process.
                 *   \param  output_items
                 *           An array to return processed samples.
-                *   \return Returns the amount of output items generated.
+                *   \return Returns the number of output items generated.
                 */
                 int work(int noutput_items,
                          gr_vector_const_void_star& input_items,
