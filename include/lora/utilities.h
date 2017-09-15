@@ -23,9 +23,9 @@
 
 #include <cstdint>
 #include <string.h>
+#include <iomanip>
 
 #define REV_BITS
-#define PHY_HEADER_SIZE 3u
 #define MAC_CRC_SIZE 2u
 #define SM(value, shift, mask) (((value) << (shift)) & (mask))
 #define MS(value, mask, shift) (((value) & (mask)) >> (shift))
@@ -122,34 +122,13 @@ namespace gr {
          *          The length in bits of the data in `v`.
          */
         template <typename T>
-        inline void print_vector(std::ostream& out, const std::vector<T>& v, const std::string& prefix, const int element_len_bits) {
+        inline void print_vector_bin(std::ostream& out, const std::vector<T>& v, const std::string& prefix, const int element_len_bits) {
             out << prefix << ": ";
 
             for (const T& x : v)
                 out << to_bin(x, element_len_bits) << ", ";
 
             out << std::endl << std::flush;
-        }
-
-        /**
-         *  \brief  Append the data in a given vector to an output stream.
-         *
-         *  \tparam T
-         *          The type of variable to append.
-         *  \param  out
-         *          The output stream to append to.
-         *  \param  v
-         *          The vector containing the data to append.
-         *  \param  element_len_bits
-         *          The length in bits of the data in `v`.
-         */
-        template <typename T>
-        inline void print_vector_raw(std::ostream& out, const std::vector<T>& v, const int element_len_bits) {
-
-            for (const T& x : v)
-                out << to_bin(x, element_len_bits);
-
-            out << std::flush;
         }
 
         /**
@@ -208,29 +187,6 @@ namespace gr {
         }
 
         /**
-         *  \brief  **Forward Error Correction** : Extract only the data in the given bytes.
-         *
-         *  \param  in_data
-         *          The data to extract from.
-         *  \param  len
-         *          The amount of data words.
-         *  \param  *indices
-         *          The indices containing the actual data bits.
-         *  \param  n
-         *          The amount of data bits.
-         *  \param  out_data
-         *          The resulting data words.
-         */
-        inline void fec_extract_data_only(const uint8_t *in_data, const uint32_t len, const uint8_t *indices, const uint8_t n, uint8_t *out_data) {
-            for (uint32_t i = 0u, out_index = 0u; i < len; i += 2u) {
-                const uint8_t d2 = (i + 1u < len) ? select_bits(in_data[i + 1u], indices, n) & 0xFF
-                                                  : 0u;
-
-                out_data[out_index++] = (d2 << 4u) | (select_bits(in_data[i], indices, n) & 0xFF);
-            }
-        }
-
-        /**
          *  \brief  Select a single bit from the given byte.
          *
          *  \param  v
@@ -285,7 +241,7 @@ namespace gr {
          *          The byte to decode.
          *  \return Returs a nibble containing the corrected data.
          */
-        static uint8_t hamming_decode_soft_byte(uint8_t v) {
+        static inline uint8_t hamming_decode_soft_byte(uint8_t v) {
             // Precalculation
             // Which bits are covered (including self)?
             // p1 10110100
@@ -294,24 +250,26 @@ namespace gr {
             // p4 01010101
 
             // Syndrome matrix = columns of "cover bits" above
-//            uint8_t H[16] = { 0u };
+            /*
+            uint8_t H[16] = { 0u };
 
-//            const uint8_t i0 = pack_nibble(1, 0, 0, 0),
-//                          i1 = pack_nibble(0, 1, 1, 1),
-//                          i2 = pack_nibble(1, 1, 1, 0),
-//                          i3 = pack_nibble(1, 1, 0, 1),
-//                          i4 = pack_nibble(0, 1, 0, 0),
-//                          i5 = pack_nibble(1, 0, 1, 1),
-//                          i6 = pack_nibble(0, 0, 1, 0),
-//                          i7 = pack_nibble(0, 0, 0, 1);
-//            H[i0] = 0;
-//            H[i1] = 1;
-//            H[i2] = 2;
-//            H[i3] = 3;
-//            H[i4] = 4;
-//            H[i5] = 5;
-//            H[i6] = 6;
-//            H[i7] = 7;
+            const uint8_t i0 = pack_nibble(1, 0, 0, 0),
+                          i1 = pack_nibble(0, 1, 1, 1),
+                          i2 = pack_nibble(1, 1, 1, 0),
+                          i3 = pack_nibble(1, 1, 0, 1),
+                          i4 = pack_nibble(0, 1, 0, 0),
+                          i5 = pack_nibble(1, 0, 1, 1),
+                          i6 = pack_nibble(0, 0, 1, 0),
+                          i7 = pack_nibble(0, 0, 0, 1);
+            H[i0] = 0;
+            H[i1] = 1;
+            H[i2] = 2;
+            H[i3] = 3;
+            H[i4] = 4;
+            H[i5] = 5;
+            H[i6] = 6;
+            H[i7] = 7;
+            */
 
             static const uint8_t H[16] = { 0x0, 0x0, 0x4, 0x0, 0x6, 0x0, 0x0, 0x2,
                                            0x7, 0x0, 0x0, 0x3, 0x0, 0x5, 0x1, 0x0 };
@@ -336,27 +294,6 @@ namespace gr {
             return pack_nibble( bit(v, 1), bit(v, 2), bit(v, 3), bit(v, 5));
         }
 
-        /**
-         *  \brief  Hamming(8,4) decoding by calling `hamming_decode_soft_byte` on each byte.
-         *          <BR>Each byte is decoded in pairs, the first one becoming the LSB nibble
-         *          <BR>and the second one the MSB nibble (if even; else just zeroes).
-         *
-         *  \param  words
-         *          The byte array to decode.
-         *  \param  len
-         *          The amount of words to decode.
-         *  \param  out_data
-         *          The decoded result words.
-         */
-        inline void hamming_decode_soft(const uint8_t *words, const uint32_t len, uint8_t *out_data) {
-            for (uint32_t i = 0u, out_index = 0u; i < len; i += 2u) {
-                const uint8_t d2 = (i + 1u < len) ? hamming_decode_soft_byte(words[i + 1u])
-                                                  : 0u;
-
-                out_data[out_index++] = (d2 << 4u) | hamming_decode_soft_byte(words[i]);
-            }
-        }
-
         template <typename T>
         inline void print_vector(std::ostream& out, const T* v, const std::string& prefix, const int size, const int element_len_bits) {
             out << prefix << ": ";
@@ -365,6 +302,18 @@ namespace gr {
                 out << to_bin(v[i], element_len_bits) << ", ";
 
             out << std::endl << std::flush;
+        }
+
+        template <typename T>
+        inline void print_vector_hex(std::ostream& out, const T* v, const uint32_t size, bool endline) {
+            for (uint32_t i = 0u; i < size; i++) {
+                out << " " << std::hex << std::setw(2) << std::setfill('0') << (int)v[i];
+            }
+
+            if(endline)
+                out << std::endl;
+
+            out << std::flush;
         }
 
         template <typename T>

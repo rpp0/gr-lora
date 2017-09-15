@@ -500,7 +500,7 @@ namespace gr {
             }
 
             #ifdef DEBUG
-                print_vector(d_debug, words_deinterleaved, "D", sizeof(uint8_t) * 8u);
+                print_vector_bin(d_debug, words_deinterleaved, "D", sizeof(uint8_t) * 8u);
                 //print_interleave_matrix(d_debug, d_words, ppm);
             #endif
 
@@ -511,7 +511,7 @@ namespace gr {
             d_words.clear();
         }
 
-        void decoder_impl::decode(uint8_t *out_data, const bool is_header) {
+        void decoder_impl::decode(const bool is_header) {
             static const uint8_t shuffle_pattern[] = {5, 0, 1, 2, 4, 3, 6, 7};
 
             // For determining shuffle pattern
@@ -529,24 +529,11 @@ namespace gr {
             //if (!is_header)
             //    values_to_file("/tmp/after_dewhiten", &d_words_dewhitened[0], d_words_dewhitened.size(), 8);
 
-            hamming_decode(out_data);
-
-            // Print result
-            std::stringstream result;
-
-            for (uint32_t i = 0u; i < d_payload_length; i++) {
-                result << " " << std::hex << std::setw(2) << std::setfill('0') << (int)out_data[i];
-            }
-
-            if (!is_header) {
-                std::cout << result.str() << std::endl;
-            } else {
-                std::cout << result.str();
-            }
+            hamming_decode(is_header);
         }
 
         void decoder_impl::msg_lora_frame(void) {
-            uint32_t len = sizeof(loratap_header_t) + sizeof(loraphy_header_t) + d_payload.size();
+            uint32_t len = sizeof(loratap_header_t) + sizeof(loraphy_header_t) + d_payload_length;
             uint32_t offset = 0;
             uint8_t buffer[len];
             loratap_header_t loratap_header;
@@ -556,7 +543,7 @@ namespace gr {
 
             offset = gr::lora::build_packet(buffer, offset, &loratap_header, sizeof(loratap_header_t));
             offset = gr::lora::build_packet(buffer, offset, &d_phdr, sizeof(loraphy_header_t));
-            offset = gr::lora::build_packet(buffer, offset, &d_payload[0], d_payload.size());
+            offset = gr::lora::build_packet(buffer, offset, &d_decoded[0], d_payload_length);
             if(offset != len) {
                 std::cerr << "decoder_impl::msg_lora_frame: invalid write" << std::endl;
                 exit(1);
@@ -582,8 +569,7 @@ namespace gr {
             }
 
             #ifdef DEBUG
-                //print_vector(d_debug, d_words_deshuffled, "S", sizeof(uint8_t)*8);
-                print_vector_raw(d_debug, d_words_deshuffled, sizeof(uint8_t) * 8u);
+                print_vector_bin(d_debug, d_words_deshuffled, "S", sizeof(uint8_t)*8);
                 d_debug << std::endl;
             #endif
 
@@ -604,22 +590,20 @@ namespace gr {
             }
 
             #ifdef DEBUG
-                print_vector(d_debug, d_words_dewhitened, "W", sizeof(uint8_t) * 8);
+                print_vector_bin(d_debug, d_words_dewhitened, "W", sizeof(uint8_t) * 8);
             #endif
 
             d_words_deshuffled.clear();
         }
 
-        void decoder_impl::hamming_decode(uint8_t *out_data) {
-            static const uint8_t data_indices[4] = {1, 2, 3, 5};
-
+        void decoder_impl::hamming_decode(bool is_header) {
             switch(d_phdr.cr) {
                 case 4: case 3: // Hamming(8,4) or Hamming(7,4)
-                    gr::lora::hamming_decode_soft(&d_words_dewhitened[0], d_words_dewhitened.size(), out_data);
+                    hamming_decode_soft(is_header);
                     break;
                 case 2: case 1: // Hamming(6,4) or Hamming(5,4)
                     // TODO: Report parity error to the user
-                    gr::lora::fec_extract_data_only(&d_words_dewhitened[0], d_words_dewhitened.size(), data_indices, 4u, out_data);
+                    extract_data_only(is_header);
                     break;
             }
 
@@ -636,6 +620,34 @@ namespace gr {
 
             d_words_dewhitened.clear();
             fec_destroy(hamming);*/
+        }
+
+        void decoder_impl::hamming_decode_soft(bool is_header) {
+            uint32_t len = d_words_dewhitened.size();
+            for (uint32_t i = 0u; i < len; i += 2u) {
+                const uint8_t d2 = (i + 1u < len) ? hamming_decode_soft_byte(d_words_dewhitened[i + 1u]) : 0u;
+                const uint8_t d1 = hamming_decode_soft_byte(d_words_dewhitened[i]);
+
+                if(is_header)
+                    d_decoded.push_back((d1 << 4u) | d2);
+                else
+                    d_decoded.push_back((d2 << 4u) | d1);
+            }
+        }
+
+        void decoder_impl::extract_data_only(bool is_header) {
+            static const uint8_t data_indices[4] = {1, 2, 3, 5};
+            uint32_t len = d_words_dewhitened.size();
+
+            for (uint32_t i = 0u; i < len; i += 2u) {
+                const uint8_t d2 = (i + 1u < len) ? select_bits(d_words_dewhitened[i + 1u], data_indices, 4u) & 0xFF : 0u;
+                const uint8_t d1 = (select_bits(d_words_dewhitened[i], data_indices, 4u) & 0xFF);
+
+                if(is_header)
+                    d_decoded.push_back((d1 << 4u) | d2);
+                else
+                    d_decoded.push_back((d2 << 4u) | d1);
+            }
         }
 
         void decoder_impl::nibble_reverse(uint8_t *out_data, const uint32_t len) {
@@ -767,13 +779,11 @@ namespace gr {
                     d_phdr.cr = 4u;
 
                     if (demodulate(input, true)) {
-                        uint8_t decoded[PHY_HEADER_SIZE];
-                        d_payload_length  = PHY_HEADER_SIZE;
+                        decode(true);
+                        gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_decoded.size(), false);
+                        memcpy(&d_phdr, &d_decoded[0], sizeof(loraphy_header_t));
+                        d_decoded.clear();
 
-                        decode(decoded, true);
-
-                        nibble_reverse(decoded, PHY_HEADER_SIZE);
-                        memcpy(&d_phdr, decoded, PHY_HEADER_SIZE);
                         d_payload_length = d_phdr.length + MAC_CRC_SIZE * d_phdr.has_mac_crc;
                         //d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
 
@@ -810,19 +820,12 @@ namespace gr {
                         d_payload_symbols -= (4u + d_phdr.cr);
 
                         if (d_payload_symbols <= 0) {
-                            uint8_t decoded[d_payload_length];
-                            memset( decoded, 0u, d_payload_length * sizeof(uint8_t) );
-
-                            decode(decoded, false);
-
-                            d_payload.insert(d_payload.end(), decoded, decoded + d_payload_length);
+                            decode(false);
+                            gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_payload_length, true);
                             msg_lora_frame();
 
                             d_state = gr::lora::DecoderState::DETECT;
-                            d_payload.clear();
-
-                            // DBGR_STOP_TIME_MEASUREMENT(true);
-                            // DBGR_PAUSE();
+                            d_decoded.clear();
                         }
                     }
 

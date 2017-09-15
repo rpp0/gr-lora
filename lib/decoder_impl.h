@@ -103,7 +103,7 @@ namespace gr {
                 std::vector<uint8_t>  d_demodulated;        ///< Vector containing the words after deinterleaving.
                 std::vector<uint8_t>  d_words_deshuffled;   ///< Vector containing the words after deshuffling.
                 std::vector<uint8_t>  d_words_dewhitened;   ///< Vector containing the words after dewhitening.
-                std::vector<uint8_t>  d_payload;            ///< Vector containing the words after Hamming decode or the final decoded words.
+                std::vector<uint8_t>  d_decoded;            ///< Vector containing the words after Hamming decode or the final decoded words.
 
                 std::ofstream d_debug_samples;              ///< Debug utputstream for complex values.
                 std::ofstream d_debug;                      ///< Outputstream for the debug log.
@@ -293,15 +293,11 @@ namespace gr {
                  *          <br/>1. Deshuffle the words
                  *          <br/>2. Dewhiten the words
                  *          <br/>3. Hamming decoding
-                 *          <br/><br/>The result is printed to the standard outputstream
-                 *          <br/>and passed as a `blob` to the `frames` output in GRC, for further use.
                  *
-                 *  \param  out_data
-                 *          An array to store the decoded payload words.
                  *  \param  is_header
                  *          Whether the demodulated words were from the HDR.
                  */
-                void decode(uint8_t *out_data, const bool is_header);
+                void decode(const bool is_header);
 
                 /**
                  *  \brief  Deshuffle the demodulated words by the given pattern.
@@ -326,10 +322,28 @@ namespace gr {
                  *          <br/>- CR 4 or 3: Hamming(8,4) or Hamming(7,4) with parity correction
                  *          <br/>- CR 2 or 1: Extract data only (can only find parity errors, not correct them)
                  *
-                 *  \param  out_data
-                 *          The result after decoding the words.
+                 *  \param  is_header
+                 *          Decoding for the header?
                  */
-                void hamming_decode(uint8_t *out_data);
+                void hamming_decode(bool is_header);
+
+                /**
+                 *  \brief  Extract only the data in the given bytes.
+                 *
+                 *  \param  is_header
+                 *          Decoding for the header?
+                 */
+                void extract_data_only(bool is_header);
+
+                /**
+                 *  \brief  Hamming(8,4) decoding by calling `hamming_decode_soft_byte` on each byte.
+                 *          <BR>Each byte is decoded in pairs, the first one becoming the LSB nibble
+                 *          <BR>and the second one the MSB nibble (if even; else just zeroes).
+                 *
+                 *  \param  is_header
+                 *          Decoding for the header?
+                 */
+                void hamming_decode_soft(bool is_header);
 
                 /**
                  *  \brief  Reverse the nibbles for each byte in the given array.
