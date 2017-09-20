@@ -37,15 +37,15 @@
 namespace gr {
     namespace lora {
 
-        decoder::sptr decoder::make(float samp_rate, int sf) {
+        decoder::sptr decoder::make(float samp_rate, int sf, bool implicit, uint8_t cr, bool crc) {
             return gnuradio::get_initial_sptr
-                   (new decoder_impl(samp_rate, sf));
+                   (new decoder_impl(samp_rate, sf, implicit, cr, crc));
         }
 
         /**
          * The private constructor
          */
-        decoder_impl::decoder_impl(float samp_rate, uint8_t sf)
+        decoder_impl::decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc)
             : gr::sync_block("decoder",
                              gr::io_signature::make(1, -1, sizeof(gr_complex)),
                              gr::io_signature::make(0, 0, 0)) {
@@ -65,7 +65,9 @@ namespace gr {
             #endif
 
             d_bw                 = 125000u;
-            d_phdr.cr            = 4;
+            d_implicit           = implicit;
+            d_phdr.cr            = cr;
+            d_phdr.has_mac_crc   = crc;
             d_samples_per_second = samp_rate;
             d_payload_symbols    = 0;
             d_cfo_estimation     = 0.0f;
@@ -80,7 +82,7 @@ namespace gr {
             d_number_of_bins     = (uint32_t)(1u << d_sf);
             d_number_of_bins_hdr = (uint32_t)(1u << (d_sf-2));
             d_decim_factor       = d_samples_per_symbol / d_number_of_bins;
-            d_energy_threshold   = 0.01f;
+            d_energy_threshold   = 0.0f;
             d_whitening_sequence = gr::lora::prng_payload;
             d_fine_sync = 0;
             set_output_multiple(2 * d_samples_per_symbol);
@@ -89,6 +91,10 @@ namespace gr {
             std::cout << "Bins per symbol: \t"      << d_number_of_bins     << std::endl;
             std::cout << "Samples per symbol: \t"   << d_samples_per_symbol << std::endl;
             std::cout << "Decimation: \t\t"         << d_decim_factor       << std::endl;
+            if(d_implicit) {
+                std::cout << "CR: \t\t"         << (int)d_phdr.cr       << std::endl;
+                std::cout << "CRC: \t\t"         << (int)d_phdr.has_mac_crc       << std::endl;
+            }
 
             // Locally generated chirps
             build_ideal_chirps();
@@ -325,8 +331,18 @@ namespace gr {
             volk_32f_accumulator_s32f(&energy_chirp2, magsq_chirp2, window);
 
             autocorr = abs(dot_product / gr_complex(sqrt(energy_chirp1 * energy_chirp2), 0));
+            d_energy_threshold = energy_chirp2 / 2.0f; // When using implicit mode, stop when energy is halved.
 
             return autocorr;
+        }
+
+        float decoder_impl::determine_energy(const gr_complex *samples) {
+            float magsq_chirp[d_samples_per_symbol];
+            float energy_chirp = 0;
+            volk_32fc_magnitude_squared_32f(magsq_chirp, samples, d_samples_per_symbol);
+            volk_32f_accumulator_s32f(&energy_chirp, magsq_chirp, d_samples_per_symbol);
+
+            return energy_chirp;
         }
 
         float decoder_impl::detect_downchirp(const gr_complex *samples, const uint32_t window) {
@@ -764,7 +780,12 @@ namespace gr {
                 }
 
                 case gr::lora::DecoderState::PAUSE: {
-                    d_state = gr::lora::DecoderState::DECODE_HEADER;
+                    if(d_implicit){
+                        d_state = gr::lora::DecoderState::DECODE_PAYLOAD;
+                        d_payload_symbols = 1;
+                    } else {
+                        d_state = gr::lora::DecoderState::DECODE_HEADER;
+                    }
                     consume_each(d_samples_per_symbol + d_delay_after_sync);
                     break;
                 }
@@ -801,26 +822,22 @@ namespace gr {
                 }
 
                 case gr::lora::DecoderState::DECODE_PAYLOAD: {
-                    //**************************************************************************
-                    // Failsafe if decoding length reaches end of actual data == noise reached?
-                    // Could be replaced be rejecting packets with CRC mismatch...
-                    if (std::abs(input[0]) < d_energy_threshold) {
-                        //printf("\n*** Decode payload reached end of data! (payload length in HDR is wrong)\n");
+                    if (d_implicit && determine_energy(input) < d_energy_threshold) {
                         d_payload_symbols = 0;
+                        //d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin() + 7u); // Test for SF 8 with header
+                        d_payload_length = (int32_t)(d_demodulated.size() / 2);
+                    } else if (demodulate(input, false)) {
+                        if(!d_implicit)
+                            d_payload_symbols -= (4u + d_phdr.cr);
                     }
-                    //**************************************************************************
 
-                    if (demodulate(input, false)) {
-                        d_payload_symbols -= (4u + d_phdr.cr);
+                    if (d_payload_symbols <= 0) {
+                        decode(false);
+                        gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_payload_length, true);
+                        msg_lora_frame();
 
-                        if (d_payload_symbols <= 0) {
-                            decode(false);
-                            gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_payload_length, true);
-                            msg_lora_frame();
-
-                            d_state = gr::lora::DecoderState::DETECT;
-                            d_decoded.clear();
-                        }
+                        d_state = gr::lora::DecoderState::DETECT;
+                        d_decoded.clear();
                     }
 
                     consume_each((int32_t)d_samples_per_symbol+d_fine_sync);
@@ -856,10 +873,5 @@ namespace gr {
             std::cerr << "[LoRa Decoder] WARNING : Setting the sample rate during execution is currently not supported." << std::endl
                       << "Nothing set, kept SR of " << d_samples_per_second << "." << std::endl;
         }
-
-        void decoder_impl::set_abs_threshold(const float threshold) {
-            d_energy_threshold = gr::lora::clamp(threshold, 0.0f, 20.0f);
-        }
-
     } /* namespace lora */
 } /* namespace gr */

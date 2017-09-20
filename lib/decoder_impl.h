@@ -80,6 +80,7 @@ namespace gr {
                 std::vector<gr_complex> d_mult_hf;          ///< Vector containing the FFT decimation.
                 std::vector<gr_complex> d_tmp;              ///< Vector containing the FFT decimation.
 
+                bool             d_implicit;                ///< Implicit header mode.
                 uint8_t          d_sf;                      ///< The Spreading Factor.
                 uint32_t         d_bw;                      ///< The receiver bandwidth (fixed to `125kHz`).
                 loraphy_header_t d_phdr;                    ///< LoRa PHY header.
@@ -263,6 +264,14 @@ namespace gr {
                 void determine_cfo(const gr_complex *samples);
 
                 /**
+                 *  \brief  Determine the energy of a symbol.
+                 *
+                 *  \param  samples
+                 *          The complex symbol to analyse.
+                 */
+                float determine_energy(const gr_complex *samples);
+
+                /**
                  *  \brief  Returns the index of the bin containing the frequency change.
                  *
                  *  \param  samples
@@ -407,7 +416,7 @@ namespace gr {
                  *  \param  sf
                  *          The expected spreqding factor.
                  */
-                decoder_impl(float samp_rate, uint8_t sf);
+                decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc);
 
                 /**
                  *  Default destructor.
@@ -445,16 +454,6 @@ namespace gr {
                  *          The new sample rate.
                  */
                 virtual void set_samp_rate(const float samp_rate);
-
-                /**
-                 *  \brief  Set the absolute threshold to distinguish signal from noise.
-                 *          <br/>Should be around 0.01f (default) for normal environments,
-                 *          <br/>or as low as 0.001f for the very noise-resistant USRP.
-                 *
-                 *  \param  threshold
-                 *          The new threshold value.
-                 */
-                virtual void set_abs_threshold(const float threshold);
         };
     } // namespace lora
 } // namespace gr

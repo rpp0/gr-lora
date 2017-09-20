@@ -93,7 +93,7 @@ namespace gr {
 
             offset = gr::lora::dissect_packet((const void **)&loratap_header, sizeof(loratap_header_t), data, offset);
             offset = gr::lora::dissect_packet((const void **)&loraphy_header, sizeof(loraphy_header_t), data, offset);
-            uint32_t payload_length = loraphy_header->length + (MAC_CRC_SIZE * loraphy_header->has_mac_crc);
+            uint32_t payload_length = size - (sizeof(loratap_header_t) + sizeof(loraphy_header_t));
             offset = gr::lora::dissect_packet((const void **)&payload, sizeof(uint8_t)*payload_length, data, offset);
             if(offset != size) {
                 std::cerr << "message_socket_sink_impl::handle: invalid read: " << offset << " != " << size << std::endl;

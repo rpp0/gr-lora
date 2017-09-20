@@ -26,7 +26,7 @@ class lora_receiver(gr.hier_block2):
     """
     docstring for block lora_receiver
     """
-    def __init__(self, in_samp_rate, center_freq, channel_list, sf, out_samp_rate, threshold = 0.01):
+    def __init__(self, in_samp_rate, center_freq, channel_list, sf, out_samp_rate, implicit, cr, crc):
         gr.hier_block2.__init__(self,
             "lora_receiver",  # Min, Max, gr.sizeof_<type>
             gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
@@ -41,8 +41,7 @@ class lora_receiver(gr.hier_block2):
 
         # Define blocks
         self.channelizer = lora.channelizer(in_samp_rate, out_samp_rate, center_freq, channel_list)
-        self.decoder = lora.decoder(out_samp_rate, sf)
-        self.set_threshold(threshold)
+        self.decoder = lora.decoder(out_samp_rate, sf, implicit, cr, crc)
 
         # Messages
         self.message_port_register_hier_out('frames')
@@ -66,10 +65,3 @@ class lora_receiver(gr.hier_block2):
     def set_center_freq(self, center_freq):
         self.center_freq = center_freq
         self.channelizer.set_center_freq(self.center_freq)
-
-    def get_threshold(self):
-        return self.threshold
-
-    def set_threshold(self, threshold):
-        self.threshold = threshold
-        self.decoder.set_abs_threshold(self.threshold)

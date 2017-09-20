@@ -338,6 +338,16 @@ namespace gr {
             out << std::flush;
         }
 
+        inline bool header_checksum(const uint8_t* header) {
+            (void) header;
+            /*Found valid order for bit #0: (1, 4, 8, 9, 10, 11)
+            Found valid order for bit #1: (0, 2, 5, 8, 9, 10)
+            Found valid order for bit #2: (0, 3, 6, 9, 11)
+            Found valid order for bit #3: (1, 2, 3, 7, 8)
+            Found valid order for bit #4: (4, 5, 6, 7)*/
+            return true;
+        }
+
         inline uint32_t dissect_packet(const void **header, uint32_t header_size, const uint8_t *buffer, uint32_t offset) {
             (*header) = buffer + offset;
             return offset + header_size;

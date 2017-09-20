@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive File
-# Generated: Thu Sep  7 15:38:03 2017
+# Generated: Wed Sep 20 10:10:43 2017
 ##################################################
 
 if __name__ == '__main__':
@@ -66,7 +66,7 @@ class lora_receive_file(grc_wxgui.top_block_gui):
         	peak_hold=False,
         )
         self.Add(self.wxgui_fftsink2_1.win)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), 7, 1000000, 0.002)
+        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), 7, 1000000, False, 4, True)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, 'counting_cr4_sf7.cfile', True)
 
