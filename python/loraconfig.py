@@ -3,14 +3,14 @@ class LoRaConfig():
         self.freq = freq
         self.sf = sf
         self.cr = cr
+        self.cr_num = int(self.cr.rpartition('/')[2])-4
         self.bw = bw
         self.prlen = prlen
         self.crc = crc
         self.implicit = implicit
 
     def file_repr(self):
-        cr_num = int(self.cr.rpartition('/')[2])-4
-        format_string = "{:n}-sf{:n}-cr{:n}-bw{:n}".format(self.freq/1000000.0, self.sf, cr_num, self.bw/1000.0)
+        format_string = "{:n}-sf{:n}-cr{:n}-bw{:n}".format(self.freq/1000000.0, self.sf, self.cr_num, self.bw/1000.0)
         if self.crc:
             format_string += "-crc"
         if self.implicit:
