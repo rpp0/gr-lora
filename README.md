@@ -65,23 +65,30 @@ make && sudo make install
 
 ## Testing and usage
 
-To test your installation, you can download one of the example LoRa signals at [rpp0/gr-lora-samples](https://github.com/rpp0/gr-lora-samples). Configure ```apps/lora_receive_file.py``` to use the sample and run the script. You should see the decoded sample data:
+To test your installation, you can simply run the example app ```apps/lora_receive_file_nogui.py```. The script will download an example trace, and attempt to decode it using gr-lora. You should see the following output:
 
 ```
-$ ./lora_receive_file.py
-
-Bits (nominal) per symbol: 7
-Bins per symbol: 128
-Header bins per symbol: 32
-Samples per symbol: 1024
-Using Volk machine: avx2_64_mmx_orc
-00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22
-88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88 88
-12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
-...
+$ ./lora_receive_file_nogui.py
+[?] Download test LoRa signal to decode? [y/N] y
+[+] Downloading https://research.edm.uhasselt.be/probyns/lora/usrp-868.1-sf7-cr4-bw125-crc-0.sigmf-data -> ./example-trace.sigmf-data . . . . . . . . . . . . . . . . . .
+[+] Downloading https://research.edm.uhasselt.be/probyns/lora/usrp-868.1-sf7-cr4-bw125-crc-0.sigmf-meta -> ./example-trace.sigmf-meta . .
+[+] Configuration: 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
+[+] Decoding. You should see a header, followed by 'deadbeef' and a CRC 5 times.
+Bits (nominal) per symbol: 	3.5
+Bins per symbol: 	128
+Samples per symbol: 	1024
+Decimation: 		8
+ 04 90 40 de ad be ef 70 0d
+ 04 90 40 de ad be ef 70 0d
+ 04 90 40 de ad be ef 70 0d
+ 04 90 40 de ad be ef 70 0d
+ 04 90 40 de ad be ef 70 0d
+[+] Done
 ```
 
-Alternatively, if you have a hardware LoRa transmitter, you use ```apps/lora_receive_realtime.py``` to decode signals in real time. If you have a Microchip RN2483, you can use [python-loranode](https://github.com/rpp0/python-loranode) to easily send messages via Python.
+Other example traces can be found [in the gr-lora-samples repository](https://github.com/rpp0/gr-lora-samples).
+
+If you have a hardware LoRa transmitter, you use ```apps/lora_receive_realtime.py``` to decode signals in real time. With a Microchip RN2483, you can use [python-loranode](https://github.com/rpp0/python-loranode) to easily send messages via Python.
 
 By default, decoded messages will be printed to the console output. However, you can use a `message_socket_sink` to forward messages to port 40868 over UDP. See the [tutorial](https://github.com/rpp0/gr-lora/wiki/Capturing-LoRa-signals-using-an-RTL-SDR-device) for more information.
 
@@ -101,6 +108,7 @@ Receivers: HackRF One, USRP B201, RTL-SDR
 
 ## Changelog
 
+- Version 0.6.2: Improved Message Socket Sink and higher sensitivity to low-power signals.
 - Version 0.6.1: Minor bug fixes and improvements.
 - Version 0.6  : Significantly increased decoding accuracy and clock drift correction.
 - Version 0.5  : Major overhaul of preamble detection and upchirp syncing

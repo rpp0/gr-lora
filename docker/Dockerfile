@@ -6,7 +6,7 @@ workdir /lib
 run pacman -Syu --noconfirm
 
 # Install required dependencies
-run pacman -S git python2-scipy swig cppunit fftw boost boost-libs gnuradio gnuradio-osmosdr libvolk log4cpp base-devel cmake wxgtk-common wxgtk2 wxgtk3 wxpython libuhd-firmware gnuradio-companion --noconfirm
+run pacman -S git python2-scipy swig cppunit fftw boost boost-libs gnuradio gnuradio-osmosdr libvolk log4cpp base-devel cmake wxgtk-common wxgtk2 wxgtk3 wxpython libuhd-firmware gnuradio-companion python2-requests --noconfirm
 
 workdir /liquid
 
