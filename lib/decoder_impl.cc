@@ -797,6 +797,8 @@ namespace gr {
                         decode(true);
                         gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_decoded.size(), false);
                         memcpy(&d_phdr, &d_decoded[0], sizeof(loraphy_header_t));
+                        if (d_phdr.cr > 4)
+                            d_phdr.cr = 4;
                         d_decoded.clear();
 
                         d_payload_length = d_phdr.length + MAC_CRC_SIZE * d_phdr.has_mac_crc;

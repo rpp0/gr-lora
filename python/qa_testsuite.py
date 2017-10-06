@@ -53,7 +53,7 @@ class TestSummary():
         else:
             raise Exception("Test result must be of type TestResult")
 
-    def export_summary(self, path, print_output=True):
+    def export_summary(self, path, print_output=True, write_output=True):
         self._summary_text += "\nRan a total of {:n} tests, together containing {:n} payloads.\n".format(
             self._num_tests,
             self._num_total_payloads
@@ -147,7 +147,7 @@ class TestSummary():
 
 
 class qa_testsuite():
-    def __init__(self):
+    def __init__(self, path=None):
         """
         Determine installed test suites and setup socket server for receiving payloads decoded by gr-lora.
         """
@@ -159,12 +159,17 @@ class qa_testsuite():
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
-        self.server.settimeout(3)
+        self.server.settimeout(10)
 
-        # Determine test suites directory
-        current_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
-        self.test_suites_directory = os.path.abspath(current_dir + '../apps/test-suites')
-        self.reports_directory = os.path.abspath(current_dir + '../docs/test-results')
+        # Determine test suites directory if needed
+        if path is None:
+            current_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
+            self.test_suites_directory = os.path.abspath(current_dir + '../apps/test-suites')
+            self.reports_directory = os.path.abspath(current_dir + '../docs/test-results')
+        else:
+            self.test_suites_directory = os.path.abspath(path)
+            self.reports_directory = os.path.abspath(path + '/../test-results')
+
 
         # List test suites
         self.test_suites = []
@@ -194,7 +199,7 @@ class qa_testsuite():
 
         return total_data
 
-    def run(self, suites_to_run, pause=False):
+    def run(self, suites_to_run, pause=False, write_output=True):
         for test_suite in self.test_suites:
             # Skip test suites that we don't want to run
             if suites_to_run != [] and (not test_suite in suites_to_run):
@@ -262,20 +267,22 @@ class qa_testsuite():
                 decoded_data = self.get_payloads(times)  # Output from the flowgraph
                 summary.add(TestResult(decoded_data=decoded_data, lora_config=lora_config, test=test), print_intermediate=True)
             # Finally, export the result for the suite
-            summary.export_summary(path=self.reports_directory)
+            summary.export_summary(path=self.reports_directory, write_output=write_output)
 
 if __name__ == '__main__':
     """
-    Tool to evaluate decoding test suites in apps/test-suites/
+    Tool to evaluate decoding test suites
     """
     # Parse args
     parser = argparse.ArgumentParser(description="Tool to evaluate decoding test suites for gr-lora.")
     parser.add_argument('suites', type=str, nargs="*", help='Names of the test suites to execute.')
     parser.add_argument('--pause', action="store_true", default=False, help='Pause upon encountering an error.')
+    parser.add_argument('--path', type=str, default=None, help='Path of the test suites')
+    parser.add_argument('--nowrite', action="store_true", default=False, help='Do not write anything.')
     args = parser.parse_args()
 
     # Make sure CTRL+C exits the whole test suite instead of only the current GNU Radio top block
     signal.signal(signal.SIGINT, signal_handler)
 
-    suite = qa_testsuite()
-    suite.run(args.suites, args.pause)
+    suite = qa_testsuite(args.path)
+    suite.run(args.suites, args.pause, not args.nowrite)
