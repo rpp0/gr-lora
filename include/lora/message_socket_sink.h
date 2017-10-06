@@ -692,6 +692,7 @@ namespace gr {
         class LORA_API message_socket_sink : virtual public gr::block {
             public:
                 typedef boost::shared_ptr<message_socket_sink> sptr;
+                enum lora_layer { LORATAP = 0, LORAPHY, LORAMAC };
 
                 /*!
                 * \brief Return a shared_ptr to a new instance of lora::message_socket_sink.
@@ -701,7 +702,7 @@ namespace gr {
                 * class. lora::message_socket_sink::make is the public interface for
                 * creating new instances.
                 */
-                static sptr make(std::string ip, int port, bool loratap, bool loraphy);
+                static sptr make(std::string ip, int port, enum lora_layer layer);
         };
 
     } // namespace lora

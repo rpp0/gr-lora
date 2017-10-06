@@ -33,8 +33,7 @@ namespace gr {
             private:
                 std::string d_ip = "127.0.0.1";
                 int d_port       = 40868;
-                bool d_loratap;
-                bool d_loraphy;
+                enum lora_layer d_layer;
 
                 // socket
                 struct sockaddr_in *d_sock_addr;
@@ -43,11 +42,11 @@ namespace gr {
                 void handle(pmt::pmt_t msg);
 
             public:
-                message_socket_sink_impl(std::string ip, int port, bool loratap, bool loraphy);
+                message_socket_sink_impl(std::string ip, int port, enum lora_layer layer);
                 ~message_socket_sink_impl();
 
             private:
-                void msg_send_udp(const loraphy_header_t* loraphy_header, const uint8_t* payload, const uint32_t payload_length);
+                void msg_send_udp(const uint8_t* data, const uint32_t length);
         };
 
     } // namespace lora

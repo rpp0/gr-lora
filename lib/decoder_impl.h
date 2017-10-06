@@ -29,6 +29,7 @@
 #include <lora/debugger.h>
 #include <volk/volk.h>
 #include <lora/loraphy.h>
+#include <boost/circular_buffer.hpp>
 
 namespace gr {
     namespace lora {
@@ -99,6 +100,8 @@ namespace gr {
                 uint32_t         d_corr_fails;              ///< Indicates how many times the correlation failed. After some tries, the state will revert to `DecoderState::DETECT`.
                 float            d_energy_threshold;        ///< The absolute threshold to distinguish signal from noise.
                 const uint8_t*   d_whitening_sequence;      ///< A pointer to the whitening sequence to be used in decoding. Determined by the SF in the ctor.
+                float            d_snr;                     ///< Signal to noise ratio
+                boost::circular_buffer<float> d_pwr_queue;  ///< Queue holding symbol power values
 
                 std::vector<uint32_t> d_words;              ///< Vector containing the demodulated words.
                 std::vector<uint8_t>  d_demodulated;        ///< Vector containing the words after deinterleaving.
@@ -270,6 +273,11 @@ namespace gr {
                  *          The complex symbol to analyse.
                  */
                 float determine_energy(const gr_complex *samples);
+
+                /**
+                 *  \brief  Determine the SNR
+                 */
+                void determine_snr();
 
                 /**
                  *  \brief  Returns the index of the bin containing the frequency change.

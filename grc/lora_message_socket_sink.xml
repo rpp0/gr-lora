@@ -4,7 +4,7 @@
   <key>lora_message_socket_sink</key>
   <category>[LoRa]</category>
   <import>import lora</import>
-  <make>lora.message_socket_sink($ip, $port, $loratap, $loraphy)</make>
+  <make>lora.message_socket_sink($ip, $port, $layer)</make>
 
   <param>
     <name>IP</name>
@@ -21,17 +21,21 @@
   </param>
 
   <param>
-    <name>Append LoRaTap</name>
-    <key>loratap</key>
-    <value>False</value>
-    <type>bool</type>
-  </param>
-
-  <param>
-    <name>Append LoRaPHY</name>
-    <key>loraphy</key>
-    <value>False</value>
-    <type>bool</type>
+    <name>Layer</name>
+    <key>layer</key>
+    <type>enum</type>
+    <option>
+        <name>LoRa TAP</name>
+        <key>0</key>
+    </option>
+    <option>
+        <name>LoRa PHY</name>
+        <key>1</key>
+    </option>
+    <option>
+        <name>LoRa MAC</name>
+        <key>2</key>
+    </option>
   </param>
 
   <sink>

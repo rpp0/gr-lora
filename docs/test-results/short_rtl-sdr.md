@@ -1,6 +1,6 @@
 # Test suite: 'short_rtl-sdr'
 
-*Results on 2017-09-20 07:55:22.913194*
+*Results on 2017-10-06 15:51:46.369561*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 

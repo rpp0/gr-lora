@@ -48,7 +48,8 @@ namespace gr {
         decoder_impl::decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc)
             : gr::sync_block("decoder",
                              gr::io_signature::make(1, -1, sizeof(gr_complex)),
-                             gr::io_signature::make(0, 0, 0)) {
+                             gr::io_signature::make(0, 0, 0)),
+            d_pwr_queue(MAX_PWR_QUEUE_SIZE) {
             // Radio config
             d_state = gr::lora::DecoderState::DETECT;
 
@@ -330,8 +331,14 @@ namespace gr {
             volk_32f_accumulator_s32f(&energy_chirp1, magsq_chirp1, window);
             volk_32f_accumulator_s32f(&energy_chirp2, magsq_chirp2, window);
 
+            // When using implicit mode, stop when energy is halved.
+            d_energy_threshold = energy_chirp2 / 2.0f;
+
+            // For calculating the SNR later on
+            d_pwr_queue.push_back(energy_chirp1 / d_samples_per_symbol);
+
+            // Autocorr value
             autocorr = abs(dot_product / gr_complex(sqrt(energy_chirp1 * energy_chirp2), 0));
-            d_energy_threshold = energy_chirp2 / 2.0f; // When using implicit mode, stop when energy is halved.
 
             return autocorr;
         }
@@ -343,6 +350,14 @@ namespace gr {
             volk_32f_accumulator_s32f(&energy_chirp, magsq_chirp, d_samples_per_symbol);
 
             return energy_chirp;
+        }
+
+        void decoder_impl::determine_snr() {
+            if(d_pwr_queue.size() >= 2) {
+                float pwr_noise = d_pwr_queue[0];
+                float pwr_signal = d_pwr_queue[d_pwr_queue.size()-1];
+                d_snr = pwr_signal / pwr_noise;
+            }
         }
 
         float decoder_impl::detect_downchirp(const gr_complex *samples, const uint32_t window) {
@@ -554,6 +569,8 @@ namespace gr {
             memset(buffer, 0, sizeof(uint8_t) * len);
             memset(&loratap_header, 0, sizeof(loratap_header));
 
+            loratap_header.rssi.snr = (uint8_t)(10.0f * log10(d_snr) + 0.5);
+
             offset = gr::lora::build_packet(buffer, offset, &loratap_header, sizeof(loratap_header_t));
             offset = gr::lora::build_packet(buffer, offset, &d_phdr, sizeof(loraphy_header_t));
             offset = gr::lora::build_packet(buffer, offset, &d_decoded[0], d_payload_length);
@@ -717,6 +734,7 @@ namespace gr {
                     float correlation = detect_preamble_autocorr(input, d_samples_per_symbol);
 
                     if (correlation >= 0.90f) {
+                        determine_snr();
                         #ifdef DEBUG
                             d_debug << "Ca: " << correlation << std::endl;
                         #endif

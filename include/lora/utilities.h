@@ -27,6 +27,7 @@
 
 #define REV_BITS
 #define MAC_CRC_SIZE 2u
+#define MAX_PWR_QUEUE_SIZE 4
 #define SM(value, shift, mask) (((value) << (shift)) & (mask))
 #define MS(value, mask, shift) (((value) & (mask)) >> (shift))
 
