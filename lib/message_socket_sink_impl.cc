@@ -76,7 +76,7 @@ namespace gr {
          */
         message_socket_sink_impl::~message_socket_sink_impl() {
             delete d_sock_addr;
-            shutdown(d_socket, 1);      // close transmissions
+            shutdown(d_socket, 1);
         }
 
         /**
