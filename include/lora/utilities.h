@@ -236,6 +236,21 @@ namespace gr {
         }
 
         /**
+         *  \brief  Swap nibbles of a byte array.
+         *
+         *  \param  array
+         *          Array of uint8_t bytes
+         *  \param  length
+         *          Length of the array
+         */
+        inline void swap_nibbles(uint8_t* array, uint32_t length) {
+            for(uint32_t i = 0; i < length; i++) {
+                array[i] = ((array[i] & 0x0f) << 4) | ((array[i] & 0xf0) >> 4);
+            }
+        }
+
+        /**
+         *  DEPRECATED
          *  \brief  Hamming(8,4) decoding by constructing a Syndrome matrix LUT for XORing on parity errors.
          *
          *  \param  v

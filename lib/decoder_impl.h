@@ -114,6 +114,7 @@ namespace gr {
 
                 fftplan d_q;                                ///< The LiquidDSP::FFT_Plan.
                 fftplan d_qr;                               ///< The LiquidDSP::FFT_Plan in reverse.
+                fec     d_h48_fec;                          ///< LiquidDSP Hamming 4/8 FEC.
 
                 uint32_t      d_decim_factor;               ///< The number of samples (data points) in each bin.
                 float         d_cfo_estimation;             ///< An estimation for the current Center Frequency Offset.
@@ -361,17 +362,6 @@ namespace gr {
                  *          Decoding for the header?
                  */
                 void hamming_decode_soft(bool is_header);
-
-                /**
-                 *  \brief  Reverse the nibbles for each byte in the given array.
-                 *          <br/>`MSB LSB` nibbles --> `LSB MSB`
-                 *
-                 *  \param  out_data
-                 *          The array of bytes to reverse the nibbles in.
-                 *  \param  len
-                 *          Length of said array.
-                 */
-                void nibble_reverse(uint8_t *out_data, const uint32_t len);
 
                 /**
                  *  \brief  Return the standard deviation for the given array.

@@ -1,6 +1,6 @@
 # Test suite: 'short_usrp'
 
-*Results on 2017-10-06 15:55:49.743840*
+*Results on 2017-12-18 14:36:18.604525*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 

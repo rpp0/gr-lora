@@ -107,6 +107,10 @@ namespace gr {
             d_q  = fft_create_plan(d_samples_per_symbol, &d_mult_hf[0], &d_fft[0],     LIQUID_FFT_FORWARD, 0);
             d_qr = fft_create_plan(d_number_of_bins,     &d_tmp[0],     &d_mult_hf[0], LIQUID_FFT_BACKWARD, 0);
 
+            // Hamming coding
+            fec_scheme fs = LIQUID_FEC_HAMMING84;
+            d_h48_fec = fec_create(fs, NULL);
+
             // Register gnuradio ports
             message_port_register_out(pmt::mp("frames"));
             message_port_register_out(pmt::mp("control"));
@@ -126,6 +130,7 @@ namespace gr {
 
             fft_destroy_plan(d_q);
             fft_destroy_plan(d_qr);
+            fec_destroy(d_h48_fec);
         }
 
         void decoder_impl::build_ideal_chirps(void) {
@@ -606,6 +611,7 @@ namespace gr {
             // We're done with these words
             if (is_header){
                 d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin() + 5u);
+                d_words_deshuffled.push_back(0);
             } else {
                 d_demodulated.clear();
             }
@@ -628,30 +634,30 @@ namespace gr {
 
         void decoder_impl::hamming_decode(bool is_header) {
             switch(d_phdr.cr) {
-                case 4: case 3: // Hamming(8,4) or Hamming(7,4)
-                    hamming_decode_soft(is_header);
+                case 4: case 3: { // Hamming(8,4) or Hamming(7,4)
+                    //hamming_decode_soft(is_header);
+                    uint32_t n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_phdr.cr));
+                    uint8_t decoded[n];
+
+                    fec_decode(d_h48_fec, n, &d_words_dewhitened[0], decoded);
+                    if(!is_header)
+                        swap_nibbles(decoded, n);
+                    d_decoded.assign(decoded, decoded+n);
                     break;
-                case 2: case 1: // Hamming(6,4) or Hamming(5,4)
+                }
+                case 2: case 1: { // Hamming(6,4) or Hamming(5,4)
                     // TODO: Report parity error to the user
                     extract_data_only(is_header);
                     break;
+                }
             }
 
             d_words_dewhitened.clear();
-
-            /*
-            fec_scheme fs = LIQUID_FEC_HAMMING84;
-            unsigned int n = ceil(d_words_dewhitened.size() * 4.0f / (4.0f + d_phdr.cr));
-
-            unsigned int k = fec_get_enc_msg_length(fs, n);
-            fec hamming = fec_create(fs, NULL);
-
-            fec_decode(hamming, n, &d_words_dewhitened[0], out_data);
-
-            d_words_dewhitened.clear();
-            fec_destroy(hamming);*/
         }
 
+        /**
+         * Deprecated
+         */
         void decoder_impl::hamming_decode_soft(bool is_header) {
             uint32_t len = d_words_dewhitened.size();
             for (uint32_t i = 0u; i < len; i += 2u) {
@@ -677,12 +683,6 @@ namespace gr {
                     d_decoded.push_back((d1 << 4u) | d2);
                 else
                     d_decoded.push_back((d2 << 4u) | d1);
-            }
-        }
-
-        void decoder_impl::nibble_reverse(uint8_t *out_data, const uint32_t len) {
-            for (uint32_t i = 0u; i < len; i++) {
-                out_data[i] = ((out_data[i] & 0x0f) << 4u) | ((out_data[i] & 0xf0) >> 4u);
             }
         }
 
