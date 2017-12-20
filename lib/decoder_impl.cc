@@ -493,7 +493,7 @@ namespace gr {
             const uint32_t word = bin_idx ^ (bin_idx >> 1u);
 
             #ifdef DEBUG
-                d_debug << gr::lora::to_bin(word, is_header ? d_sf - 2u : d_sf) << " " << bin_idx  << std::endl;
+                d_debug << gr::lora::to_bin(word, is_header ? d_sf - 2u : d_sf) << " " << word << " (bin " << bin_idx << ")"  << std::endl;
             #endif
             d_words.push_back(word);
 
@@ -533,8 +533,8 @@ namespace gr {
             }
 
             #ifdef DEBUG
+                print_interleave_matrix(d_debug, d_words, ppm);
                 print_vector_bin(d_debug, words_deinterleaved, "D", sizeof(uint8_t) * 8u);
-                //print_interleave_matrix(d_debug, d_words, ppm);
             #endif
 
             // Add to demodulated data
@@ -605,7 +605,6 @@ namespace gr {
 
             #ifdef DEBUG
                 print_vector_bin(d_debug, d_words_deshuffled, "S", sizeof(uint8_t)*8);
-                d_debug << std::endl;
             #endif
 
             // We're done with these words

@@ -25,7 +25,6 @@
 #include <string.h>
 #include <iomanip>
 
-#define REV_BITS
 #define MAC_CRC_SIZE 2u
 #define MAX_PWR_QUEUE_SIZE 4
 #define SM(value, shift, mask) (((value) << (shift)) & (mask))
@@ -33,6 +32,34 @@
 
 namespace gr {
     namespace lora {
+        static std::vector<std::string> term_colors = {
+            "\e[0m",
+            "\e[1m\e[91m",
+            "\e[1m\e[92m",
+            "\e[1m\e[93m",
+            "\e[1m\e[94m",
+            "\e[1m\e[95m",
+            "\e[1m\e[96m",
+            "\e[1m\e[97m",
+            "\e[1m\e[31m",
+            "\e[1m\e[32m",
+            "\e[1m\e[33m",
+            "\e[1m\e[34m",
+            "\e[1m\e[35m",
+            "\e[1m\e[36m"
+        };
+
+        /**
+         *  \brief  Wrap indices Python-like, i.e. array[wrap_index(-1, array_length)] gets the last element.
+         *
+         *  \param  i
+         *          Index of array
+         *  \param  n
+         *          Length of array
+         */
+        inline int32_t wrap_index(int32_t i, int32_t n) {
+            return ((i % n) + n) % n;
+        }
 
         /**
          *  \brief  Clamp given value in the given range.
@@ -86,7 +113,7 @@ namespace gr {
          */
         template <typename T>
         inline std::string to_bin(const T v, const uint32_t bitwidth) {
-            #ifdef REV_BITS
+            #ifdef LSB_FIRST
                 const uint64_t maxpow = bitwidth ? (1ull << (bitwidth - 1)) : 0;
                 uint64_t mask;
 
@@ -340,12 +367,16 @@ namespace gr {
                 out << "-";
             out << std::endl;
 
-            for(uint32_t i = 0; i < sf; i++) {
-                for(uint32_t j = 0; j < cr; j++) {
-                    out << to_bin(v[j], sf)[i];
+            out << "LSB" << std::endl;
+
+            for(int32_t i = sf-1; i >= 0; i--) {
+                for(int32_t j = 0; j < (int32_t)cr; j++) {
+                    out << term_colors[wrap_index(j-i, (int32_t)sf)+1] << to_bin(v[j], sf)[i] << term_colors[0];
                 }
                 out << std::endl;
             }
+
+            out << "MSB" << std::endl;
 
             for(uint32_t i = 0; i < cr; i++)
                 out << "-";
