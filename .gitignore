@@ -9,3 +9,5 @@ apps/test-suites
 *.sigmf-data
 *.sigmf-meta
 apps/test-trace.*
+python/lora_decoder.py
+apps/test-results-paper
