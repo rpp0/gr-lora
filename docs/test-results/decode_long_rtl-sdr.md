@@ -1,6 +1,6 @@
 # Test suite: 'decode_long_rtl-sdr'
 
-*Results on 2017-12-18 14:30:22.107068*
+*Results on 2017-12-21 08:34:37.280989*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
