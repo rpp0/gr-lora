@@ -20,13 +20,14 @@
 #
 
 from gnuradio import gr
+import gnuradio
 import lora
 
 class lora_receiver(gr.hier_block2):
     """
     docstring for block lora_receiver
     """
-    def __init__(self, in_samp_rate, center_freq, channel_list, sf, out_samp_rate, implicit, cr, crc):
+    def __init__(self, in_samp_rate, center_freq, channel_list, sf, out_samp_rate, implicit, cr, crc, conj=False):
         gr.hier_block2.__init__(self,
             "lora_receiver",  # Min, Max, gr.sizeof_<type>
             gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
@@ -38,8 +39,10 @@ class lora_receiver(gr.hier_block2):
         self.sf            = sf
         self.out_samp_rate = out_samp_rate
         self.channel_list  = channel_list
+        self.conj          = conj
 
         # Define blocks
+        self.block_conj = gnuradio.blocks.conjugate_cc()
         self.channelizer = lora.channelizer(in_samp_rate, out_samp_rate, center_freq, channel_list)
         self.decoder = lora.decoder(out_samp_rate, sf, implicit, cr, crc)
 
@@ -48,7 +51,11 @@ class lora_receiver(gr.hier_block2):
 
         # Connect blocks
         self.connect((self, 0), (self.channelizer, 0))
-        self.connect((self.channelizer, 0), (self.decoder, 0))
+        if self.conj:
+            self.connect((self.channelizer, 0), (self.block_conj, 0))
+            self.connect((self.block_conj, 0), (self.decoder, 0))
+        else:
+            self.connect((self.channelizer, 0), (self.decoder, 0))
         self.msg_connect((self.decoder, 'frames'), (self, 'frames'))
         self.msg_connect((self.decoder, 'control'), (self.channelizer, 'control'))
 
