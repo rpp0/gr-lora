@@ -4,7 +4,7 @@
   <key>lora_lora_receiver</key>
   <category>[LoRa]</category>
   <import>import lora</import>
-  <make>lora.lora_receiver($in_samp_rate, $center_freq, $channel_list, $sf, $out_samp_rate, $implicit, $cr, $crc, $conj)</make>
+  <make>lora.lora_receiver($in_samp_rate, $center_freq, $channel_list, $sf, $out_samp_rate, $implicit, $cr, $crc, $reduced_rate, $conj)</make>
 
   <callback>set_center_freq($freq)</callback>
   <callback>set_sf($sf)</callback>
@@ -88,6 +88,21 @@
       <option>
           <name>No</name>
           <key>False</key>
+      </option>
+  </param>
+
+  <param>
+      <name>Reduced rate</name>
+      <key>reduced_rate</key>
+      <type>enum</type>
+      <hide>$implicit.hide_imp</hide>
+      <option>
+          <name>No</name>
+          <key>False</key>
+      </option>
+      <option>
+          <name>Yes</name>
+          <key>True</key>
       </option>
   </param>
 

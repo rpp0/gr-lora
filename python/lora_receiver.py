@@ -27,7 +27,7 @@ class lora_receiver(gr.hier_block2):
     """
     docstring for block lora_receiver
     """
-    def __init__(self, in_samp_rate, center_freq, channel_list, sf, out_samp_rate, implicit, cr, crc, conj=False):
+    def __init__(self, in_samp_rate, center_freq, channel_list, sf, out_samp_rate, implicit, cr, crc, reduced_rate=False, conj=False):
         gr.hier_block2.__init__(self,
             "lora_receiver",  # Min, Max, gr.sizeof_<type>
             gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
@@ -44,7 +44,7 @@ class lora_receiver(gr.hier_block2):
         # Define blocks
         self.block_conj = gnuradio.blocks.conjugate_cc()
         self.channelizer = lora.channelizer(in_samp_rate, out_samp_rate, center_freq, channel_list)
-        self.decoder = lora.decoder(out_samp_rate, sf, implicit, cr, crc)
+        self.decoder = lora.decoder(out_samp_rate, sf, implicit, cr, crc, reduced_rate)
 
         # Messages
         self.message_port_register_hier_out('frames')

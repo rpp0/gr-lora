@@ -37,15 +37,15 @@
 namespace gr {
     namespace lora {
 
-        decoder::sptr decoder::make(float samp_rate, int sf, bool implicit, uint8_t cr, bool crc) {
+        decoder::sptr decoder::make(float samp_rate, int sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate) {
             return gnuradio::get_initial_sptr
-                   (new decoder_impl(samp_rate, sf, implicit, cr, crc));
+                   (new decoder_impl(samp_rate, sf, implicit, cr, crc, reduced_rate));
         }
 
         /**
          * The private constructor
          */
-        decoder_impl::decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc)
+        decoder_impl::decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate)
             : gr::sync_block("decoder",
                              gr::io_signature::make(1, -1, sizeof(gr_complex)),
                              gr::io_signature::make(0, 0, 0)),
@@ -67,6 +67,7 @@ namespace gr {
 
             d_bw                 = 125000u;
             d_implicit           = implicit;
+            d_reduced_rate       = reduced_rate;
             d_phdr.cr            = cr;
             d_phdr.has_mac_crc   = crc;
             d_samples_per_second = samp_rate;
@@ -473,7 +474,7 @@ namespace gr {
             return (d_number_of_bins - max_index) % d_number_of_bins;
         }
 
-        bool decoder_impl::demodulate(const gr_complex *samples, const bool is_header) {
+        bool decoder_impl::demodulate(const gr_complex *samples, const bool reduced_rate) {
             // DBGR_TIME_MEASUREMENT_TO_FILE("SFxx_method");
 
             // DBGR_START_TIME_MEASUREMENT(false, "only");
@@ -485,7 +486,7 @@ namespace gr {
             // DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
             // Header has additional redundancy
-            if (is_header || d_sf > 10) {
+            if (reduced_rate || d_sf > 10) {
                 bin_idx = std::lround(bin_idx / 4.0f) % d_number_of_bins_hdr;
             }
 
@@ -493,14 +494,14 @@ namespace gr {
             const uint32_t word = bin_idx ^ (bin_idx >> 1u);
 
             #ifdef DEBUG
-                d_debug << gr::lora::to_bin(word, is_header ? d_sf - 2u : d_sf) << " " << word << " (bin " << bin_idx << ")"  << std::endl;
+                d_debug << gr::lora::to_bin(word, reduced_rate ? d_sf - 2u : d_sf) << " " << word << " (bin " << bin_idx << ")"  << std::endl;
             #endif
             d_words.push_back(word);
 
             // Look for 4+cr symbols and stop
             if (d_words.size() == (4u + d_phdr.cr)) {
                 // Deinterleave
-                deinterleave((is_header || d_sf > 10) ? d_sf - 2u : d_sf);
+                deinterleave((reduced_rate || d_sf > 10) ? d_sf - 2u : d_sf);
 
                 return true; // Signal that a block is ready for decoding
             }
@@ -845,7 +846,7 @@ namespace gr {
                         d_payload_symbols = 0;
                         //d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin() + 7u); // Test for SF 8 with header
                         d_payload_length = (int32_t)(d_demodulated.size() / 2);
-                    } else if (demodulate(input, false)) {
+                    } else if (demodulate(input, d_implicit && d_reduced_rate)) {
                         if(!d_implicit)
                             d_payload_symbols -= (4u + d_phdr.cr);
                     }
@@ -857,6 +858,10 @@ namespace gr {
 
                         d_state = gr::lora::DecoderState::DETECT;
                         d_decoded.clear();
+                        d_words.clear();
+                        d_words_dewhitened.clear();
+                        d_words_deshuffled.clear();
+                        d_demodulated.clear();
                     }
 
                     consume_each((int32_t)d_samples_per_symbol+d_fine_sync);
