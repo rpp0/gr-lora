@@ -120,7 +120,8 @@ namespace gr {
                 uint32_t      d_decim_factor;               ///< The number of samples (data points) in each bin.
                 float         d_cfo_estimation;             ///< An estimation for the current Center Frequency Offset.
                 double        d_dt;                         ///< Indicates how fast the frequency changes in a symbol (chirp).
-                int32_t d_fine_sync;
+                bool    d_enable_fine_sync;                 ///< Enable drift correction
+                int32_t d_fine_sync;                        ///< Amount of drift correction to apply for next symbol
 
                 /**
                  *  \brief  TODO
@@ -415,7 +416,7 @@ namespace gr {
                  *  \param  sf
                  *          The expected spreqding factor.
                  */
-                decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate);
+                decoder_impl(float samp_rate, uint32_t bandwidth, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate, bool disable_drift_correction);
 
                 /**
                  *  Default destructor.

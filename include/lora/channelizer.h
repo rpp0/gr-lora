@@ -46,7 +46,7 @@ namespace gr {
        * class. lora::channelizer::make is the public interface for
        * creating new instances.
        */
-      static sptr make(float in_samp_rate, float out_samp_rate, float center_freq, std::vector<float> channel_list);
+      static sptr make(float samp_rate, float center_freq, std::vector<float> channel_list, uint32_t bandwidth, uint32_t decimation);
     };
 
   } // namespace lora

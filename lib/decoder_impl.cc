@@ -37,15 +37,15 @@
 namespace gr {
     namespace lora {
 
-        decoder::sptr decoder::make(float samp_rate, int sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate) {
+        decoder::sptr decoder::make(float samp_rate, uint32_t bandwidth, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate, bool disable_drift_correction) {
             return gnuradio::get_initial_sptr
-                   (new decoder_impl(samp_rate, sf, implicit, cr, crc, reduced_rate));
+                   (new decoder_impl(samp_rate, bandwidth, sf, implicit, cr, crc, reduced_rate, disable_drift_correction));
         }
 
         /**
          * The private constructor
          */
-        decoder_impl::decoder_impl(float samp_rate, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate)
+        decoder_impl::decoder_impl(float samp_rate, uint32_t bandwidth, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate, bool disable_drift_correction)
             : gr::sync_block("decoder",
                              gr::io_signature::make(1, -1, sizeof(gr_complex)),
                              gr::io_signature::make(0, 0, 0)),
@@ -65,7 +65,7 @@ namespace gr {
                 d_dbg.attach();
             #endif
 
-            d_bw                 = 125000u;
+            d_bw                 = bandwidth;
             d_implicit           = implicit;
             d_reduced_rate       = reduced_rate;
             d_phdr.cr            = cr;
@@ -87,12 +87,16 @@ namespace gr {
             d_energy_threshold   = 0.0f;
             d_whitening_sequence = gr::lora::prng_payload;
             d_fine_sync = 0;
+            d_enable_fine_sync = !disable_drift_correction;
             set_output_multiple(2 * d_samples_per_symbol);
 
             std::cout << "Bits (nominal) per symbol: \t"      << d_bits_per_symbol    << std::endl;
             std::cout << "Bins per symbol: \t"      << d_number_of_bins     << std::endl;
             std::cout << "Samples per symbol: \t"   << d_samples_per_symbol << std::endl;
             std::cout << "Decimation: \t\t"         << d_decim_factor       << std::endl;
+            if(!d_enable_fine_sync) {
+                std::cout << "Warning: clock drift correction disabled" << std::endl;
+            }
             if(d_implicit) {
                 std::cout << "CR: \t\t"         << (int)d_phdr.cr       << std::endl;
                 std::cout << "CRC: \t\t"         << (int)d_phdr.has_mac_crc       << std::endl;
@@ -481,7 +485,8 @@ namespace gr {
 
             uint32_t bin_idx = max_frequency_gradient_idx(samples);
             //uint32_t bin_idx = get_shift_fft(samples);
-            fine_sync(samples, bin_idx, std::max(d_decim_factor / 4u, 2u));
+            if(d_enable_fine_sync)
+                fine_sync(samples, bin_idx, std::max(d_decim_factor / 4u, 2u));
 
             // DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 

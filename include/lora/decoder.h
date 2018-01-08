@@ -702,7 +702,7 @@ namespace gr {
        * class. lora::decoder::make is the public interface for
        * creating new instances.
        */
-      static sptr make(float samp_rate, int sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate);
+      static sptr make(float samp_rate, uint32_t bandwidth, uint8_t sf, bool implicit, uint8_t cr, bool crc, bool reduced_rate, bool disable_drift_correction);
 
       virtual void set_sf(uint8_t sf) = 0;
       virtual void set_samp_rate(float samp_rate) = 0;

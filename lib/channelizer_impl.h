@@ -33,14 +33,14 @@ namespace gr {
     class channelizer_impl : public channelizer {
      private:
          gr::filter::freq_xlating_fir_filter_ccf::sptr d_xlating_fir_filter;
-         gr::filter::fractional_resampler_cc::sptr d_resampler;
+         //gr::filter::fractional_resampler_cc::sptr d_resampler;
          std::vector<float> d_lpf;
          float d_cfo;
          uint32_t d_freq_offset;
          gr::lora::controller::sptr d_controller;
 
      public:
-      channelizer_impl(float in_samp_rate, float out_samp_rate, float center_freq, std::vector<float> channel_list);
+      channelizer_impl(float samp_rate, float center_freq, std::vector<float> channel_list, uint32_t bandwidth, uint32_t decimation);
       ~channelizer_impl();
       void apply_cfo(float cfo);
 
