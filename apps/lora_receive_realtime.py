@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Lora Receive Realtime
-# Generated: Wed Jan  3 10:08:54 2018
+# Generated: Mon Jan  8 15:32:44 2018
 ##################################################
 
 if __name__ == '__main__':
@@ -40,13 +40,14 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         ##################################################
         self.sf = sf = 11
         self.samp_rate = samp_rate = 1e6
-        self.bw = bw = 125e3
+        self.bw = bw = 125000
         self.target_freq = target_freq = 868.1e6
-        self.symbols_per_sec = symbols_per_sec = bw / (2**sf)
-        self.internal_sampling_rate = internal_sampling_rate = 5e5
+        self.symbols_per_sec = symbols_per_sec = float(bw) / (2**sf)
         self.firdes_tap = firdes_tap = firdes.low_pass(1, samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)
+        self.downlink = downlink = False
+        self.decimation = decimation = 1
         self.capture_freq = capture_freq = 868e6
-        self.bitrate = bitrate = sf * (1 / (2**sf / bw))
+        self.bitrate = bitrate = sf * (1 / (2**sf / float(bw)))
 
         ##################################################
         # Blocks
@@ -81,7 +82,7 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
         self.osmosdr_source_0.set_bandwidth(0, 0)
 
         self.lora_message_socket_sink_0 = lora.message_socket_sink('127.0.0.1', 40868, 0)
-        self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, ([target_freq]), sf, internal_sampling_rate, False, 4, True)
+        self.lora_lora_receiver_0 = lora.lora_receiver(1e6, capture_freq, ([target_freq]), bw, sf, False, 4, True, False, downlink, decimation, False, False)
 
         ##################################################
         # Connections
@@ -95,9 +96,9 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
 
     def set_sf(self, sf):
         self.sf = sf
-        self.set_symbols_per_sec(self.bw / (2**self.sf))
+        self.set_symbols_per_sec(float(self.bw) / (2**self.sf))
         self.lora_lora_receiver_0.set_sf(self.sf)
-        self.set_bitrate(self.sf * (1 / (2**self.sf / self.bw)))
+        self.set_bitrate(self.sf * (1 / (2**self.sf / float(self.bw))))
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -113,9 +114,9 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
 
     def set_bw(self, bw):
         self.bw = bw
-        self.set_symbols_per_sec(self.bw / (2**self.sf))
+        self.set_symbols_per_sec(float(self.bw) / (2**self.sf))
         self.set_firdes_tap(firdes.low_pass(1, self.samp_rate, self.bw, 10000, firdes.WIN_HAMMING, 6.67))
-        self.set_bitrate(self.sf * (1 / (2**self.sf / self.bw)))
+        self.set_bitrate(self.sf * (1 / (2**self.sf / float(self.bw))))
 
     def get_target_freq(self):
         return self.target_freq
@@ -129,18 +130,23 @@ class lora_receive_realtime(grc_wxgui.top_block_gui):
     def set_symbols_per_sec(self, symbols_per_sec):
         self.symbols_per_sec = symbols_per_sec
 
-    def get_internal_sampling_rate(self):
-        return self.internal_sampling_rate
-
-    def set_internal_sampling_rate(self, internal_sampling_rate):
-        self.internal_sampling_rate = internal_sampling_rate
-        self.lora_lora_receiver_0.set_out_samp_rate(self.internal_sampling_rate)
-
     def get_firdes_tap(self):
         return self.firdes_tap
 
     def set_firdes_tap(self, firdes_tap):
         self.firdes_tap = firdes_tap
+
+    def get_downlink(self):
+        return self.downlink
+
+    def set_downlink(self, downlink):
+        self.downlink = downlink
+
+    def get_decimation(self):
+        return self.decimation
+
+    def set_decimation(self, decimation):
+        self.decimation = decimation
 
     def get_capture_freq(self):
         return self.capture_freq

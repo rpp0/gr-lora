@@ -105,7 +105,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>sf * (1 / (2**sf / bw))</value>
+      <value>sf * (1 / (2**sf / float(bw)))</value>
     </param>
   </block>
   <block>
@@ -132,7 +132,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>125e3</value>
+      <value>125000</value>
     </param>
   </block>
   <block>
@@ -228,7 +228,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(376, 13)</value>
+      <value>(384, 12)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -267,7 +267,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>bw / (2**sf)</value>
+      <value>float(bw) / (2**sf)</value>
     </param>
   </block>
   <block>
@@ -410,8 +410,16 @@
   <block>
     <key>lora_lora_receiver</key>
     <param>
+      <key>bandwidth</key>
+      <value>bw</value>
+    </param>
+    <param>
       <key>alias</key>
       <value></value>
+    </param>
+    <param>
+      <key>crc</key>
+      <value>True</value>
     </param>
     <param>
       <key>center_freq</key>
@@ -422,16 +430,32 @@
       <value>[target_freq]</value>
     </param>
     <param>
+      <key>cr</key>
+      <value>4</value>
+    </param>
+    <param>
       <key>comment</key>
       <value></value>
+    </param>
+    <param>
+      <key>conj</key>
+      <value>False</value>
     </param>
     <param>
       <key>affinity</key>
       <value></value>
     </param>
     <param>
-      <key>threshold</key>
-      <value>0.002</value>
+      <key>decimation</key>
+      <value>10</value>
+    </param>
+    <param>
+      <key>disable_channelization</key>
+      <value>False</value>
+    </param>
+    <param>
+      <key>disable_drift_correction</key>
+      <value>False</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -439,7 +463,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(416, 164)</value>
+      <value>(416, 156)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -450,6 +474,10 @@
       <value>lora_lora_receiver_0</value>
     </param>
     <param>
+      <key>implicit</key>
+      <value>False</value>
+    </param>
+    <param>
       <key>maxoutbuf</key>
       <value>0</value>
     </param>
@@ -458,16 +486,16 @@
       <value>0</value>
     </param>
     <param>
-      <key>out_samp_rate</key>
-      <value>1000000</value>
+      <key>reduced_rate</key>
+      <value>False</value>
     </param>
     <param>
-      <key>in_samp_rate</key>
+      <key>samp_rate</key>
       <value>samp_rate</value>
     </param>
     <param>
       <key>sf</key>
-      <value>7</value>
+      <value>sf</value>
     </param>
   </block>
   <block>
@@ -510,7 +538,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(416, 276)</value>
+      <value>(416, 300)</value>
     </param>
     <param>
       <key>_rotation</key>

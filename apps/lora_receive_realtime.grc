@@ -105,7 +105,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>sf * (1 / (2**sf / bw))</value>
+      <value>sf * (1 / (2**sf / float(bw)))</value>
     </param>
   </block>
   <block>
@@ -132,7 +132,7 @@
     </param>
     <param>
       <key>value</key>
-      <value>125e3</value>
+      <value>125000</value>
     </param>
   </block>
   <block>
@@ -166,6 +166,64 @@
     <key>variable</key>
     <param>
       <key>comment</key>
+      <value>The decimation determines the oversampling rate.
+A sample rate of 1e6 and decimation of 1 equals
+8 times oversampling, a decimation of 2 is 4 times
+oversampling, and so on. Set higher decimation
+for better performance, but worse accuracy.</value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(640, 76)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>decimation</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>1</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
+      <value></value>
+    </param>
+    <param>
+      <key>_enabled</key>
+      <value>True</value>
+    </param>
+    <param>
+      <key>_coordinate</key>
+      <value>(384, 76)</value>
+    </param>
+    <param>
+      <key>_rotation</key>
+      <value>0</value>
+    </param>
+    <param>
+      <key>id</key>
+      <value>downlink</value>
+    </param>
+    <param>
+      <key>value</key>
+      <value>False</value>
+    </param>
+  </block>
+  <block>
+    <key>variable</key>
+    <param>
+      <key>comment</key>
       <value></value>
     </param>
     <param>
@@ -187,36 +245,6 @@
     <param>
       <key>value</key>
       <value>firdes.low_pass(1, samp_rate, bw, 10000, firdes.WIN_HAMMING, 6.67)</value>
-    </param>
-  </block>
-  <block>
-    <key>variable</key>
-    <param>
-      <key>comment</key>
-      <value>The internal sampling rate determines the
-oversampling rate. 1e6 is 8 times oversampling,
-5e5 is 4 times oversampling, and so on. Set higher
-for better accuracy, but worse performance.</value>
-    </param>
-    <param>
-      <key>_enabled</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>_coordinate</key>
-      <value>(640, 76)</value>
-    </param>
-    <param>
-      <key>_rotation</key>
-      <value>0</value>
-    </param>
-    <param>
-      <key>id</key>
-      <value>internal_sampling_rate</value>
-    </param>
-    <param>
-      <key>value</key>
-      <value>5e5</value>
     </param>
   </block>
   <block>
@@ -297,7 +325,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>value</key>
-      <value>bw / (2**sf)</value>
+      <value>float(bw) / (2**sf)</value>
     </param>
   </block>
   <block>
@@ -312,7 +340,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(280, 77)</value>
+      <value>(280, 76)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -330,8 +358,16 @@ for better accuracy, but worse performance.</value>
   <block>
     <key>lora_lora_receiver</key>
     <param>
+      <key>bandwidth</key>
+      <value>bw</value>
+    </param>
+    <param>
       <key>alias</key>
       <value></value>
+    </param>
+    <param>
+      <key>crc</key>
+      <value>True</value>
     </param>
     <param>
       <key>center_freq</key>
@@ -342,16 +378,32 @@ for better accuracy, but worse performance.</value>
       <value>[target_freq]</value>
     </param>
     <param>
+      <key>cr</key>
+      <value>4</value>
+    </param>
+    <param>
       <key>comment</key>
       <value></value>
+    </param>
+    <param>
+      <key>conj</key>
+      <value>downlink</value>
     </param>
     <param>
       <key>affinity</key>
       <value></value>
     </param>
     <param>
-      <key>threshold</key>
-      <value>0.002</value>
+      <key>decimation</key>
+      <value>decimation</value>
+    </param>
+    <param>
+      <key>disable_channelization</key>
+      <value>False</value>
+    </param>
+    <param>
+      <key>disable_drift_correction</key>
+      <value>False</value>
     </param>
     <param>
       <key>_enabled</key>
@@ -359,7 +411,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(392, 172)</value>
+      <value>(392, 212)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -370,6 +422,10 @@ for better accuracy, but worse performance.</value>
       <value>lora_lora_receiver_0</value>
     </param>
     <param>
+      <key>implicit</key>
+      <value>False</value>
+    </param>
+    <param>
       <key>maxoutbuf</key>
       <value>0</value>
     </param>
@@ -378,12 +434,12 @@ for better accuracy, but worse performance.</value>
       <value>0</value>
     </param>
     <param>
-      <key>out_samp_rate</key>
-      <value>internal_sampling_rate</value>
+      <key>reduced_rate</key>
+      <value>False</value>
     </param>
     <param>
-      <key>in_samp_rate</key>
-      <value>samp_rate</value>
+      <key>samp_rate</key>
+      <value>1e6</value>
     </param>
     <param>
       <key>sf</key>
@@ -392,14 +448,6 @@ for better accuracy, but worse performance.</value>
   </block>
   <block>
     <key>lora_message_socket_sink</key>
-    <param>
-      <key>loraphy</key>
-      <value>True</value>
-    </param>
-    <param>
-      <key>loratap</key>
-      <value>False</value>
-    </param>
     <param>
       <key>alias</key>
       <value></value>
@@ -418,7 +466,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(640, 220)</value>
+      <value>(640, 236)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -431,6 +479,10 @@ for better accuracy, but worse performance.</value>
     <param>
       <key>ip</key>
       <value>127.0.0.1</value>
+    </param>
+    <param>
+      <key>layer</key>
+      <value>0</value>
     </param>
     <param>
       <key>port</key>
@@ -661,7 +713,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(24, 140)</value>
+      <value>(24, 188)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -1876,7 +1928,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(16, 340)</value>
+      <value>(16, 388)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -2071,7 +2123,7 @@ for better accuracy, but worse performance.</value>
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(392, 292)</value>
+      <value>(392, 340)</value>
     </param>
     <param>
       <key>_rotation</key>
