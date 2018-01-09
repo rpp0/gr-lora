@@ -108,6 +108,7 @@ Receivers: HackRF One, USRP B201, RTL-SDR
 
 ## Changelog
 
+- Version 0.7  : Added support for downlink signals, reduced rate mode when using implicit header and arbitrary bandwidths (experimental).
 - Version 0.6.2: Improved Message Socket Sink and higher sensitivity to low-power signals.
 - Version 0.6.1: Minor bug fixes and improvements.
 - Version 0.6  : Significantly increased decoding accuracy and clock drift correction.
