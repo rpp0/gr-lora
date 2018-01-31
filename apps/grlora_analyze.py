@@ -26,8 +26,6 @@ def iphase(cpx):
     return np.unwrap(np.angle(cpx))
 
 def ifreq(cpx):
-    global fs
-
     iphase_signal = iphase(cpx)
     return np.diff(iphase_signal)
 

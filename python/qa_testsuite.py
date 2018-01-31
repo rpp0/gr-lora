@@ -16,6 +16,7 @@ from gnuradio import gr, gr_unittest, blocks, filter
 from gnuradio.filter import firdes
 from sigmf.sigmffile import SigMFFile
 from lora.loraconfig import LoRaConfig
+from lora.lorasocket import LoRaUDPServer
 
 Test = collections.namedtuple('Test', ['payload', 'times'])
 TestResult = collections.namedtuple('TestResult', ['decoded_data', 'lora_config', 'test'])
@@ -151,15 +152,8 @@ class qa_testsuite():
         """
         Determine installed test suites and setup socket server for receiving payloads decoded by gr-lora.
         """
-        # Variables
-        self.host = "127.0.0.1"
-        self.port = 40868
-
-        # Setup socket
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((self.host, self.port))
-        self.server.settimeout(10)
+        # Setup UDP server to capture decoded data
+        self.server = LoRaUDPServer(ip="127.0.0.1", port=40868)
 
         # Determine test suites directory if needed
         if path is None:
@@ -177,27 +171,6 @@ class qa_testsuite():
             self.test_suites = [x for x in os.listdir(self.test_suites_directory) if os.path.isdir(os.path.join(self.test_suites_directory, x))]
         else:
             print("No test suites found! Skipping...")
-
-    def __del__(self):
-        self.server.close()
-
-    def get_payloads(self, number):
-        """
-        Returns array of <number> hexadecimal LoRa payload datagrams received on a socket.
-        """
-        total_data = []
-        data = ''
-
-        for i in range(number):
-            try:
-                data = self.server.recvfrom(65535)[0]
-                if data:
-                    total_data.append(binascii.hexlify(data))
-            except Exception as e:
-                print(e)
-                pass
-
-        return total_data
 
     def run(self, suites_to_run, pause=False, write_output=True):
         for test_suite in self.test_suites:
@@ -264,7 +237,7 @@ class qa_testsuite():
                 tb.start()
                 tb.wait()
 
-                decoded_data = self.get_payloads(times)  # Output from the flowgraph
+                decoded_data = self.server.get_payloads(times)  # Output from the flowgraph
                 summary.add(TestResult(decoded_data=decoded_data, lora_config=lora_config, test=test), print_intermediate=True)
             # Finally, export the result for the suite
             summary.export_summary(path=self.reports_directory, write_output=write_output)
