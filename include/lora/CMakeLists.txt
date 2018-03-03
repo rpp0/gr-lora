@@ -30,5 +30,6 @@ install(FILES
     loratap.h
     loraphy.h
     utilities.h
-    controller.h DESTINATION include/lora
+    controller.h
+    message_socket_source.h DESTINATION include/lora
 )
