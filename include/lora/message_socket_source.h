@@ -703,7 +703,7 @@ namespace gr {
        * class. lora::message_socket_source::make is the public interface for
        * creating new instances.
        */
-      static sptr make(const std::string& addr, uint16_t port, size_t mtu);
+      static sptr make(const std::string& addr, uint16_t port, size_t mtu, size_t payload_len);
     };
 
   } // namespace lora

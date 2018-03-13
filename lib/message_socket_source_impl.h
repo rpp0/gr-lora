@@ -22,6 +22,9 @@
 #define INCLUDED_LORA_MESSAGE_SOCKET_SOURCE_IMPL_H
 
 #include <lora/message_socket_source.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <boost/thread.hpp>
 
 namespace gr
 {
@@ -34,10 +37,17 @@ namespace gr
       const std::string d_addr;
       const uint16_t d_udp_port;
       const size_t d_mtu;
+      const size_t d_payload_len;
+      bool d_running;
+      int d_layer;
+      boost::shared_ptr<boost::thread> d_thread;
+
+
+      void msg_receive_udp();
 
     public:
       message_socket_source_impl (const std::string& addr, uint16_t port,
-				  size_t mtu);
+				  size_t mtu, size_t payload_len);
       ~message_socket_source_impl ();
     };
 
