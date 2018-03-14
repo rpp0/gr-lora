@@ -39,7 +39,6 @@ namespace gr
       const size_t d_mtu;
       const size_t d_payload_len;
       bool d_running;
-      int d_layer;
       boost::shared_ptr<boost::thread> d_thread;
 
 

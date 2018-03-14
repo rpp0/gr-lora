@@ -52,8 +52,7 @@ namespace gr
 	    d_udp_port (port),
 	    d_mtu (mtu),
 	    d_payload_len (payload_len),
-	    d_running (true),
-	    d_layer (0)
+	    d_running (true)
     {
       message_port_register_out (pmt::mp ("out"));
       boost::shared_ptr<boost::thread> (
@@ -73,6 +72,7 @@ namespace gr
       ssize_t ret;
       uint8_t *buf;
       uint32_t bytes_num;
+      pmt::pmt_t lora_tap;
 
       if ((sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 	perror ("opening UDP socket");
@@ -104,8 +104,9 @@ namespace gr
 	ret = recvfrom (sock, buf, d_mtu, 0, &client_addr, &client_addr_len);
 	if (ret > 0) {
 	  bytes_num = (uint32_t) ret;
-	  if (bytes_num == (sizeof(loratap_header_t)+sizeof(loraphy_header_t)+ d_payload_len)) {
-	    pmt::pmt_t lora_tap;
+	  if (bytes_num
+	      == (sizeof(loratap_header_t) + sizeof(loraphy_header_t)
+		  + d_payload_len)) {
 	    lora_tap = pmt::make_blob (buf, bytes_num);
 	    message_port_pub (pmt::mp ("out"), lora_tap);
 	  }

@@ -686,9 +686,13 @@ namespace gr {
   namespace lora {
 
     /*!
-     * \brief <+description of block+>
+     * \brief Message socket source block , using UDP
      * \ingroup lora
      *
+     * \details This block creates a UDP server at a specific port
+     * and pass received UDP datagrams as a pmt::pmt_t blob message.
+     * The datagrams sent to the UDP server always contain valid
+     * LoRaTAP header, LoRaPHY header and payload
      */
     class LORA_API message_socket_source : virtual public gr::block
     {
@@ -696,12 +700,10 @@ namespace gr {
       typedef boost::shared_ptr<message_socket_source> sptr;
 
       /*!
-       * \brief Return a shared_ptr to a new instance of lora::message_socket_source.
-       *
-       * To avoid accidental use of raw pointers, lora::message_socket_source's
-       * constructor is in a private implementation
-       * class. lora::message_socket_source::make is the public interface for
-       * creating new instances.
+       * \param addr the address to bind the UDP socket
+       * \param port the UDP port to wait for packets
+       * \param mtu the maximum MTU. Used to pre-allocate a maximum packet size
+       * \param payload_len the payload length in bytes
        */
       static sptr make(const std::string& addr, uint16_t port, size_t mtu, size_t payload_len);
     };
