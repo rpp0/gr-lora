@@ -31,27 +31,21 @@ namespace gr
   namespace lora
   {
 
-    class message_socket_source_impl : public message_socket_source
-    {
+    class message_socket_source_impl : public message_socket_source {
     private:
-      const std::string d_addr;
-      const uint16_t d_udp_port;
-      const size_t d_mtu;
-      const size_t d_payload_len;
-      bool d_running;
-      boost::shared_ptr<boost::thread> d_thread;
+        const std::string d_addr;
+        const uint16_t d_udp_port;
+        bool d_running;
+        boost::shared_ptr<boost::thread> d_thread;
 
-
-      void msg_receive_udp();
+        void msg_receive_udp();
 
     public:
-      message_socket_source_impl (const std::string& addr, uint16_t port,
-				  size_t mtu, size_t payload_len);
-      ~message_socket_source_impl ();
+        message_socket_source_impl(const std::string& addr, uint16_t port);
+        ~message_socket_source_impl();
     };
 
   } // namespace lora
 } // namespace gr
 
 #endif /* INCLUDED_LORA_MESSAGE_SOCKET_SOURCE_IMPL_H */
-
