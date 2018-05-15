@@ -21,7 +21,8 @@ install(FILES
     lora_receiver.xml
     lora_message_file_sink.xml
     lora_message_socket_sink.xml
-    lora_message_socket_source.xml DESTINATION share/gnuradio/grc/blocks
+    lora_message_socket_source.xml
+    lora_encoder.xml DESTINATION share/gnuradio/grc/blocks
 )
 
 if(HAS_MONGODB)

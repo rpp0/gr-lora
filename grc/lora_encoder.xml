@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<block>
+  <name>LoRa Transmitter</name>
+  <key>lora_encoder</key>
+  <category>[LoRa]</category>
+  <import>import lora</import>
+  <make>lora.encoder()</make>
+
+  <sink>
+    <name>in</name>
+    <type>message</type>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+</block>

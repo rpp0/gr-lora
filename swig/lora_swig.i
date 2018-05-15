@@ -14,6 +14,7 @@
 #include "lora/channelizer.h"
 #include "lora/controller.h"
 #include "lora/message_socket_source.h"
+#include "lora/encoder.h"
 %}
 
 
@@ -29,3 +30,5 @@ GR_SWIG_BLOCK_MAGIC2(lora, channelizer);
 GR_SWIG_BLOCK_MAGIC2(lora, controller);
 %include "lora/message_socket_source.h"
 GR_SWIG_BLOCK_MAGIC2(lora, message_socket_source);
+%include "lora/encoder.h"
+GR_SWIG_BLOCK_MAGIC2(lora, encoder);

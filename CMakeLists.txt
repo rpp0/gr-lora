@@ -26,6 +26,9 @@ option(DEBUG "Print debug output" OFF)
 if(DEBUG)
     message("-- Enabling debug mode")
     add_definitions(-DDEBUG)
+    if(CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
+        add_definitions(-g)
+    endif()
 endif(DEBUG)
 
 ########################################################################

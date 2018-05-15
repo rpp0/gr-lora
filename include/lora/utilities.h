@@ -407,6 +407,12 @@ namespace gr {
             return offset;
         }
 
+        inline void whiten(uint8_t* input, const uint8_t* sequence, uint32_t length) {
+            for(uint32_t i = 0; i < length; i++) {
+                input[i] = input[i] ^ sequence[i];
+            }
+        }
+
     }
 }
 
