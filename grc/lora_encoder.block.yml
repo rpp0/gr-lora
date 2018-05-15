@@ -1,0 +1,17 @@
+id: lora_encoder
+label: LoRa Transmitter
+category: '[LoRa]'
+
+inputs:
+-   domain: message
+    id: in
+
+outputs:
+-   domain: stream
+    dtype: complex
+
+templates:
+    imports: import lora
+    make: lora.encoder()
+
+file_format: 1

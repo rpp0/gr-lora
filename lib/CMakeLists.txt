@@ -30,6 +30,7 @@ list(APPEND lora_sources
     controller_impl.cc
     debugger.cc
     message_socket_source_impl.cc
+    encoder_impl.cc
 )
 
 set(lora_sources "${lora_sources}" PARENT_SCOPE)
