@@ -37,7 +37,10 @@ namespace gr {
          fec d_h48_fec;
          uint32_t d_samples_per_second;
          uint32_t d_bw;
+         bool d_explicit;
+         bool d_reduced_rate;
          double d_dt;
+         uint8_t d_osr;
          uint16_t d_num_preamble_symbols;
          std::vector<gr_complex> d_sample_buffer;
 
@@ -50,7 +53,8 @@ namespace gr {
       bool parse_packet_conf(loraconf_t& conf, uint8_t* packet, uint32_t packet_len);
       void transmit_packet(loraconf_t& conf, uint8_t* packet);
       void shuffle(uint8_t *data, uint32_t data_len, const uint8_t *shuffle_pattern);
-      void interleave(uint16_t *symbols, uint8_t* data, uint32_t data_len, uint8_t sf, uint8_t cr);
+      uint32_t interleave_block(uint16_t *symbols, uint8_t* data, uint8_t sf, uint8_t cr, bool reduced_rate);
+      void nibble_swap(uint8_t* encoded, uint32_t length);
     };
 
   } // namespace lora
