@@ -61,6 +61,16 @@ namespace gr {
             return ((i % n) + n) % n;
         }
 
+        inline uint32_t gray_decode(uint32_t x) {
+            for (uint32_t bit = 1u << 31; bit >= 2; bit >>= 1) {
+                if (x & bit) {
+                    x ^= bit >> 1;
+                }
+            }
+
+            return x;
+        }
+
         /**
          *  \brief  Clamp given value in the given range.
          *

@@ -47,12 +47,15 @@ namespace gr {
         message_port_register_in(pmt::mp("in"));
         set_msg_handler(pmt::mp("in"), boost::bind(&encoder_impl::handle_loratap, this, _1));
 
-        set_output_multiple(4096);
+        set_output_multiple(pow(2,16));
 
         // Initialize variables
-        d_samples_per_second = 125000;
+        d_osr = 4;
+        d_samples_per_second = 125000*d_osr;
         d_num_preamble_symbols = 8;
         d_bw = 125000;
+        d_explicit = true;
+        d_reduced_rate = false;
 
         d_dt = 1.0f / d_samples_per_second;
         d_sample_buffer.reserve(d_samples_per_second); // Allocate for one second of samples
@@ -70,12 +73,11 @@ namespace gr {
             const double f0 = (d_bw / 2.0);
             const double pre_dir = 2.0 * M_PI;
             double t;
-            gr_complex cmx = gr_complex(1.0f, 1.0f);
 
             std::vector<gr_complex> chirp(samples_per_symbol*2);
             for (uint32_t i = 0u; i < samples_per_symbol; i++) {
                 t = d_dt * i;
-                gr_complex sample = cmx * gr_expj(pre_dir * t * (f0 + T * t) * -1.0f);
+                gr_complex sample = gr_expj(pre_dir * t * (f0 + T * t) * -1.0f);
                 chirp[i] = sample;
                 chirp[i+samples_per_symbol] = sample;
             }
@@ -100,8 +102,6 @@ namespace gr {
     }
 
     bool encoder_impl::parse_packet_conf(loraconf_t& conf, uint8_t* packet, uint32_t packet_len) {
-        uint32_t offset = 0;
-
         if(packet_len <= sizeof(loraconf_t)) {
             return false;
         }
@@ -117,8 +117,6 @@ namespace gr {
      */
     int encoder_impl::work(int noutput_items, gr_vector_const_void_star &input_items, gr_vector_void_star &output_items) {
         gr_complex* out = (gr_complex*)output_items[0];
-
-        std::cout << "We can transmit " << noutput_items << " samples" << std::endl;
 
         // Temporary         ve  pa      le              fq  bw  sf  pr  mr  cr  sn  sy  H1  H1  H1
         char test_pkt[] = "\x00\x00\x12\x00\x00\xa1\xbc\x33\x01\x07\x00\x00\x00\x00\x12\x17\x91\xa0\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x20\x21\x22\xb8\x73";
@@ -174,7 +172,10 @@ namespace gr {
         }
     }
 
-    void encoder_impl::interleave(uint16_t *symbols, uint8_t* data, uint32_t data_len, uint8_t sf, uint8_t cr) {
+    uint32_t encoder_impl::interleave_block(uint16_t *symbols, uint8_t* data, uint8_t sf, uint8_t cr, bool reduced_rate) {
+        if(reduced_rate)
+            sf -= 2;
+
         // Determine symbols for this block
         for(uint8_t symbol = 0; symbol < 4+cr; symbol++) {
             for(int8_t bit = sf-1; bit >= 0; bit--) {
@@ -191,44 +192,100 @@ namespace gr {
         // Rotate to interleave
         std::vector<uint16_t> symbols_v(symbols, symbols + (4+cr));
         print_interleave_matrix(std::cout, symbols_v, sf);
+        print_vector(std::cout, symbols, "Chips", 4+cr, sf);
+
+        // Determine bins
+        std::cout << "Bins: ";
+        for(uint8_t symbol = 0; symbol < 4+cr; symbol++) {
+            symbols[symbol] = gray_decode(symbols[symbol]);
+            if(reduced_rate)
+                symbols[symbol] <<= 2;
+            std::cout << (int)symbols[symbol] << ", ";
+        }
+        std::cout << std::endl;
+
+        return sf;
     }
 
-    void encoder_impl::transmit_packet(loraconf_t& conf, uint8_t* packet) {
+    void encoder_impl::nibble_swap(uint8_t* encoded, uint32_t length) {
+        for(uint32_t i = 0; i+1 < length; i += 2) {
+            uint8_t tmp = encoded[i];
+            encoded[i] = encoded[i+1];
+            encoded[i+1] = tmp;
+        }
+    }
+
+    void encoder_impl::transmit_packet(loraconf_t& conf, uint8_t* packet) { // TODO: clean up
         uint32_t packet_length = conf.phy.length + sizeof(loraphy_header_t); //
         uint32_t num_bytes = packet_length*2;
         uint8_t encoded[num_bytes];
-        uint32_t num_symbols = packet_length*2;
+        uint32_t num_symbols = num_bytes * ((4.0+conf.phy.cr) / conf.tap.channel.sf) + 0.5;
+        uint32_t encoded_offset = 0;
+        uint32_t packet_offset = 0;
+        std::vector<gr_complex>& upchirp = d_chirps[conf.tap.channel.sf];
 
         // Add preamble symbols to queue
         for(uint32_t i = 0; i < d_num_preamble_symbols; i++) {
-            std::vector<gr_complex>& reference = d_chirps[conf.tap.channel.sf];
-            d_sample_buffer.insert(d_sample_buffer.end(), reference.begin(), reference.begin() + (reference.size() / 2));
+            d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin(), upchirp.begin() + (upchirp.size() / 2));
         }
 
         // Add sync words to queue
+        uint8_t sync_word = 0x12;
+        uint32_t sync_offset_1 = ((sync_word & 0xf0) >> 4) * pow(2, conf.tap.channel.sf) * d_osr / 32;
+        uint32_t sync_offset_2 = (sync_word & 0x0f) * pow(2, conf.tap.channel.sf) * d_osr / 32;
+        d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin()+sync_offset_1, upchirp.begin()+sync_offset_1 + (upchirp.size() / 2));
+        d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin()+sync_offset_2, upchirp.begin()+sync_offset_2 + (upchirp.size() / 2));
 
         // Add SFD to queue
+        std::vector<gr_complex> downchirp(upchirp.size() / 2);
+        for(uint32_t i = 0; i < downchirp.size(); i++) {
+            downchirp[i] = std::conj(upchirp[i]);
+        }
+        d_sample_buffer.insert(d_sample_buffer.end(), downchirp.begin(), downchirp.end());
+        d_sample_buffer.insert(d_sample_buffer.end(), downchirp.begin(), downchirp.end());
+        d_sample_buffer.insert(d_sample_buffer.end(), downchirp.begin(), downchirp.begin() + downchirp.size() / 4.0);
 
         // If explicit header, add one block (= SF codewords) to queue in reduced rate mode (and always 4/8)
+        if(d_explicit) {
+            fec_encode(d_h48_fec, 3, packet, encoded); // Header is always 4/8
+            packet_offset = 3;
+            encoded_offset = 5;
+        }
 
         // Add remaining blocks to queue
+        print_vector(std::cout, packet, "Packet", packet_length, 8);
 
-        print_vector(std::cout, packet, "Encoded", packet_length, 8);
+        fec_encode(d_h48_fec, packet_length - packet_offset, packet+packet_offset, encoded+encoded_offset); // TODO: change to appropriate scheme
+        nibble_swap(encoded+encoded_offset, num_bytes-encoded_offset);
+        print_vector(std::cout, encoded, "Encoded", num_bytes, 8);
 
-        fec_encode(d_h48_fec, packet_length, packet, encoded);
+        whiten(encoded+encoded_offset, gr::lora::prng_payload, num_bytes-encoded_offset);
         print_vector(std::cout, encoded, "Whitened", num_bytes, 8);
-
-        //whiten(encoded, gr::lora::prng_payload, num_bytes);
-        print_vector(std::cout, encoded, "Shuffled", num_bytes, 8);
 
         const uint8_t shuffle_pattern[] = {1, 2, 3, 5, 4, 0, 6, 7};
         shuffle(encoded, num_bytes, shuffle_pattern);
-        print_vector(std::cout, encoded, "Interleaved", conf.tap.channel.sf, 8);
+        print_vector(std::cout, encoded, "Shuffled", num_bytes, 8);
 
+        // Interleaving
         uint16_t symbols[num_symbols];
         memset(symbols, 0x00, num_symbols * sizeof(uint16_t));
-        interleave(symbols, encoded, num_bytes, conf.tap.channel.sf-2, conf.phy.cr);
-        print_vector(std::cout, symbols, "Chips", 4+conf.phy.cr, conf.tap.channel.sf-2);
+        uint32_t symbols_done = 0;
+        uint32_t interleave_offset = 0;
+
+        if(d_explicit) {
+            interleave_offset += interleave_block(symbols, encoded, conf.tap.channel.sf, 4, true);
+            symbols_done += 8;
+        }
+
+        while(interleave_offset+conf.tap.channel.sf <= num_bytes) { // TODO: needs to be exact number of bytes
+            interleave_offset += interleave_block(symbols+symbols_done, encoded+interleave_offset, conf.tap.channel.sf, conf.phy.cr, d_reduced_rate);
+            symbols_done += 4 + conf.phy.cr;
+        }
+
+        // Transmission
+        for(uint32_t i = 0; i < num_symbols; i++) {
+            d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin() + (symbols[i]*d_osr), upchirp.begin() + (symbols[i]*d_osr) + (upchirp.size() / 2));
+        }
     }
 
   } /* namespace lora */
