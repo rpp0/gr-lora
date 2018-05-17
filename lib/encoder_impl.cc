@@ -50,12 +50,13 @@ namespace gr {
         set_output_multiple(pow(2,16));
 
         // Initialize variables
-        d_osr = 4;
+        d_osr = 8;
         d_samples_per_second = 125000*d_osr;
         d_num_preamble_symbols = 8;
         d_bw = 125000;
         d_explicit = true;
         d_reduced_rate = false;
+        d_chirp_phi0 = -M_PI;
 
         d_dt = 1.0f / d_samples_per_second;
         d_sample_buffer.reserve(d_samples_per_second); // Allocate for one second of samples
@@ -64,20 +65,20 @@ namespace gr {
         fec_scheme fs = LIQUID_FEC_HAMMING84;
         d_h48_fec = fec_create(fs, NULL);
 
-        // Setup chirp lookup tables
+        // Setup chirp lookup tables TODO unused now
         for(uint8_t sf = 6; sf <= 12; sf++) {
             const uint32_t chips_per_symbol = pow(2, sf);
             const double symbols_per_second = (double)d_bw / chips_per_symbol;
             const double samples_per_symbol = d_samples_per_second / symbols_per_second;
-            const double T = -0.5 * d_bw * symbols_per_second;
-            const double f0 = (d_bw / 2.0);
+            const double T = 0.5 * d_bw * symbols_per_second;
+            const double f0 = -(d_bw / 2.0);
             const double pre_dir = 2.0 * M_PI;
             double t;
 
             std::vector<gr_complex> chirp(samples_per_symbol*2);
             for (uint32_t i = 0u; i < samples_per_symbol; i++) {
                 t = d_dt * i;
-                gr_complex sample = gr_expj(pre_dir * t * (f0 + T * t) * -1.0f);
+                gr_complex sample = gr_expj(pre_dir * t * (f0 + T * t));
                 chirp[i] = sample;
                 chirp[i+samples_per_symbol] = sample;
             }
@@ -86,6 +87,36 @@ namespace gr {
 
             d_chirps[sf] = chirp; // Copy vector metadata to chirps hashmap. Note that vector internally allocates on heap.
         }
+    }
+
+    void encoder_impl::transmit_chirp(bool up, uint8_t sf, uint16_t symbol, bool quarter = false) {
+        const uint32_t chips_per_symbol = pow(2, sf);
+        const double symbols_per_second = (double)d_bw / chips_per_symbol;
+        const uint32_t samples_per_symbol = d_samples_per_second / symbols_per_second;
+        const double T = 0.5 * d_bw * symbols_per_second;
+        const double f0 = -(d_bw / 2.0);
+        double pre_dir = 2.0 * M_PI;
+        double t;
+
+        if(!up)
+            pre_dir *= -1;
+
+        std::vector<gr_complex> chirp(samples_per_symbol);
+        double phase = 0;
+        for (uint32_t i = 0u; i < samples_per_symbol; i++) {
+            t = d_dt * ((i + (d_osr * symbol)) % samples_per_symbol);
+            phase = d_chirp_phi0 + (pre_dir * t * (f0 + T * t));
+            chirp[i] = gr_expj(phase);
+        }
+
+        // Add chirp to buffer
+        if(quarter)
+            d_sample_buffer.insert(d_sample_buffer.end(), chirp.begin(), chirp.begin() + chirp.size() / 4);
+        else
+            d_sample_buffer.insert(d_sample_buffer.end(), chirp.begin(), chirp.end());
+
+        // Set phase
+        d_chirp_phi0 = phase;
     }
 
     /*
@@ -222,28 +253,23 @@ namespace gr {
         uint32_t num_symbols = num_bytes * ((4.0+conf.phy.cr) / conf.tap.channel.sf) + 0.5;
         uint32_t encoded_offset = 0;
         uint32_t packet_offset = 0;
-        std::vector<gr_complex>& upchirp = d_chirps[conf.tap.channel.sf];
 
         // Add preamble symbols to queue
         for(uint32_t i = 0; i < d_num_preamble_symbols; i++) {
-            d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin(), upchirp.begin() + (upchirp.size() / 2));
+            transmit_chirp(true, conf.tap.channel.sf, 0);
         }
 
         // Add sync words to queue
         uint8_t sync_word = 0x12;
         uint32_t sync_offset_1 = ((sync_word & 0xf0) >> 4) * pow(2, conf.tap.channel.sf) * d_osr / 32;
         uint32_t sync_offset_2 = (sync_word & 0x0f) * pow(2, conf.tap.channel.sf) * d_osr / 32;
-        d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin()+sync_offset_1, upchirp.begin()+sync_offset_1 + (upchirp.size() / 2));
-        d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin()+sync_offset_2, upchirp.begin()+sync_offset_2 + (upchirp.size() / 2));
+        transmit_chirp(true, conf.tap.channel.sf, sync_offset_1);
+        transmit_chirp(true, conf.tap.channel.sf, sync_offset_2);
 
         // Add SFD to queue
-        std::vector<gr_complex> downchirp(upchirp.size() / 2);
-        for(uint32_t i = 0; i < downchirp.size(); i++) {
-            downchirp[i] = std::conj(upchirp[i]);
-        }
-        d_sample_buffer.insert(d_sample_buffer.end(), downchirp.begin(), downchirp.end());
-        d_sample_buffer.insert(d_sample_buffer.end(), downchirp.begin(), downchirp.end());
-        d_sample_buffer.insert(d_sample_buffer.end(), downchirp.begin(), downchirp.begin() + downchirp.size() / 4.0);
+        transmit_chirp(false, conf.tap.channel.sf, 0);
+        transmit_chirp(false, conf.tap.channel.sf, 0);
+        transmit_chirp(false, conf.tap.channel.sf, 0, true);
 
         // If explicit header, add one block (= SF codewords) to queue in reduced rate mode (and always 4/8)
         if(d_explicit) {
@@ -284,7 +310,7 @@ namespace gr {
 
         // Transmission
         for(uint32_t i = 0; i < num_symbols; i++) {
-            d_sample_buffer.insert(d_sample_buffer.end(), upchirp.begin() + (symbols[i]*d_osr), upchirp.begin() + (symbols[i]*d_osr) + (upchirp.size() / 2));
+            transmit_chirp(true, conf.tap.channel.sf, symbols[i]);
         }
     }
 
