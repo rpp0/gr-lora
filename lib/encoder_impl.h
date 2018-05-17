@@ -42,6 +42,7 @@ namespace gr {
          double d_dt;
          uint8_t d_osr;
          uint16_t d_num_preamble_symbols;
+         double d_chirp_phi0;
          std::vector<gr_complex> d_sample_buffer;
 
      public:
@@ -55,6 +56,7 @@ namespace gr {
       void shuffle(uint8_t *data, uint32_t data_len, const uint8_t *shuffle_pattern);
       uint32_t interleave_block(uint16_t *symbols, uint8_t* data, uint8_t sf, uint8_t cr, bool reduced_rate);
       void nibble_swap(uint8_t* encoded, uint32_t length);
+      void transmit_chirp(bool up, uint8_t sf, uint16_t symbol, bool quarter);
     };
 
   } // namespace lora
