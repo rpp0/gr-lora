@@ -830,7 +830,7 @@ namespace gr {
                         //d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
 
                         // Calculate number of payload symbols needed
-                        uint8_t redundancy = (d_sf > 10 ? 2 : 0);
+                        uint8_t redundancy = ((d_sf > 10 || d_reduced_rate) ? 2 : 0);
                         const int symbols_per_block = d_phdr.cr + 4u;
                         const float bits_needed     = float(d_payload_length) * 8.0f;
                         const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(d_sf - redundancy);
@@ -853,7 +853,7 @@ namespace gr {
                         d_payload_symbols = 0;
                         //d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin() + 7u); // Test for SF 8 with header
                         d_payload_length = (int32_t)(d_demodulated.size() / 2);
-                    } else if (demodulate(input, d_implicit && d_reduced_rate)) {
+                    } else if (demodulate(input, d_implicit || d_reduced_rate)) {
                         if(!d_implicit)
                             d_payload_symbols -= (4u + d_phdr.cr);
                     }

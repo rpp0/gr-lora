@@ -297,7 +297,7 @@ namespace gr {
                  *  \param  is_header
                  *          Whether the demodulated words were from the HDR.
                  */
-                bool demodulate(const gr_complex *samples, const bool is_header);
+                bool demodulate(const gr_complex *samples, const bool reduced_rate);
 
                 /**
                  *  \brief  Deinterleave the raw demodulated words by reversing the interleave pattern.
