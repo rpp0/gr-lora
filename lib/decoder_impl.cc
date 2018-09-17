@@ -86,7 +86,6 @@ namespace gr {
             d_number_of_bins_hdr = (uint32_t)(1u << (d_sf-2));
             d_decim_factor       = d_samples_per_symbol / d_number_of_bins;
             d_energy_threshold   = 0.0f;
-            d_whitening_sequence = gr::lora::prng_payload;
             d_fine_sync = 0;
             d_enable_fine_sync = !disable_drift_correction;
             set_output_multiple(2 * d_samples_per_symbol);
@@ -565,8 +564,8 @@ namespace gr {
             // For determining whitening sequence
             //if (!is_header)
             //    values_to_file("/tmp/after_deshuffle", &d_words_deshuffled[0], d_words_deshuffled.size(), 8);
-
-            dewhiten(is_header ? gr::lora::prng_header : d_whitening_sequence);
+            dewhiten(is_header ? gr::lora::prng_header :
+										 (d_phdr.cr <=2) ? gr::lora::prng_payload_cr56 : gr::lora::prng_payload_cr78);
 
             //if (!is_header)
             //    values_to_file("/tmp/after_dewhiten", &d_words_dewhitened[0], d_words_dewhitened.size(), 8);
