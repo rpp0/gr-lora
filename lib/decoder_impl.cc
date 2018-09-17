@@ -16,6 +16,7 @@
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
+ * 2018: patches by wilfried.philips@wphilipe.eu for low data rate and implicit header decoding
  */
 
 #ifdef HAVE_CONFIG_H
@@ -504,9 +505,11 @@ namespace gr {
             d_words.push_back(word);
 
             // Look for 4+cr symbols and stop
-            if (d_words.size() == (4u + d_phdr.cr)) {
-                // Deinterleave
-                deinterleave((reduced_rate || d_sf > 10) ? d_sf - 2u : d_sf);
+						bool is_first =  d_implicit && (d_demodulated.size()==0);
+						
+            if (d_words.size() == (4u + (is_first ? 4 : d_phdr.cr))) {
+							// Deinterleave
+							deinterleave((reduced_rate || d_sf > 10) ? d_sf - 2u : d_sf);
 
                 return true; // Signal that a block is ready for decoding
             }
