@@ -480,7 +480,7 @@ namespace gr {
 
         bool decoder_impl::demodulate(const gr_complex *samples, const bool reduced_rate) {
             // DBGR_TIME_MEASUREMENT_TO_FILE("SFxx_method");
-
+					bool is_first =  d_implicit && (d_demodulated.size()==0);
             // DBGR_START_TIME_MEASUREMENT(false, "only");
 
             uint32_t bin_idx = max_frequency_gradient_idx(samples);
@@ -504,11 +504,10 @@ namespace gr {
             d_words.push_back(word);
 
             // Look for 4+cr symbols and stop
-						bool is_first =  d_implicit && (d_demodulated.size()==0);
 						
             if (d_words.size() == (4u + (is_first ? 4 : d_phdr.cr))) {
 							// Deinterleave
-							deinterleave((reduced_rate || d_sf > 10) ? d_sf - 2u : d_sf);
+							deinterleave((reduced_rate||is_first || d_sf > 10) ? d_sf - 2u : d_sf);
 
                 return true; // Signal that a block is ready for decoding
             }
@@ -564,8 +563,17 @@ namespace gr {
             // For determining whitening sequence
             //if (!is_header)
             //    values_to_file("/tmp/after_deshuffle", &d_words_deshuffled[0], d_words_deshuffled.size(), 8);
-            dewhiten(is_header ? gr::lora::prng_header :
-										 (d_phdr.cr <=2) ? gr::lora::prng_payload_cr56 : gr::lora::prng_payload_cr78);
+						if (d_implicit && ! d_reduced_rate)
+							dewhiten(is_header ? gr::lora::prng_header :
+											 (d_phdr.cr ==4) ? gr::lora::prng_payload_cr8_implicit_fullrate:
+											 (d_phdr.cr ==3) ? gr::lora::prng_payload_cr7_implicit_fullrate:
+											 (d_phdr.cr ==2) ? gr::lora::prng_payload_cr6_implicit_fullrate :
+											 gr::lora::prng_payload_cr5_implicit_fullrate);
+						else
+
+
+							dewhiten(is_header ? gr::lora::prng_header :
+											 (d_phdr.cr <=2) ? gr::lora::prng_payload_cr56 : gr::lora::prng_payload_cr78);
 
             //if (!is_header)
             //    values_to_file("/tmp/after_dewhiten", &d_words_dewhitened[0], d_words_dewhitened.size(), 8);
