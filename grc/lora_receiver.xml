@@ -102,7 +102,6 @@
       <name>Reduced rate</name>
       <key>reduced_rate</key>
       <type>enum</type>
-      <hide>$implicit.hide_imp</hide>
       <option>
           <name>No</name>
           <key>False</key>

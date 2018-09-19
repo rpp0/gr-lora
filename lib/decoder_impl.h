@@ -100,7 +100,6 @@ namespace gr {
                 uint32_t         d_payload_length;          ///< The number of words after decoding the HDR or payload. Calculated from an indicator in the HDR.
                 uint32_t         d_corr_fails;              ///< Indicates how many times the correlation failed. After some tries, the state will revert to `DecoderState::DETECT`.
                 float            d_energy_threshold;        ///< The absolute threshold to distinguish signal from noise.
-                const uint8_t*   d_whitening_sequence;      ///< A pointer to the whitening sequence to be used in decoding. Determined by the SF in the ctor.
                 float            d_snr;                     ///< Signal to noise ratio
                 boost::circular_buffer<float> d_pwr_queue;  ///< Queue holding symbol power values
 
@@ -298,7 +297,7 @@ namespace gr {
                  *  \param  is_header
                  *          Whether the demodulated words were from the HDR.
                  */
-                bool demodulate(const gr_complex *samples, const bool is_header);
+                bool demodulate(const gr_complex *samples, const bool reduced_rate);
 
                 /**
                  *  \brief  Deinterleave the raw demodulated words by reversing the interleave pattern.

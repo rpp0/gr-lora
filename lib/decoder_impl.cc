@@ -16,6 +16,7 @@
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
+ * 2018: patches by wilfried.philips@wphilipe.eu for low data rate and implicit header decoding
  */
 
 #ifdef HAVE_CONFIG_H
@@ -85,7 +86,6 @@ namespace gr {
             d_number_of_bins_hdr = (uint32_t)(1u << (d_sf-2));
             d_decim_factor       = d_samples_per_symbol / d_number_of_bins;
             d_energy_threshold   = 0.0f;
-            d_whitening_sequence = gr::lora::prng_payload;
             d_fine_sync = 0;
             d_enable_fine_sync = !disable_drift_correction;
             set_output_multiple(2 * d_samples_per_symbol);
@@ -480,7 +480,7 @@ namespace gr {
 
         bool decoder_impl::demodulate(const gr_complex *samples, const bool reduced_rate) {
             // DBGR_TIME_MEASUREMENT_TO_FILE("SFxx_method");
-
+            bool is_first =  d_implicit && (d_demodulated.size()==0);
             // DBGR_START_TIME_MEASUREMENT(false, "only");
 
             uint32_t bin_idx = max_frequency_gradient_idx(samples);
@@ -504,9 +504,10 @@ namespace gr {
             d_words.push_back(word);
 
             // Look for 4+cr symbols and stop
-            if (d_words.size() == (4u + d_phdr.cr)) {
+
+            if (d_words.size() == (4u + (is_first ? 4 : d_phdr.cr))) {
                 // Deinterleave
-                deinterleave((reduced_rate || d_sf > 10) ? d_sf - 2u : d_sf);
+                deinterleave((reduced_rate||is_first || d_sf > 10) ? d_sf - 2u : d_sf);
 
                 return true; // Signal that a block is ready for decoding
             }
@@ -562,8 +563,16 @@ namespace gr {
             // For determining whitening sequence
             //if (!is_header)
             //    values_to_file("/tmp/after_deshuffle", &d_words_deshuffled[0], d_words_deshuffled.size(), 8);
-
-            dewhiten(is_header ? gr::lora::prng_header : d_whitening_sequence);
+            if (d_implicit && ! d_reduced_rate) {
+                dewhiten(is_header ? gr::lora::prng_header :
+                         (d_phdr.cr ==4) ? gr::lora::prng_payload_cr8_implicit_fullrate:
+                         (d_phdr.cr ==3) ? gr::lora::prng_payload_cr7_implicit_fullrate:
+                         (d_phdr.cr ==2) ? gr::lora::prng_payload_cr6_implicit_fullrate :
+                         gr::lora::prng_payload_cr5_implicit_fullrate);
+            } else {
+                dewhiten(is_header ? gr::lora::prng_header :
+                    (d_phdr.cr <=2) ? gr::lora::prng_payload_cr56 : gr::lora::prng_payload_cr78);
+            }
 
             //if (!is_header)
             //    values_to_file("/tmp/after_dewhiten", &d_words_dewhitened[0], d_words_dewhitened.size(), 8);
@@ -828,7 +837,7 @@ namespace gr {
                         //d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
 
                         // Calculate number of payload symbols needed
-                        uint8_t redundancy = (d_sf > 10 ? 2 : 0);
+                        uint8_t redundancy = ((d_sf > 10 || d_reduced_rate) ? 2 : 0);
                         const int symbols_per_block = d_phdr.cr + 4u;
                         const float bits_needed     = float(d_payload_length) * 8.0f;
                         const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(d_sf - redundancy);
@@ -851,7 +860,7 @@ namespace gr {
                         d_payload_symbols = 0;
                         //d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin() + 7u); // Test for SF 8 with header
                         d_payload_length = (int32_t)(d_demodulated.size() / 2);
-                    } else if (demodulate(input, d_implicit && d_reduced_rate)) {
+                    } else if (demodulate(input, d_implicit || d_reduced_rate)) {
                         if(!d_implicit)
                             d_payload_symbols -= (4u + d_phdr.cr);
                     }
