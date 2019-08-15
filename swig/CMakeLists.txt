@@ -29,7 +29,7 @@ endif(NOT lora_sources)
 # Include swig generation macros
 ########################################################################
 find_package(SWIG)
-find_package(PythonLibs 2)
+find_package(PythonLibs)
 if(NOT SWIG_FOUND OR NOT PYTHONLIBS_FOUND)
     return()
 endif()
@@ -39,9 +39,9 @@ include(GrPython)
 ########################################################################
 # Setup swig generation
 ########################################################################
-foreach(incdir ${GNURADIO_RUNTIME_INCLUDE_DIRS})
-    list(APPEND GR_SWIG_INCLUDE_DIRS ${incdir}/gnuradio/swig)
-endforeach(incdir)
+set(GR_SWIG_INCLUDE_DIRS
+   $<TARGET_PROPERTY:gnuradio::runtime_swig,INTERFACE_INCLUDE_DIRECTORIES>)
+set(GR_SWIG_TARGET_DEPS gnuradio::runtime_swig)
 
 set(GR_SWIG_LIBRARIES gnuradio-lora)
 set(GR_SWIG_DOC_FILE ${CMAKE_CURRENT_BINARY_DIR}/lora_swig_doc.i)

@@ -31,7 +31,7 @@ endif(DEBUG)
 ########################################################################
 # Project setup
 ########################################################################
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.8)
 project(gr-lora CXX C)
 enable_testing()
 
@@ -45,10 +45,14 @@ set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 #make sure our local CMake Modules path comes first
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
+cmake_policy(SET CMP0011 NEW)
+
 ########################################################################
 # Compiler specific setup
 ########################################################################
-if(CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
+if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+       CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+       AND NOT WIN32)
     #http://gcc.gnu.org/wiki/Visibility
     add_definitions(-fvisibility=hidden)
     add_definitions(-std=c++11)
@@ -56,31 +60,34 @@ if(CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
     add_definitions(-Wextra)
 endif()
 
-########################################################################
-# Find boost
-########################################################################
-if(UNIX AND EXISTS "/usr/lib64")
-    list(APPEND BOOST_LIBRARYDIR "/usr/lib64") #fedora 64-bit fix
-endif(UNIX AND EXISTS "/usr/lib64")
-set(Boost_ADDITIONAL_VERSIONS
-    "1.35.0" "1.35" "1.36.0" "1.36" "1.37.0" "1.37" "1.38.0" "1.38" "1.39.0" "1.39"
-    "1.40.0" "1.40" "1.41.0" "1.41" "1.42.0" "1.42" "1.43.0" "1.43" "1.44.0" "1.44"
-    "1.45.0" "1.45" "1.46.0" "1.46" "1.47.0" "1.47" "1.48.0" "1.48" "1.49.0" "1.49"
-    "1.50.0" "1.50" "1.51.0" "1.51" "1.52.0" "1.52" "1.53.0" "1.53" "1.54.0" "1.54"
-    "1.55.0" "1.55" "1.56.0" "1.56" "1.57.0" "1.57" "1.58.0" "1.58" "1.59.0" "1.59"
-    "1.60.0" "1.60" "1.61.0" "1.61" "1.62.0" "1.62" "1.63.0" "1.63" "1.64.0" "1.64"
-    "1.65.0" "1.65" "1.66.0" "1.66" "1.67.0" "1.67" "1.68.0" "1.68" "1.69.0" "1.69"
-)
-find_package(Boost "1.35" COMPONENTS filesystem system)
+IF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    SET(CMAKE_CXX_STANDARD 11)
+ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    SET(CMAKE_CXX_STANDARD 11)
+ELSEIF(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    SET(CMAKE_CXX_STANDARD 11)
+ELSE()
+    message(WARNING "C++ standard could not be set because compiler is not GNU, Clang or MSVC.")
+ENDIF()
 
-if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Boost required to compile lora")
-endif()
+IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    SET(CMAKE_C_STANDARD 11)
+ELSEIF(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    SET(CMAKE_C_STANDARD 11)
+ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    SET(CMAKE_C_STANDARD 11)
+ELSE()
+    message(WARNING "C standard could not be set because compiler is not GNU, Clang or MSVC.")
+ENDIF()
 
 ########################################################################
 # Install directories
 ########################################################################
+find_package(Gnuradio "3.8" REQUIRED COMPONENTS blocks filter fft)
+include(GrVersion)
+
 include(GrPlatform) #define LIB_SUFFIX
+
 set(GR_RUNTIME_DIR      bin)
 set(GR_LIBRARY_DIR      lib${LIB_SUFFIX})
 set(GR_INCLUDE_DIR      include/lora)
@@ -120,13 +127,6 @@ endif(APPLE)
 find_package(CppUnit)
 find_package(Doxygen)
 
-# Search for GNU Radio and its components and versions. Add any
-# components required to the list of GR_REQUIRED_COMPONENTS (in all
-# caps such as FILTER or FFT) and change the version to the minimum
-# API compatible version required.
-set(GR_REQUIRED_COMPONENTS RUNTIME FILTER)
-find_package(Gnuradio "3.7.2" REQUIRED)
-
 if(NOT CPPUNIT_FOUND)
     message(FATAL_ERROR "CppUnit required to compile lora")
 endif()
@@ -139,29 +139,6 @@ if(DOXYGEN_FOUND)
 else(DOXYGEN_FOUND)
 	option(ENABLE_DOXYGEN "Build docs using Doxygen" OFF)
 endif(DOXYGEN_FOUND)
-
-########################################################################
-# Setup the include and linker paths
-########################################################################
-include_directories(
-    ${CMAKE_SOURCE_DIR}/lib
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_BINARY_DIR}/lib
-    ${CMAKE_BINARY_DIR}/include
-    ${Boost_INCLUDE_DIRS}
-    ${CPPUNIT_INCLUDE_DIRS}
-    ${GNURADIO_ALL_INCLUDE_DIRS}
-)
-
-link_directories(
-    ${Boost_LIBRARY_DIRS}
-    ${CPPUNIT_LIBRARY_DIRS}
-    ${GNURADIO_RUNTIME_LIBRARY_DIRS}
-)
-
-# Set component parameters
-set(GR_LORA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE INTERNAL "" FORCE)
-set(GR_LORA_SWIG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/swig CACHE INTERNAL "" FORCE)
 
 ########################################################################
 # Create uninstall target

@@ -24,8 +24,8 @@
 
 #include <lora/channelizer.h>
 #include <lora/controller.h>
-#include <gnuradio/filter/freq_xlating_fir_filter_ccf.h>
-#include <gnuradio/filter/fractional_resampler_cc.h>
+#include <gnuradio/filter/freq_xlating_fir_filter.h>
+#include <gnuradio/filter/mmse_resampler_cc.h>
 #include <gnuradio/filter/firdes.h>
 
 namespace gr {

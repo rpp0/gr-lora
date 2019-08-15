@@ -29,7 +29,7 @@ from build_utils_codes import *
 # set srcdir to the directory that contains Makefile.am
 try:
     srcdir = os.environ['srcdir']
-except KeyError, e:
+except KeyError as e:
     srcdir = "."
 srcdir = srcdir + '/'
 
@@ -39,7 +39,7 @@ try:
         do_makefile = False
     else:
         do_makefile = True
-except KeyError, e:
+except KeyError as e:
     do_makefile = False
 
 # set do_sources to either true or false dependeing on the environment
@@ -48,7 +48,7 @@ try:
         do_sources = False
     else:
         do_sources = True
-except KeyError, e:
+except KeyError as e:
     do_sources = True
 
 name_dict = {}

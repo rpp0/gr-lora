@@ -33,13 +33,15 @@ GR_PYTHON_INSTALL(
     __init__.py
     lora_receiver.py
     lorasocket.py
-    loraconfig.py DESTINATION ${GR_PYTHON_DIR}/lora
+    loraconfig.py
+    DESTINATION ${GR_PYTHON_DIR}/lora
 )
 
 if(HAS_MONGODB)
     GR_PYTHON_INSTALL(
         FILES
-        message_mongodb_sink.py DESTINATION ${GR_PYTHON_DIR}/lora
+        message_mongodb_sink.py
+        DESTINATION ${GR_PYTHON_DIR}/lora
     )
 endif(HAS_MONGODB)
 
