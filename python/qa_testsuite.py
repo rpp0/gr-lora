@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import lora
 import socket
 import pmt
@@ -108,7 +108,7 @@ class TestSummary():
             self._num_total_payloads += 1
 
             try:
-                decoded = decoded_data[i]
+                decoded = decoded_data[i].decode('utf-8')
             except IndexError:
                 decoded = "?"
             try:
@@ -121,7 +121,7 @@ class TestSummary():
                 self._num_total_correct_payloads += 1
             else:
                 if self.pause:
-                    _ = raw_input("Expected %s but got %s for %s. Press enter to continue..." % (expected, decoded, lora_config.string_repr()))
+                    _ = input("Expected %s but got %s for %s. Press enter to continue..." % (expected, decoded, lora_config.string_repr()))
 
         # Append to text report
         evaluation_text += "\tTest {:>3n}: {:<30s} * {:<3n} :: passed {:>3n} out of {:<3n} ({:.2%})\n".format(

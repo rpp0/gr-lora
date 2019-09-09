@@ -21,12 +21,12 @@
 # gr-lora specific options
 ########################################################################
 option(HAS_MONGODB "Support for storing data to MongoDB" OFF)
-option(DEBUG "Print debug output" OFF)
+option(GRLORA_DEBUG "Print debug output" OFF)
 
-if(DEBUG)
+if(GRLORA_DEBUG)
     message("-- Enabling debug mode")
-    add_definitions(-DDEBUG)
-endif(DEBUG)
+    add_definitions(-DGRLORA_DEBUG)
+endif(GRLORA_DEBUG)
 
 ########################################################################
 # Project setup
@@ -35,17 +35,33 @@ cmake_minimum_required(VERSION 3.8)
 project(gr-lora CXX C)
 enable_testing()
 
-#select the release build type by default to get optimization flags
+# Install to PyBOMBS target prefix if defined
+if(DEFINED ENV{PYBOMBS_PREFIX})
+    set(CMAKE_INSTALL_PREFIX $ENV{PYBOMBS_PREFIX})
+    message(STATUS "PyBOMBS installed GNU Radio. Setting CMAKE_INSTALL_PREFIX to $ENV{PYBOMBS_PREFIX}")
+endif()
+
+
+# Select the release build type by default to get optimization flags
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
    message(STATUS "Build type not specified: defaulting to release.")
 endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 
-#make sure our local CMake Modules path comes first
+# Make sure our local CMake Modules path comes first
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
+# Set the version information here
+set(VERSION_MAJOR 1)
+set(VERSION_API    0)
+set(VERSION_ABI 0)
+set(VERSION_PATCH git)
+
 cmake_policy(SET CMP0011 NEW)
+
+# Enable generation of compile_commands.json for code completion engines
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ########################################################################
 # Compiler specific setup
@@ -55,7 +71,6 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
        AND NOT WIN32)
     #http://gcc.gnu.org/wiki/Visibility
     add_definitions(-fvisibility=hidden)
-    add_definitions(-std=c++11)
     add_definitions(-Wall)
     add_definitions(-Wextra)
 endif()
@@ -83,10 +98,14 @@ ENDIF()
 ########################################################################
 # Install directories
 ########################################################################
-find_package(Gnuradio "3.8" REQUIRED COMPONENTS blocks filter fft)
+find_package(Gnuradio "3.8" REQUIRED COMPONENTS blocks filter fft analog digital)
 include(GrVersion)
 
 include(GrPlatform) #define LIB_SUFFIX
+
+if(NOT CMAKE_MODULES_DIR)
+  set(CMAKE_MODULES_DIR lib${LIB_SUFFIX}/cmake)
+endif(NOT CMAKE_MODULES_DIR)
 
 set(GR_RUNTIME_DIR      bin)
 set(GR_LIBRARY_DIR      lib${LIB_SUFFIX})
@@ -100,6 +119,7 @@ set(GR_PKG_CONF_DIR     ${GR_CONF_DIR}/${CMAKE_PROJECT_NAME}/conf.d)
 set(GR_LIBEXEC_DIR      libexec)
 set(GR_PKG_LIBEXEC_DIR  ${GR_LIBEXEC_DIR}/${CMAKE_PROJECT_NAME})
 set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
+set(GR_CMAKE_DIR        ${CMAKE_MODULES_DIR}/lora)
 
 ########################################################################
 # On Apple only, set install name and use rpath correctly, if not already set
@@ -124,12 +144,7 @@ endif(APPLE)
 ########################################################################
 # Find gnuradio build dependencies
 ########################################################################
-find_package(CppUnit)
 find_package(Doxygen)
-
-if(NOT CPPUNIT_FOUND)
-    message(FATAL_ERROR "CppUnit required to compile lora")
-endif()
 
 ########################################################################
 # Setup doxygen option
@@ -166,10 +181,6 @@ add_subdirectory(docs)
 ########################################################################
 # Install cmake search helper for this library
 ########################################################################
-if(NOT CMAKE_MODULES_DIR)
-  set(CMAKE_MODULES_DIR lib${LIB_SUFFIX}/cmake)
-endif(NOT CMAKE_MODULES_DIR)
-
 install(FILES cmake/Modules/loraConfig.cmake
     DESTINATION ${CMAKE_MODULES_DIR}/lora
 )

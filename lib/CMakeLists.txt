@@ -39,13 +39,13 @@ if(NOT lora_sources)
 endif(NOT lora_sources)
 
 add_library(gnuradio-lora SHARED ${lora_sources})
-target_link_libraries(gnuradio-lora ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES} liquid log4cpp)
-set_target_properties(gnuradio-lora PROPERTIES DEFINE_SYMBOL "gnuradio_lora_EXPORTS")
+target_link_libraries(gnuradio-lora gnuradio::gnuradio-runtime gnuradio::gnuradio-blocks gnuradio::gnuradio-filter liquid log4cpp)
 target_include_directories(gnuradio-lora
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<BUILD_INTERFACE:${Boost_INCLUDE_DIR}>
     PUBLIC $<INSTALL_INTERFACE:include>
   )
+set_target_properties(gnuradio-lora PROPERTIES DEFINE_SYMBOL "gnuradio_lora_EXPORTS")
 
 if(APPLE)
     set_target_properties(gnuradio-lora PROPERTIES
@@ -56,18 +56,16 @@ endif(APPLE)
 ########################################################################
 # Install built library files
 ########################################################################
-install(TARGETS gnuradio-lora
-    LIBRARY DESTINATION lib${LIB_SUFFIX} # .so/.dylib file
-    ARCHIVE DESTINATION lib${LIB_SUFFIX} # .lib file
-    RUNTIME DESTINATION bin              # .dll file
-)
+include(GrMiscUtils)
+GR_LIBRARY_FOO(gnuradio-lora RUNTIME_COMPONENT "lora_runtime" DEVEL_COMPONENT "lora_devel")
 
 ########################################################################
 # Build and register unit test
 ########################################################################
 include(GrTest)
 
-include_directories(${CPPUNIT_INCLUDE_DIRS})
+# If your unit tests require special include paths, add them here
+# include_directories()
 
 list(APPEND test_lora_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/test_lora.cc
@@ -75,15 +73,16 @@ list(APPEND test_lora_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/qa_message_socket_sink.cc
 )
 
-add_executable(test-lora ${test_lora_sources})
+# Anything we need to link to for the unit tests go here
+list(APPEND GR_TEST_TARGET_DEPS gnuradio-lora)
 
-target_link_libraries(
-  test-lora
-  ${GNURADIO_RUNTIME_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${CPPUNIT_LIBRARIES}
-  gnuradio-lora
-  liquid
-)
+if(NOT test_foo_sources)
+    MESSAGE(STATUS "No C++ unit tests... skipping")
+    return()
+endif(NOT test_foo_sources)
 
-GR_ADD_TEST(test_lora test-lora)
+foreach(qa_file ${test_lora_sources})
+    GR_ADD_CPP_TEST("lora_${qa_file}"
+        ${CMAKE_CURRENT_SOURCE_DIR}/${qa_file}
+    )
+endforeach(qa_file)

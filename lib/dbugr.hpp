@@ -31,7 +31,7 @@
 
 //#define DBGR_CHRONO      /// Measure execution time
 
-#ifndef DEBUG
+#ifndef GRLORA_DEBUG
     #define DBGR_PAUSE(MSG)
     #define DBGR_QUICK_TO_FILE(FILEPATH, APPEND, DATA, SIZE, FORMAT)
     #define DBGR_WRITE_SIGNAL(IDEAL_SIG_FP, SAMPLE_SIG_FP, WINDOW, OFFSET, MIN, MAX, FULL, PAUSE, MSG)

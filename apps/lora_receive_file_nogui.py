@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Gets a USRP capture trace from my research page and decodes it using gr-lora.
 # Author: Pieter Robyns
 
