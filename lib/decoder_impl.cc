@@ -297,7 +297,7 @@ namespace gr {
             return result;
         }
 
-        void decoder_impl::fine_sync(const gr_complex* in_samples, uint32_t bin_idx, int32_t search_space) {
+        void decoder_impl::fine_sync(const gr_complex* in_samples, int32_t bin_idx, int32_t search_space) {
             int32_t shift_ref = (bin_idx+1) * d_decim_factor;
             float samples_ifreq[d_samples_per_symbol];
             float max_correlation = 0.0f;
@@ -315,14 +315,26 @@ namespace gr {
             }
 
             #ifdef GRLORA_DEBUG
-                //d_debug << "FINE: " << -lag << std::endl;
+                d_debug << "LAG : " << lag << std::endl;
             #endif
 
             d_fine_sync = -lag;
 
-            //if(abs(d_fine_sync) >= d_decim_factor / 2)
-            //    d_fine_sync = 0;
+            // Soft limit impact of correction
+            /*
+            if(lag > 0)
+                d_fine_sync = std::min(-lag / 2, -1);
+            else if(lag < 0)
+                d_fine_sync = std::max(-lag / 2, 1);*/
+
+            // Hard limit impact of correction
+            /*if(abs(d_fine_sync) >= d_decim_factor / 2)
+                d_fine_sync = 0;*/
+
             //d_fine_sync = 0;
+            #ifdef GRLORA_DEBUG
+                d_debug << "FINE: " << d_fine_sync << std::endl;
+            #endif
         }
 
         float decoder_impl::detect_preamble_autocorr(const gr_complex *samples, const uint32_t window) {
@@ -794,7 +806,8 @@ namespace gr {
                         d_state = gr::lora::DecoderState::PAUSE;
                     } else {
                         if(c < -0.97f) {
-                            fine_sync(input, d_number_of_bins-1, d_decim_factor * 4);
+                            // TODO: Check d_upchirp_ifreq_v: bin -1 gives different result compared to bin d_number_of_bins-1, which shouldn't be the case.
+                            fine_sync(input, -1, d_decim_factor * 4);
                         } else {
                             d_corr_fails++;
                         }

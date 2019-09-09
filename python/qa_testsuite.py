@@ -27,9 +27,9 @@ def signal_handler(signal, frame):
 def trunc(target, max_len=30):
     result = ""
     if len(target) > max_len:
-        result += target[0:max_len/2-1]
+        result += target[0:int(max_len/2)-1]
         result += ".."
-        result += target[-max_len/2+1:]
+        result += target[-int(max_len/2)+1:]
     else:
         result = target
     assert(len(result) <= max_len)

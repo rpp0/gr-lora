@@ -135,7 +135,7 @@ namespace gr {
                 /**
                  *  \brief  TODO
                  */
-                void fine_sync(const gr_complex* in_samples, uint32_t bin_idx, int32_t search_space);
+                void fine_sync(const gr_complex* in_samples, int32_t bin_idx, int32_t search_space);
 
                 /**
                  * \brief Schmidl-Cox autocorrelation approach for approximately detecting the preamble.

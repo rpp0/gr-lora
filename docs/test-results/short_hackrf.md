@@ -1,6 +1,6 @@
 # Test suite: 'short_hackrf'
 
-*Results on 2018-09-19 08:20:10.113700*
+*Results on 2019-09-09 14:51:29.403736*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
