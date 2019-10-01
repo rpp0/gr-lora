@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2018 Free Software Foundation, Inc.
 #
 # This file is part of GNU Radio
 #
@@ -17,16 +17,10 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 
-install(FILES
-    lora_controller.block.yml
-    lora_receiver.block.yml
-    lora_message_file_sink.block.yml
-    lora_message_socket_sink.block.yml
-    lora_message_socket_source.block.yml DESTINATION share/gnuradio/grc/blocks
-)
+include(CMakeFindDependencyMacro)
 
-if(HAS_MONGODB)
-    install(FILES
-        lora_message_mongodb_sink.block.yml DESTINATION share/gnuradio/grc/blocks
-    )
-endif(HAS_MONGODB)
+set(target_deps "@TARGET_DEPENDENCIES@")
+foreach(dep IN LISTS target_deps)
+    find_dependency(${dep})
+endforeach()
+include("${CMAKE_CURRENT_LIST_DIR}/@TARGET@Targets.cmake")
