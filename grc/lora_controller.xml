@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<block>
-  <name>controller</name>
-  <key>lora_controller</key>
-  <category></category>
-  <import>import lora</import>
-  <make>lora.controller($parent)</make>
-
-</block>
