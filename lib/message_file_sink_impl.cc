@@ -716,10 +716,10 @@ namespace gr {
      * Incoming message handler
      */
     void message_file_sink_impl::msg_handler(pmt::pmt_t msg) {
-        uint32_t length = pmt::length(msg);
-        // std::cout << "Writing " << length / sizeof(gr_complex) << " samples" << std::endl;
-        gr_complex* raw_samples = (gr_complex *)pmt::blob_data(msg);
-        d_file.write(reinterpret_cast<const char *>(raw_samples), length);
+        const char* data = (const char*) pmt::blob_data(msg);
+        size_t size = pmt::blob_length(msg);
+        d_file.write(data, size);
+        d_file.flush();
     }
 
   } /* namespace lora */
