@@ -490,9 +490,10 @@ namespace gr {
             return (d_number_of_bins - max_index) % d_number_of_bins;
         }
 
-        bool decoder_impl::demodulate(const gr_complex *samples, const bool reduced_rate) {
+        bool decoder_impl::demodulate(const gr_complex *samples, const bool is_first) {
             // DBGR_TIME_MEASUREMENT_TO_FILE("SFxx_method");
-            bool is_first =  d_implicit && (d_demodulated.size()==0);
+            bool reduced_rate = is_first || d_reduced_rate;
+
             // DBGR_START_TIME_MEASUREMENT(false, "only");
 
             uint32_t bin_idx = max_frequency_gradient_idx(samples);
@@ -503,7 +504,7 @@ namespace gr {
             // DBGR_INTERMEDIATE_TIME_MEASUREMENT();
 
             // Header has additional redundancy
-            if (reduced_rate || d_sf > 10) {
+            if (reduced_rate) {
                 bin_idx = std::lround(bin_idx / 4.0f) % d_number_of_bins_hdr;
             }
 
@@ -517,9 +518,9 @@ namespace gr {
 
             // Look for 4+cr symbols and stop
 
-            if (d_words.size() == (4u + (is_first ? 4 : d_phdr.cr))) {
+            if (d_words.size() == (4u + (is_first ? 4u : d_phdr.cr))) {
                 // Deinterleave
-                deinterleave((reduced_rate||is_first || d_sf > 10) ? d_sf - 2u : d_sf);
+                deinterleave(reduced_rate ? d_sf - 2u : d_sf);
 
                 return true; // Signal that a block is ready for decoding
             }
@@ -575,16 +576,8 @@ namespace gr {
             // For determining whitening sequence
             //if (!is_header)
             //    values_to_file("/tmp/after_deshuffle", &d_words_deshuffled[0], d_words_deshuffled.size(), 8);
-            if (d_implicit && ! d_reduced_rate) {
-                dewhiten(is_header ? gr::lora::prng_header :
-                         (d_phdr.cr ==4) ? gr::lora::prng_payload_cr8_implicit_fullrate:
-                         (d_phdr.cr ==3) ? gr::lora::prng_payload_cr7_implicit_fullrate:
-                         (d_phdr.cr ==2) ? gr::lora::prng_payload_cr6_implicit_fullrate :
-                         gr::lora::prng_payload_cr5_implicit_fullrate);
-            } else {
-                dewhiten(is_header ? gr::lora::prng_header :
-                    (d_phdr.cr <=2) ? gr::lora::prng_payload_cr56 : gr::lora::prng_payload_cr78);
-            }
+            dewhiten(is_header ? gr::lora::prng_header :
+                (d_phdr.cr <=2) ? gr::lora::prng_payload_cr56 : gr::lora::prng_payload_cr78);
 
             //if (!is_header)
             //    values_to_file("/tmp/after_dewhiten", &d_words_dewhitened[0], d_words_dewhitened.size(), 8);
@@ -831,36 +824,38 @@ namespace gr {
                     } else {
                         d_state = gr::lora::DecoderState::DECODE_HEADER;
                     }
+                    d_state = gr::lora::DecoderState::DECODE_HEADER;
                     consume_each(d_samples_per_symbol + d_delay_after_sync);
                     break;
                 }
 
                 case gr::lora::DecoderState::DECODE_HEADER: {
-                    d_phdr.cr = 4u;
-
                     if (demodulate(input, true)) {
-                        decode(true);
-                        gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_decoded.size(), false);
-                        memcpy(&d_phdr, &d_decoded[0], sizeof(loraphy_header_t));
-                        if (d_phdr.cr > 4)
-                            d_phdr.cr = 4;
-                        d_decoded.clear();
+                        if (d_implicit) {
+                            d_payload_symbols = 1;
+                        } else {
+                            decode(true);
+                            gr::lora::print_vector_hex(std::cout, &d_decoded[0], d_decoded.size(), false);
+                            memcpy(&d_phdr, &d_decoded[0], sizeof(loraphy_header_t));
+                            if (d_phdr.cr > 4)
+                                d_phdr.cr = 4;
+                            d_decoded.clear();
 
-                        d_payload_length = d_phdr.length + MAC_CRC_SIZE * d_phdr.has_mac_crc;
-                        //d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
+                            d_payload_length = d_phdr.length + MAC_CRC_SIZE * d_phdr.has_mac_crc;
+                            //d_phy_crc = SM(decoded[1], 4, 0xf0) | MS(decoded[2], 0xf0, 4);
 
-                        // Calculate number of payload symbols needed
-                        uint8_t redundancy = ((d_sf > 10 || d_reduced_rate) ? 2 : 0);
-                        const int symbols_per_block = d_phdr.cr + 4u;
-                        const float bits_needed     = float(d_payload_length) * 8.0f;
-                        const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(d_sf - redundancy);
-                        const int blocks_needed     = (int)std::ceil(symbols_needed / symbols_per_block);
-                        d_payload_symbols     = blocks_needed * symbols_per_block;
+                            // Calculate number of payload symbols needed
+                            uint8_t redundancy = (d_reduced_rate ? 2 : 0);
+                            const int symbols_per_block = d_phdr.cr + 4u;
+                            const float bits_needed     = float(d_payload_length) * 8.0f;
+                            const float symbols_needed  = bits_needed * (symbols_per_block / 4.0f) / float(d_sf - redundancy);
+                            const int blocks_needed     = (int)std::ceil(symbols_needed / symbols_per_block);
+                            d_payload_symbols     = blocks_needed * symbols_per_block;
 
-                        #ifdef GRLORA_DEBUG
-                            d_debug << "LEN: " << d_payload_length << " (" << d_payload_symbols << " symbols)" << std::endl;
-                        #endif
-
+                            #ifdef GRLORA_DEBUG
+                                d_debug << "LEN: " << d_payload_length << " (" << d_payload_symbols << " symbols)" << std::endl;
+                            #endif
+                        }
                         d_state = gr::lora::DecoderState::DECODE_PAYLOAD;
                     }
 
@@ -873,7 +868,7 @@ namespace gr {
                         d_payload_symbols = 0;
                         //d_demodulated.erase(d_demodulated.begin(), d_demodulated.begin() + 7u); // Test for SF 8 with header
                         d_payload_length = (int32_t)(d_demodulated.size() / 2);
-                    } else if (demodulate(input, d_implicit || d_reduced_rate)) {
+                    } else if (demodulate(input, false)) {
                         if(!d_implicit)
                             d_payload_symbols -= (4u + d_phdr.cr);
                     }
