@@ -9,7 +9,7 @@ compiler: g++
 
 sudo: required
 
-dist: trusty
+dist: bionic
 
 before_install:
   - cd ../
@@ -18,25 +18,23 @@ before_install:
   - sudo apt-get update
 
 install:
-  - sudo apt-get install g++-4.8
-  - export CXX="g++-4.8"
-  - export CC="gcc-4.8"
-  # Report correct versions are installed
-  # - uname -a
-  # - $CXX --version
-  # - $CC --version
-
-  - sudo pip install scipy
-  - sudo apt-get install swig
-  - sudo apt-get install libcppunit-dev
-  - sudo apt-get install fftw3 fftw-dev libfftw3-dev
-
-  - sudo apt-get install libboost1.55-all-dev
-  - sudo apt-get install gnuradio
-  - sudo apt-get install gnuradio-dev
-  - sudo apt-get install liblog4cpp5
-  - sudo apt-get install liblog4cpp5-dev
+  - sudo apt install git cmake g++ libboost-all-dev libgmp-dev swig python3-numpy python3-mako python3-sphinx python3-lxml doxygen libfftw3-dev libcomedi-dev libsdl1.2-dev libgsl-dev libqwt-qt5-dev libqt5opengl5-dev python3-pyqt5 liblog4cpp5-dev libzmq3-dev python3-yaml python3-click python3-click-plugins python3-zmq 
   - sudo ldconfig
+
+  # Manual GNU Radio install
+  - git clone -b maint-3.8 --recursive https://github.com/gnuradio/gnuradio.git
+  - cd gnuradio
+  - mkdir build
+  - cd build
+  - cmake ../
+  - make
+  - sudo make install
+  - cd ../../
+
+  # Install GNU Radio from PPA - doesn't work right now because it's not packaged correctly
+  #- sudo add-apt-repository ppa:gnuradio/gnuradio -y
+  #- sudo apt-get update -q
+  #- sudo apt install gnuradio gnuradio-dev -y
 
   # Manual liquidDSP install
   - git clone https://github.com/jgaeddert/liquid-dsp.git
