@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <string.h>
 #include <iomanip>
+#include <sstream>
 
 #define MAC_CRC_SIZE 2u
 #define MAX_PWR_QUEUE_SIZE 4
@@ -348,10 +349,17 @@ namespace gr {
         }
 
         template <typename T>
-        inline void print_vector_hex(std::ostream& out, const T* v, const uint32_t size, bool endline) {
+        inline void print_vector_hex(std::ostream& out, const T* v, const uint32_t size, bool endline, bool print_ascii) {
+            std::stringstream ss;
+
             for (uint32_t i = 0u; i < size; i++) {
                 out << " " << std::hex << std::setw(2) << std::setfill('0') << (int)v[i];
+                if (v[i] >= ' ' && v[i] <= '~')
+                    ss << v[i];
             }
+
+            if (print_ascii)
+                out << " (" << ss.str() << ")";
 
             if(endline)
                 out << std::endl;
