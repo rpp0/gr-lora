@@ -1,6 +1,6 @@
 # Test suite: 'short_usrp'
 
-*Results on 2020-03-23 14:57:19.060054*
+*Results on 2020-03-23 15:48:15.192566*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
@@ -134,7 +134,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   0 |   5 | 0.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
@@ -142,7 +142,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   0 |   5 | 0.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
@@ -150,7 +150,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   0 |   5 | 0.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
@@ -158,7 +158,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   0 |   5 | 0.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
@@ -174,7 +174,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   2 |   5 | 40.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
@@ -182,7 +182,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   0 |   5 | 0.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
@@ -190,11 +190,11 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`deadbeef                      ` |   5 |   5 | 100.00%
+`deadbeef                      ` |   0 |   5 | 0.00%
 `88                            ` |   1 |   1 | 100.00%
 `ffff                          ` |  10 |  10 | 100.00%
 
 ### Summary for suite 'short_usrp'
 
-Total payloads passed: 384 out of 384 (100.00%)
+Total payloads passed: 351 out of 384 (91.41%)
 
