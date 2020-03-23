@@ -224,7 +224,10 @@ class qa_testsuite():
                 # Build flowgraph
                 tb = gr.top_block()
                 file_source = blocks.file_source(gr.sizeof_gr_complex, data_file, False)
-                lora_receiver = lora.lora_receiver(sample_rate, capture_freq, [868100000], bw, sf, False, 4, True, reduced_rate=False, decimation=1)
+                if sf > 10:  # The devices used in the test suites use reduced rate mode for SF > 10 TODO this should be calculated based on symbol time exceeding 16ms per symbol
+                    lora_receiver = lora.lora_receiver(sample_rate, capture_freq, [868100000], bw, sf, False, 4, True, reduced_rate=True, decimation=1)
+                else:
+                    lora_receiver = lora.lora_receiver(sample_rate, capture_freq, [868100000], bw, sf, False, 4, True, reduced_rate=False, decimation=1)
                 throttle = blocks.throttle(gr.sizeof_gr_complex, sample_rate, True)
                 message_socket_sink = lora.message_socket_sink("127.0.0.1", 40868, 2)
                 freq_xlating_fir_filter = filter.freq_xlating_fir_filter_ccc(1, (firdes.low_pass(1, sample_rate, 200000, 100000, firdes.WIN_HAMMING, 6.67)), frequency_offset, sample_rate)

@@ -1,6 +1,6 @@
 # Test suite: 'decode_long_rtl-sdr'
 
-*Results on 2020-03-23 15:52:32.617155*
+*Results on 2020-03-23 16:38:49.298826*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
@@ -30,7 +30,7 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 --- | --- | --- | ---
-`00010203040506..f8f9fafbfcfdfe` |   0 |   1 | 0.00%
+`00010203040506..f8f9fafbfcfdfe` |   1 |   1 | 100.00%
 
 ### 868.1 MHz, SF 12, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
@@ -40,5 +40,5 @@ Transmitted payload | :heavy_check_mark: | :hash: | :heavy_division_sign:
 
 ### Summary for suite 'decode_long_rtl-sdr'
 
-Total payloads passed: 4 out of 6 (66.67%)
+Total payloads passed: 5 out of 6 (83.33%)
 
