@@ -285,7 +285,7 @@ namespace gr {
         nibble_swap(encoded+encoded_offset, num_bytes-encoded_offset);
         print_vector(std::cout, encoded, "Encoded", num_bytes, 8);
 
-        whiten(encoded+encoded_offset, gr::lora::prng_payload, num_bytes-encoded_offset);
+        whiten(encoded+encoded_offset, gr::lora::prng_payload_cr78, num_bytes-encoded_offset);
         print_vector(std::cout, encoded, "Whitened", num_bytes, 8);
 
         const uint8_t shuffle_pattern[] = {1, 2, 3, 5, 4, 0, 6, 7};
