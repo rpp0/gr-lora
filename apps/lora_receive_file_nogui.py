@@ -28,7 +28,7 @@ class lora_receive_file_nogui(gr.top_block):
         # Blocks
         ##################################################
         self.message_socket_sink = lora.message_socket_sink('127.0.0.1', 40868, 1)
-        self.lora_receiver = lora.lora_receiver(sample_rate, capture_freq, ([lc.freq]), 125000, lc.sf, lc.implicit, lc.cr_num, lc.crc, reduced_rate=False, decimation=self.decimation)
+        self.lora_receiver = lora.lora_receiver(sample_rate, capture_freq, ([lc.freq]), lc.bw, lc.sf, lc.implicit, lc.cr_num, lc.crc, reduced_rate=False, decimation=self.decimation)
         self.blocks_throttle = blocks.throttle(gr.sizeof_gr_complex, sample_rate, True)
         self.blocks_file_source = blocks.file_source(gr.sizeof_gr_complex, sample_file, False)
 
