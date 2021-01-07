@@ -47,7 +47,7 @@ namespace gr {
             d_layer(layer) {
 
             message_port_register_in(pmt::mp("in"));
-            set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, _1));
+            set_msg_handler(pmt::mp("in"), boost::bind(&message_socket_sink_impl::handle, this, boost::placeholders::_1));
 
             d_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
