@@ -699,7 +699,7 @@ namespace gr {
               gr::io_signature::make(0, 0, 0)) {
 
         message_port_register_in(pmt::mp("in"));
-        set_msg_handler(pmt::mp("in"), boost::bind(&message_file_sink_impl::msg_handler, this, _1));
+        set_msg_handler(pmt::mp("in"), boost::bind(&message_file_sink_impl::msg_handler, this, boost::placeholders::_1));
 
         d_file.open(path.c_str(), std::ios::out | std::ios::binary);
     }

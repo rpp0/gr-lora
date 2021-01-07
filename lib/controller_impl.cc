@@ -46,7 +46,7 @@ namespace gr {
         d_parent = parent;
         d_port = pmt::intern("control");
         message_port_register_in(d_port);
-        set_msg_handler(d_port, boost::bind(&controller_impl::handle_control, this, _1));
+        set_msg_handler(d_port, boost::bind(&controller_impl::handle_control, this, boost::placeholders::_1));
     }
 
     void controller_impl::handle_control(pmt::pmt_t msg){
