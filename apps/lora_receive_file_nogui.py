@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     if not args.skip_download and \
        not (os.path.exists(data_file_path) and os.path.exists(meta_file_path)) and \
-       raw_input("[?] Download test LoRa signal to decode? [y/N] ").lower() == "y":
+       input("[?] Download test LoRa signal to decode? [y/N] ").lower() == "y":
         download_file("https://research.edm.uhasselt.be/probyns/lora/usrp-868.1-sf7-cr4-bw125-crc-0.sigmf-data", data_file_path)
         download_file("https://research.edm.uhasselt.be/probyns/lora/usrp-868.1-sf7-cr4-bw125-crc-0.sigmf-meta", meta_file_path)
         sleep(3)
