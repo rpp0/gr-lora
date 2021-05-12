@@ -51,7 +51,7 @@ See the 'Testing' section below for examples on how to use `gr-lora`.
 
 ### Manual installation
 
-If you prefer a manual installation, the following dependencies are required: `python2-numpy`, `python2-scipy`, `swig`, `cppunit`, `fftw`, `gnuradio`, `libvolk`, `log4cpp`, `cmake`, `wx`, and [`liquid-dsp`](https://github.com/jgaeddert/liquid-dsp).
+If you prefer a manual installation, the following dependencies are required: `python2-numpy`, `python2-scipy`, `swig`, `cppunit`, `fftw`, `gnuradio`, `libvolk`, `log4cpp`, `cmake`, `wx`, `liborc-0.4-dev`, `liborc-0.4-0-dbg`, and [`liquid-dsp`](https://github.com/jgaeddert/liquid-dsp).
 
 The installation procedure is the same as for any GNU Radio OOT module:
 
