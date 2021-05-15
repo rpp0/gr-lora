@@ -102,8 +102,8 @@ Contributions to the project are very much appreciated! If you have an idea for 
 
 The following LoRa modules and SDRs were tested and work with gr-lora:
 
-Transmitters: Pycom LoPy, Dragino LoRa Raspberry Pi HAT, Adafruit Feather 32u4, Microchip RN 2483 (custom board), SX1276(Custom Board with STM32 Support)
-Receivers: HackRF One, USRP B201, RTL-SDR, LimeSDR(LMS7002M)-LimeSDR USB.
+Transmitters: Pycom LoPy, Dragino LoRa Raspberry Pi HAT, Adafruit Feather 32u4, Microchip RN 2483 (custom board), SX1276(Custom Board with STM32 Support), Modtronix inAir9B (SX1276).
+Receivers: HackRF One, USRP B201, USRP N210 (Daughtercard ID: Flex 900 Rx), RTL-SDR, LimeSDR(LMS7002M)-LimeSDR USB.
 
 
 ## Changelog
