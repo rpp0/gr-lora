@@ -36,7 +36,7 @@ namespace gr
         const std::string d_addr;
         const uint16_t d_udp_port;
         bool d_running;
-        boost::shared_ptr<boost::thread> d_thread;
+        std::shared_ptr<boost::thread> d_thread;
 
         void msg_receive_udp();
 

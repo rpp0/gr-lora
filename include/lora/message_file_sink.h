@@ -694,7 +694,7 @@ namespace gr {
     class LORA_API message_file_sink : virtual public gr::block
     {
      public:
-      typedef boost::shared_ptr<message_file_sink> sptr;
+      typedef std::shared_ptr<message_file_sink> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of lora::message_file_sink.

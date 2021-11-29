@@ -36,7 +36,7 @@ namespace gr {
     class LORA_API controller : virtual public gr::block
     {
      public:
-      typedef boost::shared_ptr<controller> sptr;
+      typedef std::shared_ptr<controller> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of lora::controller.

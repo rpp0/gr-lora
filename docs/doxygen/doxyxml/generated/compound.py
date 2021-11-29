@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Generated Mon Feb  9 19:08:05 2009 by generateDS.py.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
+
 
 from xml.dom import minidom
 from xml.dom import Node
@@ -500,5 +499,3 @@ def parse(inFilename):
     rootObj = supermod.DoxygenType.factory()
     rootObj.build(rootNode)
     return rootObj
-
-

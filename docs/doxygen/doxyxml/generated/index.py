@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Generated Mon Feb  9 19:08:05 2009 by generateDS.py.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from xml.dom import minidom
 
@@ -76,4 +74,3 @@ def parse(inFilename):
     rootObj.build(rootNode)
 
     return rootObj
-

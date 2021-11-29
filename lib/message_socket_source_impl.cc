@@ -46,7 +46,7 @@ namespace gr {
         d_running(true)
     {
         message_port_register_out(pmt::mp("out"));
-        boost::shared_ptr<boost::thread>(new boost::thread(boost::bind (&message_socket_source_impl::msg_receive_udp, this)));
+        std::shared_ptr<boost::thread>(new boost::thread(boost::bind (&message_socket_source_impl::msg_receive_udp, this)));
     }
 
     void message_socket_source_impl::msg_receive_udp() {

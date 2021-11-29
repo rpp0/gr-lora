@@ -692,7 +692,7 @@ namespace gr {
      */
     class LORA_API decoder : virtual public gr::sync_block {
      public:
-      typedef boost::shared_ptr<decoder> sptr;
+      typedef std::shared_ptr<decoder> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of lora::decoder.

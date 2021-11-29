@@ -31,7 +31,7 @@
 namespace gr {
     namespace lora {
 
-        message_socket_sink::sptr message_socket_sink::make(std::string ip, int port, enum lora_layer layer) {
+        message_socket_sink::sptr message_socket_sink::make(std::string ip, int port, int layer) {
             return gnuradio::get_initial_sptr(new message_socket_sink_impl(ip, port, layer));
         }
 
@@ -40,7 +40,7 @@ namespace gr {
          *
          *      Create a UDP socket connection to send the data through.
          */
-        message_socket_sink_impl::message_socket_sink_impl(std::string ip, int port, enum lora_layer layer)
+        message_socket_sink_impl::message_socket_sink_impl(std::string ip, int port, int layer)
             : gr::block("message_socket_sink", gr::io_signature::make(0, 0, 0), gr::io_signature::make(0, 0, 0)),
             d_ip(ip),
             d_port(port),

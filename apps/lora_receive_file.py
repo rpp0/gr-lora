@@ -6,7 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Lora Receive File
-# GNU Radio version: 3.8.0.0
+# GNU Radio version: 3.9.4.0
 
 from distutils.version import StrictVersion
 
@@ -27,18 +27,22 @@ import sip
 from gnuradio import blocks
 import pmt
 from gnuradio import gr
+from gnuradio.fft import window
 import sys
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 import lora
+
+
+
 from gnuradio import qtgui
 
 class lora_receive_file(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Lora Receive File")
+        gr.top_block.__init__(self, "Lora Receive File", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Lora Receive File")
         qtgui.util.check_set_qss()
@@ -84,11 +88,12 @@ class lora_receive_file(gr.top_block, Qt.QWidget):
         ##################################################
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
             1024, #size
-            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            window.WIN_BLACKMAN_hARRIS, #wintype
             capture_freq, #fc
             samp_rate, #bw
             "", #name
-            1
+            1,
+            None # parent
         )
         self.qtgui_freq_sink_x_0.set_update_time(0.10)
         self.qtgui_freq_sink_x_0.set_y_axis(-140, 10)
@@ -99,6 +104,7 @@ class lora_receive_file(gr.top_block, Qt.QWidget):
         self.qtgui_freq_sink_x_0.set_fft_average(1.0)
         self.qtgui_freq_sink_x_0.enable_axis_labels(True)
         self.qtgui_freq_sink_x_0.enable_control_panel(False)
+        self.qtgui_freq_sink_x_0.set_fft_window_normalized(False)
 
 
 
@@ -120,8 +126,8 @@ class lora_receive_file(gr.top_block, Qt.QWidget):
             self.qtgui_freq_sink_x_0.set_line_color(i, colors[i])
             self.qtgui_freq_sink_x_0.set_line_alpha(i, alphas[i])
 
-        self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.pyqwidget(), Qt.QWidget)
-        self.top_grid_layout.addWidget(self._qtgui_freq_sink_x_0_win)
+        self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
         self.lora_lora_receiver_0 = lora.lora_receiver(samp_rate, capture_freq, [target_freq], bw, sf, False, 4, True, False, False, 10, False, False)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, 'counting_cr4_sf7.cfile', True, 0, 0)
@@ -136,9 +142,13 @@ class lora_receive_file(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_throttle_0, 0), (self.lora_lora_receiver_0, 0))
         self.connect((self.blocks_throttle_0, 0), (self.qtgui_freq_sink_x_0, 0))
 
+
     def closeEvent(self, event):
         self.settings = Qt.QSettings("GNU Radio", "lora_receive_file")
         self.settings.setValue("geometry", self.saveGeometry())
+        self.stop()
+        self.wait()
+
         event.accept()
 
     def get_sf(self):
@@ -194,6 +204,7 @@ class lora_receive_file(gr.top_block, Qt.QWidget):
 
 
 
+
 def main(top_block_cls=lora_receive_file, options=None):
 
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -202,10 +213,15 @@ def main(top_block_cls=lora_receive_file, options=None):
     qapp = Qt.QApplication(sys.argv)
 
     tb = top_block_cls()
+
     tb.start()
+
     tb.show()
 
     def sig_handler(sig=None, frame=None):
+        tb.stop()
+        tb.wait()
+
         Qt.QApplication.quit()
 
     signal.signal(signal.SIGINT, sig_handler)
@@ -215,12 +231,7 @@ def main(top_block_cls=lora_receive_file, options=None):
     timer.start(500)
     timer.timeout.connect(lambda: None)
 
-    def quitting():
-        tb.stop()
-        tb.wait()
-    qapp.aboutToQuit.connect(quitting)
     qapp.exec_()
-
 
 if __name__ == '__main__':
     main()

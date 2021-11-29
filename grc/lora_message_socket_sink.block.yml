@@ -15,7 +15,7 @@ parameters:
     default: 40868
 -   id: layer
     label: Layer
-    dtype: enum
+    dtype: raw
     options: ['0', '1', '2']
     option_labels: [LoRa TAP, LoRa PHY, LoRa MAC]
 

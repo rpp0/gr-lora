@@ -36,7 +36,7 @@ namespace gr {
     class LORA_API channelizer : virtual public gr::hier_block2
     {
      public:
-      typedef boost::shared_ptr<channelizer> sptr;
+      typedef std::shared_ptr<channelizer> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of lora::channelizer.

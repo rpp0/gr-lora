@@ -697,7 +697,7 @@ namespace gr {
     class LORA_API message_socket_source : virtual public gr::block
     {
      public:
-      typedef boost::shared_ptr<message_socket_source> sptr;
+      typedef std::shared_ptr<message_socket_source> sptr;
 
       /*!
        * \param addr The address to bind the UDP socket

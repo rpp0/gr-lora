@@ -1,16 +1,14 @@
 title: The LORA OOT Module
-brief: GNURadio blocks for receiving LoRa modulated radio messages using SDR
+brief: Short description of gr-lora
 tags: # Tags are arbitrary, but look at CGRAN what other authors are using
   - sdr
-  - lora
-  - receiving
-  - decoding
 author:
-  - Pieter Robyns <pieter.robyns (<at>) uhasselt.be>
-  - Eduard Marin <eduard.marin (<at>) esat.kuleuven.be>
-#copyright_owner:
+  - Author Name <authors@email.address>
+copyright_owner:
+  - Copyright Owner 1
 license:
-repo: https://github.com/rpp0/gr-lora
+gr_supported_version: # Put a comma separated list of supported GR versions here
+#repo: # Put the URL of the repository here, or leave blank for default
 #website: <module_website> # If you have a separate project website, put it here
 #icon: <icon_url> # Put a URL to a square image here that will be used as an icon on CGRAN
 ---
