@@ -11,3 +11,5 @@ apps/test-suites
 apps/test-trace.*
 python/lora_decoder.py
 apps/test-results-paper
+apps/lora_receive_realtime.py
+apps/lora_receive_file.py

@@ -82,7 +82,7 @@ if __name__ == '__main__':
         transmit_freq = meta_capture["lora:frequency"]
         sf = meta_capture["lora:sf"]
         cr = meta_capture["lora:cr"]
-        bw = meta_capture["lora:bw"]
+        bw = int(meta_capture["lora:bw"])
         prlen = meta_capture["lora:prlen"]
         crc = meta_capture["lora:crc"]
         implicit = meta_capture["lora:implicit"]
