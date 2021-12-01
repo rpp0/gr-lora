@@ -1,6 +1,6 @@
 # Test suite: 'decode_long_usrp'
 
-*Results on 2020-03-23 16:39:24.283343*
+*Results on 2021-12-01 01:28:36.996753*
 
 ### 868.1 MHz, SF 7, CR 4/8, BW 125 kHz, prlen 8, crc on, implicit off
 
