@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021 gr-lora author.
+# Copyright 2021 gr-lora rpp0.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
